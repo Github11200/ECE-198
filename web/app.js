@@ -1,7 +1,7 @@
 const byId = (id) => document.getElementById(id);
 const sources = {
   replay: { label: "Synthetic replay", help: "Runs sample motions for five seconds. No camera or wearable required." },
-  camera: { label: "Live AlphaPose camera", help: "Start this session, then run the AlphaPose webcam bridge on this laptop." },
+  camera: { label: "Live AlphaPose camera", help: "Starting a session opens a separate camera window with pose overlays on this laptop." },
   recording: { label: "AlphaPose JSON replay", help: "Start this session, then run the bridge with your exported COCO JSON." },
 };
 const defaultTargets = [2, 4, 1, 3, 2];
@@ -99,7 +99,21 @@ function renderMonitor(session) {
   byId("setup").hidden = Boolean(session);
   byId("monitor").hidden = !session;
   byId("source-badge").textContent = session ? sources[session.source].label.toUpperCase() : "SETUP";
+  byId("camera-controls").hidden = session?.source !== "camera";
   if (!session) return;
+
+  if (session.source === "camera") {
+    const cameraState = session.camera || "closed";
+    const messages = {
+      starting: "Starting the camera and loading pose models. The preview window will open shortly.",
+      open: "Camera window is open on this laptop. Close it to pause the camera, or end the session to finish.",
+      closed: "Camera window is closed. Open it to resume this session.",
+      error: "The camera stopped unexpectedly. Close other apps using the webcam, then reopen the window.",
+    };
+    byId("camera-status").textContent = messages[cameraState] || messages.error;
+    byId("open-camera").textContent = cameraState === "open" ? "Restart camera window" : "Open camera window";
+    byId("open-camera").disabled = busy || cameraState === "starting";
+  }
 
   const visible = session.participants.filter((person) => person.angle !== null).length;
   const status = session.source === "replay"
@@ -244,6 +258,12 @@ byId("finish").addEventListener("click", () => {
     renderMonitor(null);
     byId("history-filter").value = "";
     await showHistory(finished.id);
+  });
+});
+byId("open-camera").addEventListener("click", () => {
+  if (active?.source !== "camera") return;
+  changeSession(byId("open-camera"), async () => {
+    renderMonitor(await request("/api/camera/start", { session_id: active.id }));
   });
 });
 byId("live-tab").addEventListener("click", () => { alertMessage(""); view(false); });

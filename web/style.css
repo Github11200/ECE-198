@@ -50,6 +50,9 @@ input, select { width: 100%; border: 1px solid #acc0b9; border-radius: 7px; padd
 .targets label { background: #f4f8f6; padding: 10px; border-radius: 8px; }
 .primary { border: 1px solid var(--teal); border-radius: 8px; padding: 10px 15px; background: var(--teal); color: white; font-weight: 700; }
 .primary:hover { background: #094b43; }
+.camera-controls { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 15px; }
+.camera-controls p { font-size: .92rem; }
+.camera-controls button { flex-shrink: 0; }
 .monitor-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 15px; margin-top: 15px; align-items: start; }
 .participants { display: grid; gap: 7px; margin-top: 14px; }
 .person { display: grid; grid-template-columns: auto minmax(0, 1.6fr) minmax(55px, .65fr) minmax(90px, auto); gap: 9px; align-items: center; padding: 9px; min-height: 61px; background: white; border: 1px solid var(--line); border-radius: 9px; text-align: left; color: var(--ink); }
@@ -93,7 +96,7 @@ footer { display: flex; justify-content: space-between; gap: 8px; padding: 21px 
   nav button { padding: 8px; font-size: .85rem; }
   .hero { align-items: start; padding-top: 24px; }
   .panel, .participant-display { padding: 13px; }
-  .panel-heading, .session-header { flex-wrap: wrap; }
+  .panel-heading, .session-header, .camera-controls { flex-wrap: wrap; }
   .fields { grid-template-columns: 1fr; }
   .person { grid-template-columns: auto minmax(0, 1fr) auto; }
   .person .state { grid-column: 2 / -1; }

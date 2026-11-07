@@ -11,3 +11,6 @@ alphapose-results*.json
 *.mov
 .convex/
 convex/_generated/
+.venv/
+external/
+.cache/

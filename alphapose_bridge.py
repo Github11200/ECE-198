@@ -1,6 +1,7 @@
 """Send AlphaPose COCO joints to a running CCCARE session."""
 import argparse
-from collections import defaultdict
+import _thread
+from collections import defaultdict, deque
 import json
 import os
 from pathlib import Path
@@ -22,10 +23,12 @@ def local_request(base, route, data=None):
 
 
 class PoseFeed:
-    def __init__(self, base, source):
+    def __init__(self, base, source, session_id=None):
         session = local_request(base, "/api/session")["session"]
         if not session or session["source"] != source:
             raise ValueError(f"Start a {source} session in the dashboard first.")
+        if session_id is not None and session["id"] != session_id:
+            raise ValueError("The camera session ended before the camera could start.")
         self.base = base
         self.session_id = session["id"]
         self.seats = len(session["participants"])
@@ -44,7 +47,7 @@ class PoseFeed:
         except HTTPError as error:
             if error.code != 409:
                 raise
-            print("The dashboard ended this session. Press Ctrl+C to close the camera.", flush=True)
+            print("The dashboard ended this session.", flush=True)
             self.closed = True
         finally:
             self.frame += 1
@@ -113,21 +116,60 @@ def run_camera(args, feed):
 
     original_vis = vis.vis_frame_fast
     detections = []
+    frame_times = deque(maxlen=30)
 
     def collect(image, result, options, thresholds):
         detections.extend(writer_detection(person) for person in result["result"])
         return original_vis(image, result, options, thresholds) if args.show_camera else image
 
     class LiveWriter(writer.DataWriter):
+        preview_open = False
+        closing = False
+
         def write_image(self, image, name, stream=None):
+            if self.closing:
+                return
             try:
                 feed.send(detections, image.shape[1])
             except (URLError, TimeoutError) as error:
                 print(f"Pose update failed: {error}", file=sys.stderr, flush=True)
             finally:
                 detections.clear()
+            if feed.closed:
+                self.closing = True
+                _thread.interrupt_main()
+                return
             if args.show_camera:
-                super().write_image(image, name, stream=stream)
+                import cv2
+                frame_times.append(monotonic())
+                if len(frame_times) > 1:
+                    # Empty-detection frames can be RGB/BGR views with negative strides.
+                    image = image.copy()
+                    elapsed = frame_times[-1] - frame_times[0]
+                    fps = (len(frame_times) - 1) / max(elapsed, 1e-6)
+                    label = f"Pose: {fps:.1f} FPS"
+                    cv2.putText(image, label, (12, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.7, (0, 0, 0), 4, cv2.LINE_AA)
+                    cv2.putText(image, label, (12, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.7, (255, 255, 255), 2, cv2.LINE_AA)
+                title = "CCCARE Camera"
+                try:
+                    visible = not self.preview_open or cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) >= 1
+                except cv2.error:
+                    visible = False
+                if not visible:
+                    self.closing = True
+                    _thread.interrupt_main()
+                    return
+                if not self.preview_open:
+                    cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+                    height, width = image.shape[:2]
+                    cv2.resizeWindow(title, 960, max(1, int(960 * height / width)))
+                cv2.imshow(title, image)
+                if cv2.waitKey(1) & 0xFF in (27, ord("q")):
+                    self.closing = True
+                    _thread.interrupt_main()
+                self.preview_open = True
 
     # These hooks run inside AlphaPose's single writer thread with --sp.
     # It calls write_image even on frames with zero detected people.
@@ -137,8 +179,13 @@ def run_camera(args, feed):
     with TemporaryDirectory(prefix="cccare-alphapose-") as output:
         sys.argv = [str(demo), "--cfg", str(args.cfg), "--checkpoint", str(args.checkpoint),
                     "--webcam", str(args.index), "--gpus", args.gpus, "--outdir", output,
-                    "--posebatch", "8", "--sp", "--vis", "--vis_fast"]
-        runpy.run_path(str(demo), run_name="__main__")
+                    "--posebatch", "8", "--qsize", "4", "--sp", "--vis", "--vis_fast"]
+        try:
+            runpy.run_path(str(demo), run_name="__main__")
+        finally:
+            if args.show_camera:
+                import cv2
+                cv2.destroyAllWindows()
 
 
 def main():
@@ -156,11 +203,14 @@ def main():
     camera.add_argument("--index", type=int, default=0)
     camera.add_argument("--gpus", default="0", help="Use -1 for CPU, 0 for the first CUDA GPU")
     camera.add_argument("--show-camera", action="store_true")
+    camera.add_argument("--session-id", help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.mode == "recording" and (args.width < 1 or not 0 < args.fps <= 120):
         parser.error("--width must be positive and --fps must be greater than 0 and at most 120")
     try:
-        feed = PoseFeed(f"http://localhost:{args.port}", args.mode)
+        # The server binds IPv4. On Windows, localhost's IPv6 retry can stall
+        # every frame for two seconds before falling back to IPv4.
+        feed = PoseFeed(f"http://127.0.0.1:{args.port}", args.mode, getattr(args, "session_id", None))
         if feed.frame:
             feed.send([], 1)  # A restarted feed cannot complete a previous partial attempt.
         if args.mode == "camera":

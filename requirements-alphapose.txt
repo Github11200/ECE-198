@@ -1,0 +1,20 @@
+# Windows inference dependencies; GPU PyTorch and native builds are installed by setup-alphapose.ps1.
+numpy==1.23.5
+setuptools==69.5.1
+pip==26.3
+wheel==0.48.0
+Cython==0.29.37
+six==1.17.0
+terminaltables==3.1.10
+scipy==1.10.1
+opencv-python==4.8.1.78
+matplotlib==3.7.5
+tqdm==4.70.1
+tensorboardX==2.6.5
+easydict==1.13
+PyYAML==6.0.3
+munkres==3.0.0
+timm==0.1.20
+natsort==8.4.0
+pycocotools==2.0.11
+gdown==6.5.1

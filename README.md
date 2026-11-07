@@ -6,6 +6,8 @@ CCCARE instructors may supervise 10–12 participants at once, or up to 30 in a 
 
 ## Start here
 
+On Eric's Windows laptop, AlphaPose and GPU dependencies are installed locally. Run `start-dashboard.cmd`, open the dashboard, and start a **Live AlphaPose camera** session. A separate camera window opens automatically with pose overlays. See the [GPU setup and verification notes](docs/ERIC_ALPHAPOSE.md).
+
 Run `python app.py`, open [localhost:8000](http://localhost:8000), and click **Start demo replay**. After the five-second replay, click **End & save session**. See the [demo runbook](docs/RUNBOOK.md) for camera setup, measurement, learning checkpoints and GitHub commands. See the [wearable handoff](docs/WEARABLE.md) for the Convex connection.
 
 ## What the prototype does

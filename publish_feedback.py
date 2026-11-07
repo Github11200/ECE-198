@@ -45,7 +45,7 @@ def main():
     token = os.environ.get("FEEDBACK_PUBLISH_TOKEN")
     if not token:
         parser.error("Set FEEDBACK_PUBLISH_TOKEN to the deployment's publish token.")
-    local = f"http://localhost:{args.port}"
+    local = f"http://127.0.0.1:{args.port}"
     remote = args.url.rstrip("/") + "/feedback"
     print("Publishing demo feedback to Convex. Press Ctrl+C to stop.", flush=True)
     last_payload, last_sent = None, 0

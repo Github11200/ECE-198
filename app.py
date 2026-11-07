@@ -9,6 +9,7 @@ from time import monotonic
 from uuid import uuid4
 
 import database
+from camera import CameraWindow
 from pose import Curl, REPLAY_FPS, REPLAY_FRAMES, elbow_angle, replay_frame
 
 ROOT = Path(__file__).resolve().parent
@@ -67,15 +68,23 @@ class Session:
 
 
 class SessionService:
-    def __init__(self, db_path):
+    def __init__(self, db_path, camera=None):
         self.db_path = db_path
         database.initialize(db_path)
         self.active = None
         self.lock = Lock()
+        self.camera = camera
+
+    def snapshot(self):
+        result = self.active.snapshot()
+        if self.active.source == "camera" and self.camera:
+            state = self.camera.status()
+            result["camera"] = "starting" if state == "open" and self.active.last_input is None else state
+        return result
 
     def current(self):
         with self.lock:
-            return self.active.snapshot() if self.active else None
+            return self.snapshot() if self.active else None
 
     def start(self, data):
         source, targets = data.get("source"), data.get("targets")
@@ -89,7 +98,27 @@ class SessionService:
             if self.active:
                 raise RequestError(409, "Finish the active session first.")
             self.active = Session(source, targets)
-            return self.active.snapshot()
+            if source == "camera" and self.camera:
+                try:
+                    self.camera.start(self.active.id)
+                except OSError as error:
+                    self.active = None
+                    raise RequestError(503, str(error)) from error
+            return self.snapshot()
+
+    def open_camera(self, data):
+        with self.lock:
+            if not self.active or self.active.id != data.get("session_id") or self.active.source != "camera":
+                raise RequestError(409, "Start a live camera session first.")
+            if not self.camera:
+                raise RequestError(503, "Camera launch is unavailable in this server.")
+            try:
+                self.camera.start(self.active.id)
+            except OSError as error:
+                raise RequestError(503, str(error)) from error
+            self.active.last_input = None
+            self.active.update([None] * len(self.active.people))
+            return self.snapshot()
 
     def ingest(self, data):
         with self.lock:
@@ -114,6 +143,8 @@ class SessionService:
             if self.active and self.active.id == session_id:
                 result = self.active.snapshot(finished=True)
                 database.save(self.db_path, result)
+                if self.active.source == "camera" and self.camera:
+                    self.camera.stop()
                 self.active = None
                 return result
             saved = database.find(self.db_path, session_id)
@@ -156,6 +187,7 @@ def handler_for(service, port):
                 else:
                     routes = {"/api/session/start": (201, service.start),
                               "/api/session/finish": (200, service.finish),
+                              "/api/camera/start": (200, service.open_camera),
                               "/api/pose": (200, service.ingest)}
                     if self.path in routes:
                         origin = self.headers.get("Origin")
@@ -193,16 +225,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--db", type=Path, default=ROOT / "data" / "sessions.sqlite3")
+    parser.add_argument("--camera-index", type=int, default=0, help="Webcam device number")
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("--port must be between 1 and 65535")
-    service = SessionService(args.db)
+    if args.camera_index < 0:
+        parser.error("--camera-index must be nonnegative")
+    camera = CameraWindow(ROOT, args.port, args.camera_index)
+    service = SessionService(args.db, camera=camera)
     with ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(service, args.port)) as server:
         print(f"CCCARE Exercise Tracker · http://localhost:{args.port}", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:
             pass
+        finally:
+            camera.stop()
 
 
 if __name__ == "__main__":
