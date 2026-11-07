@@ -1,6 +1,24 @@
 # CCCARE handoff to the Windows laptop
 
-Updated: November 7, 2026 (America/New_York).
+Updated: November 7, 2026 (America/Toronto).
+
+## Latest laptop checkpoint — November 7
+
+This section supersedes the original computer's pending-check list below.
+
+- Laptop checkout: `C:\Users\leosi\Desktop\ECE198 CCARE\ECE-198`, branch `leo/exercise-tracker`, tracking Leo's fork. The published handoff commit is `320b60e41c5f97338a66389e6c26aca3a368db21`.
+- Leo confirmed the replay/save/restart/History checkpoint himself. Codex did not verify the browser workflow; Chrome control was declined. The four bundled unit tests passed on the laptop's system Python 3.14.5.
+- Hardware query reported Intel Arc 140V graphics and an Intel Core Ultra 9 288V CPU. AlphaPose is installed for CPU inference; NVIDIA/CUDA was not installed.
+- AlphaPose is a sibling checkout at `..\AlphaPose`, pinned to `c60106d19afb443e964df6f06ed1842962f5f1f7`.
+- Local Python 3.10.21 is in `..\.python`; the isolated environment is `..\.venv-alphapose`. The system Python remains separate. Leo explicitly asked Codex to execute the installation commands.
+- Installed CPU PyTorch 1.13.1, torchvision 0.14.1, NumPy 1.23.5, and all dependencies declared by the pinned AlphaPose setup. `uv pip check` passed for all 52 installed packages.
+- Built `halpecocotools==0.0.1` and `cython-bbox==0.1.5` with the existing `C:\msys64\ucrt64\bin\gcc.exe`. A local build-only patch corrected cython-bbox's Windows compiler arguments; `MS_WIN64` was defined for both helpers. No custom CUDA extensions were enabled. Bounding-box overlap and mask encode/decode checks passed.
+- Downloaded the COCO FastPose checkpoint, YOLOv3-SPP detector weights, and the official torchvision ResNet50 initialization weights. These remain local, outside the tracker repository.
+- AlphaPose's CLI help loaded. CPU inference on the upstream sample `examples/demo/1.jpg` completed and exported five detections, each with 51 values (17 COCO joints). The rendered skeleton overlay was visually checked. This is an upstream sample-image check, not five-person camera validation.
+- That one sample reported approximately 0.503 seconds for detection and 0.606 seconds for pose inference. These are sample processing times, not a camera-to-dashboard latency measurement or evidence of meeting 100 ms.
+- The editable install regenerated AlphaPose's `alphapose/version.py`; its inference code was not edited. Tracker application code was not changed.
+
+Working launch commands and local build notes are in [Windows AlphaPose setup](docs/WINDOWS_ALPHAPOSE.md). Next: standalone webcam on CPU, then one participant through the live bridge, full/short curls, and saving the session. Live webcam access, live bridge delivery, actual exercise counts/range, five-person live tracking, latency, and wearable delivery remain unverified.
 
 ## Read this first, next Codex
 

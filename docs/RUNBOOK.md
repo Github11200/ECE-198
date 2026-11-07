@@ -21,6 +21,8 @@ A five-minute presentation can give 45 seconds to the CCCARE problem, 90 seconds
 
 ### Install and smoke-test AlphaPose
 
+For Leo's installed Windows CPU environment and verified commands, see [Windows AlphaPose setup](WINDOWS_ALPHAPOSE.md).
+
 Keep AlphaPose in a sibling directory and its Python dependencies in a separate environment. Use an NVIDIA/CUDA machine from the team if available. Start early enough to get model and detector weights. For a CPU trial, follow upstream's CPU build instructions and try `--gpus -1`. Measure speed before using it in the presentation.
 
 1. Clone [AlphaPose](https://github.com/MVIG-SJTU/AlphaPose) and use commit `c60106d19afb443e964df6f06ed1842962f5f1f7`, whose writer interface this bridge follows.
