@@ -1,5 +1,17 @@
 # Wearable handoff for Erik and Jinay
 
+## Who supplies what
+
+| Owner | Integration boundary |
+| --- | --- |
+| Leo | Camera/scoring, stable participant IDs, local session API and SQLite history, and `publish_feedback.py` producing the agreed feedback payload |
+| Jinay | Team Convex deployment/schema/route setup, private token configuration, wearable networking/receiver and OLED update logic |
+| Erik | Confirmed networking hardware, display wiring, and device-to-participant pairing with Jinay |
+
+Leo's next integration step is to provide this contract and the publisher source, agree on a first paired ID (P01), and run the publisher when Jinay has supplied the team's `.convex.site` URL and configured credentials privately. Test one participant's count/target/cue against the dashboard before scaling. The cloud project and firmware are not prerequisites for testing camera tracking or saving reports locally.
+
+The existing receiver contract uses HTTP polling every 500 ms. It does **not** implement a persistent event subscription. Convex supports reactive subscriptions in supported clients (for example [its WebSocket-based JavaScript client](https://docs.convex.dev/client/javascript/overview)). If the team's requirement specifically needs event-driven wearable delivery, Jinay must implement a suitable authorized query/transport and receiver for the actual board. The current `feedback.read` is an internal query exposed through the HTTP GET route, not an existing public subscription endpoint. Do not claim the wearable is listening for push events until that path has been built and tested.
+
 The first band is manually paired with participant `P01`. Erik can put the ID in the firmware or use a setup input. Jinay can read a compact participant-specific snapshot using HTTP over Wi-Fi. The laptop still scores every pose and saves history in SQLite. The firmware can use the same contract with synthetic or camera inputs.
 
 With station assignments, P01 is a participant ID, independent of the camera lane. Keep the same participant ID when that person moves stations. The updated relay source accepts IDs P01–P99 and optional `exercise`/`station` labels; deploying and physically verifying those updates is still pending. It remains one latest-feedback snapshot for one laptop relay, not a multi-station session-history service. See [the frontend/API handoff](FRONTEND_API.md) for the storage distinction.

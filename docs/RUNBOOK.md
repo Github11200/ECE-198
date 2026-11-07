@@ -23,6 +23,8 @@ A five-minute presentation can give 45 seconds to the CCCARE problem, 90 seconds
 
 ## Three participants: ten squats each
 
+On Leo's installed Intel laptop, start a **Live AlphaPose camera** session in the Admin Panel, then run `start-camera-intel.cmd` from the project folder. It supplies the already verified environment and GPU arguments. Start it again for each new camera session; keep its terminal open while tracking. It does not start a session by itself.
+
 1. Select **Squats**, **Live AlphaPose camera**, and **3** participants. Assign P01, P02, P03 to lanes 1, 2, 3 and set each target to **10**. Start the session, then run the installed Intel GPU camera bridge from [WINDOWS_ALPHAPOSE.md](WINDOWS_ALPHAPOSE.md#intel-gpu-mode) with `--show-camera`.
 2. Use the labeled left, middle, and right thirds of the preview. Each person stays in their lane. Move the camera back to include all three full bodies, with a side view of each person's right hip, knee, and ankle. Start standing.
 3. Each person completes ten squat attempts, returning to standing between attempts. Current demo criteria: stand/return at knee angle >=160 degrees, attempt begins at <=130 degrees, range reached at <=100 degrees. A completed short attempt still counts and is marked short. Compare against a manual count; these squat criteria have not yet been validated on real volunteers.

@@ -12,6 +12,8 @@ Run `start-frontend.cmd` to install missing frontend dependencies, build the web
 
 Once built, `python app.py` or `start-dashboard.cmd` serves the same integrated site without a Node server. The original dashboard remains at [/tracker](http://127.0.0.1:8000/tracker), and remains the homepage fallback if the frontend has not been built. For a camera-free trial, select **Synthetic demo replay**, then **End & save session** after five seconds. See the [frontend guide](frontend/README.md), [demo runbook](docs/RUNBOOK.md), and [wearable handoff](docs/WEARABLE.md).
 
+For a real session on Leo's installed Intel laptop, start a Live AlphaPose camera session in the Admin Panel, then run `start-camera-intel.cmd`. The [Leo acceptance checklist](docs/LEO_ACCEPTANCE.md) maps the backend requirement to the existing database and separates the laptop handoff from wearable implementation.
+
 ## What the prototype does
 
 The instructor starts one exercise session for up to five numbered participants, selects a camera or synthetic replay, assigns participant IDs to lanes, and sets one rep target per person. The dashboard shows completed attempts, target progress, whether the last attempt reached the selected exercise's demonstration range threshold, and specific tracking availability reasons. Finishing saves a report for each participant, including range score, observed peak angles, tracking coverage, and review notes. History keeps exercise, station, and target snapshots. A qualified instructor interprets the motion and sets the exercise plan.

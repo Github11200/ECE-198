@@ -6,6 +6,16 @@ Updated: November 7, 2026 (America/Toronto).
 
 This section supersedes the original computer's pending-check list below.
 
+### Backend requirement and real-session/wearable handoff check
+
+Leo asked whether actual sessions can be tested, whether his session/user database requirement is implemented, and what to supply for Jinay's wearable task. After Leo was unsure about profile scope, recommended retaining numbered participant IDs/labels plus linked workout results for this demo. No names, editable profiles, authentication, or additional personal fields were introduced. The existing database already provides the required participant/session/result relationships and atomic save-on-finish flow.
+
+Read-only checks found four saved sessions and twelve participant-result rows, with participant columns `id` and `label`. Fifteen selected persistence/scoring/frontend/wearable tests passed. The isolated seven-exercise HTTP checker also passed an actual process restart and idempotent finish retries, without changing real history. No camera accuracy claim was made.
+
+Added `start-camera-intel.cmd` as a repeatable launcher for the already verified environment/GPU bridge command. Its `--help` smoke test passed; this turn did not open a new physical workout or camera. The server remains available on port 8000. `docs/LEO_ACCEPTANCE.md` gives the actual-session/manual-count/save/reload checklist and records which requirement is already implemented.
+
+Expanded `docs/WEARABLE.md` with ownership and a precise transport boundary: the prepared HTTP interface specifies 500 ms polling, not push-event subscription. Jinay must choose/implement the actual board's receiver and any event-driven subscription endpoint/transport. Leo supplies the local feed/publisher/ID contract and joins the first dashboard-to-P01-band comparison. No cloud deployment, credentials, real event receiver, or wearable delivery was added or verified here.
+
 ### Visual refinement and identity/measurement discussion
 
 Leo requested a less generic website and asked how the stack fits together, how to identify six or more people, whether wearable colors could help, and whether to use reps or 30-second measurement intervals. Retained the Alder branding while replacing the long clinic marketing homepage with the actual tracker workflow and portal entry points. Simplified admin/login/participant headings, reduced decorative treatment, flattened the admin metrics into a summary strip, and improved table text contrast. Styles are in `frontend/src/app/refinements.css`. Rebuilt the existing local export; no server restart or session mutation was needed.
