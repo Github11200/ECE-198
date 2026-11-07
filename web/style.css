@@ -51,6 +51,7 @@ input, select { width: 100%; border: 1px solid #acc0b9; border-radius: 7px; padd
 .lane-setup > strong { font-size: .85rem; }
 .targets { grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); }
 .history-item td { vertical-align: top; }
+.report-link { display: inline-block; margin: 12px 0 4px; color: var(--teal); font-weight: 700; }
 .history-item td details { min-width: 170px; }
 .history-item td summary { font-size: .82rem; }
 .history-item ul { padding-left: 18px; line-height: 1.5; font-size: .8rem; }

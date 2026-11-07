@@ -43,6 +43,7 @@ All POST bodies use `Content-Type: application/json`. Error responses have an `e
 | `POST /api/pose` | Camera/recording producer only; the frontend does not need to send poses |
 | `POST /api/session/finish` | Save completed results; retrying the same ID returns its saved result |
 | `GET /api/history` | Up to 30 recent completed sessions with reports |
+| `GET /reports/<session_id>` | Standalone printable HTML report for a saved session; browser print supports saving as PDF |
 
 Start example:
 
@@ -97,6 +98,8 @@ const response = await fetch('/api/session/finish', {
 });
 const report = await response.json();
 ```
+
+After saving, open `/reports/${report.id}` to review the workout. The current frontend opens the saved History entry and supplies an **Open workout report / print** link. The report uses saved results, including any incomplete dose or tracking issues; the prescribed target does not replace the actual count. Reports remain available after a server restart.
 
 Poll active state about every 100–150 ms for the demo, prevent overlapping requests, and show reconnection status on errors. Rendering speed does not establish camera-to-screen latency. History can be fetched on demand. Numbered participant IDs stay with people across sessions; camera lane numbers do not.
 

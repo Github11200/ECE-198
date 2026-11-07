@@ -192,6 +192,20 @@ def run_camera(args, feed):
             finally:
                 detections.clear()
             if args.show_camera:
+                if feed is not None:
+                    import cv2
+                    # Frames with no detections retain AlphaPose's reversed RGB
+                    # channel view; OpenCV drawing requires contiguous pixels.
+                    image = image.copy()
+                    width = image.shape[1]
+                    for lane, participant_id in enumerate(feed.participant_ids):
+                        x = int(width * lane / feed.seats)
+                        if lane:
+                            cv2.line(image, (x, 0), (x, image.shape[0] - 1), (0, 220, 255), 2)
+                        cv2.putText(image, f'{participant_id} | lane {lane + 1}', (x + 8, 25),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 3)
+                        cv2.putText(image, f'{participant_id} | lane {lane + 1}', (x + 8, 25),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 220, 255), 1)
                 super().write_image(image, name, stream=stream)
 
     # These hooks run inside AlphaPose's single writer thread with --sp.

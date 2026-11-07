@@ -19,6 +19,14 @@ Open [http://localhost:8000](http://localhost:8000). The demo uses Python 3.10 o
 
 A five-minute presentation can give 45 seconds to the CCCARE problem, 90 seconds to this walkthrough, 60 seconds to the prototype or a one-volunteer camera demo, and the final 85 seconds to architecture, criteria and next steps. Bring the wearable prototype if the hardware team has it. Ask the teaching team whether a completed rep below the range threshold should count toward the prescribed dose.
 
+## Three participants: ten squats each
+
+1. Select **Squats**, **Live AlphaPose camera**, and **3** participants. Assign P01, P02, P03 to lanes 1, 2, 3 and set each target to **10**. Start the session, then run the installed Intel GPU camera bridge from [WINDOWS_ALPHAPOSE.md](WINDOWS_ALPHAPOSE.md#intel-gpu-mode) with `--show-camera`.
+2. Use the labeled left, middle, and right thirds of the preview. Each person stays in their lane. Move the camera back to include all three full bodies, with a side view of each person's right hip, knee, and ankle. Start standing.
+3. Each person completes ten squat attempts, returning to standing between attempts. Current demo criteria: stand/return at knee angle >=160 degrees, attempt begins at <=130 degrees, range reached at <=100 degrees. A completed short attempt still counts and is marked short. Compare against a manual count; these squat criteria have not yet been validated on real volunteers.
+4. When everyone finishes, click **End & save session**. Targets do not automatically end the session. In the expanded History entry, click **Open workout report / print**. The generated report contains actual per-person dose, full/short counts, range score, tracking coverage, review notes, and per-rep angles. Use **Print / save as PDF** to export it.
+5. Stop the camera bridge with Ctrl+C. Completed results and printable reports remain available after restarting the server.
+
 ## Try a real AlphaPose input
 
 ### Install and smoke-test AlphaPose

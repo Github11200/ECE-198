@@ -140,7 +140,7 @@ function renderMonitor(session) {
   const visible = session.participants.filter((person) => person.angle !== null).length;
   const status = session.source === "replay"
     ? (session.replay_done ? "Replay complete. Save the session to open its results." : "Running generated pose frames.")
-    : `${visible} of ${session.participants.length} seats have a clear arm view.`;
+    : `${visible} of ${session.participants.length} lanes have a usable pose.`;
   if (byId("monitor-status").textContent !== status) byId("monitor-status").textContent = status;
   byId("roster-count").textContent = `${session.participants.length} seats`;
   for (const person of session.participants) {
@@ -194,6 +194,12 @@ function renderHistory(openId = null) {
     const rule = document.createElement("p");
     rule.className = "hint";
     rule.textContent = session.criteria?.description || "";
+    const reportLink = document.createElement("a");
+    reportLink.href = `/reports/${encodeURIComponent(session.id)}`;
+    reportLink.target = "_blank";
+    reportLink.rel = "noopener";
+    reportLink.className = "report-link";
+    reportLink.textContent = "Open workout report / print";
 
     const wrapper = document.createElement("div");
     wrapper.className = "table-scroll";
@@ -231,7 +237,7 @@ function renderHistory(openId = null) {
       row.insertCell().append(review);
     }
     wrapper.append(table);
-    details.append(summary, rule, wrapper);
+    details.append(summary, rule, reportLink, wrapper);
     history.append(details);
   }
 }

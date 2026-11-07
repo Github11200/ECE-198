@@ -6,6 +6,14 @@ Updated: November 7, 2026 (America/Toronto).
 
 This section supersedes the original computer's pending-check list below.
 
+### Three-person squat test and printable reports
+
+Leo requested three actual participants with ten squats prescribed to each, plus a generated workout report. Added `/reports/<session_id>` for saved sessions and an **Open workout report / print** link in History. The self-contained HTML includes actual dose totals, full/short counts, range percentages, tracking coverage, review notes, and per-rep angles. Browser print supports saving as PDF. Labels are escaped and timestamps display in America/Toronto. Reports are generated from saved SQLite results, not invented ten-rep outcomes.
+
+The AlphaPose preview now draws the active session's lane boundaries and participant IDs. Restarted the updated server and started a live squat session for P01/P02/P03, each target 10, at Squat station. Session `c74df7403a414776a0e1de38619ffc8c` was started at 18:00:10 UTC on November 7. The Intel GPU camera bridge is receiving frames. Initial diagnostics detected one person in lane 2 with low confidence in the right hip/knee/ankle; lanes 1 and 3 were empty. Three-person squat counting and the resulting actual workout report remain pending volunteer positioning and completion. The session is intentionally left active for Leo to exercise and save.
+
+Verification: all 15 unit tests pass, including a three-person report with unequal actual totals, weighted range score, and escaped station text. JavaScript syntax and whitespace checks pass. A real HTTP request returned a printable report for existing saved history, and both earlier sessions remain in SQLite. Initial live overlay drawing stopped on AlphaPose's negative-stride no-detection image; copying the frame before drawing fixed OpenCV compatibility. The empty-frame overlay smoke check passed and the bridge was restarted into the same session without clearing counts. No browser print/layout QA or completed three-person camera validation was claimed. See the three-participant squat walkthrough in `docs/RUNBOOK.md`.
+
 ### Wearable basics and frontend decision
 
 Leo chose to merge the teammate's simple frontend into this repository; keep the local Python API and merge web assets when that source is available. No actual frontend merge has been performed yet.

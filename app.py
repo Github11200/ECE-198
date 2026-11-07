@@ -12,6 +12,7 @@ from uuid import uuid4
 import database
 from pose import MIN_CONFIDENCE, REPLAY_FPS, REPLAY_FRAMES, replay_frame
 from exercises import DEFAULT_EXERCISE, EXERCISES, catalog, counter, criteria, measure, report
+from reports import workout_report
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = {"/": ("index.html", "text/html"), "/style.css": ("style.css", "text/css"),
@@ -184,6 +185,13 @@ def handler_for(service, port):
                 if self.headers.get("Host") not in hosts:
                     raise RequestError(403, "Open the demo using localhost.")
                 if self.command == "GET":
+                    match = re.fullmatch(r'/reports/([0-9a-f]{32})', self.path)
+                    if match:
+                        saved = database.find(service.db_path, match.group(1))
+                        if saved is None:
+                            raise RequestError(404, 'Saved workout not found.')
+                        self.send(200, workout_report(saved).encode('utf-8'), 'text/html')
+                        return
                     if self.path == '/api/exercises':
                         self.send_json(200, {'exercises': catalog(), 'max_active_lanes': 5,
                                              'identity_mode': 'manual participant-to-lane assignment'})
