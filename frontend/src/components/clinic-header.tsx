@@ -36,10 +36,10 @@ export default function ClinicHeader() {
             Contact
           </a>
           <div className="nav-logins">
-            <Link href="/admin" className="admin-login">
+            <Link href="/login/admin" className="admin-login">
               Admin login
             </Link>
-            <Link href="/participant" className="button button-small">
+            <Link href="/login/participant" className="button button-small">
               Participant login <ArrowUpRight size={15} />
             </Link>
           </div>

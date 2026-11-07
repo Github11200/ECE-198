@@ -1,6 +1,6 @@
 # Clinic website and demonstration portals
 
-A separate Next.js App Router application for the ECE 198 presentation, branded as **Alder Rehabilitation**, a fictional physiotherapy and guided-exercise clinic. Both login links enter prepared demonstration portals directly.
+A separate Next.js App Router application for the ECE 198 presentation, branded as **Alder Rehabilitation**, a fictional physiotherapy and guided-exercise clinic. Admin and participant login pages accept any values and open prepared demonstration portals.
 
 ## Run
 
@@ -24,8 +24,8 @@ In PowerShell environments where `npm.ps1` is blocked, use `npm.cmd`.
 
 ## Demo walkthrough
 
-1. Start on the clinic programme page and select **Participant login**. Expand an exercise to see its plan details. Select **My progress** to see session history and switch the chart between four and eight weeks.
-2. Select **View admin portal** to open the instructor workspace. Search or filter the roster, open a participant record, and change their demo rep target.
+1. Start on the clinic programme page and select **Participant login**. Enter any Name and Password and select **Sign in**. The fields are not validated, read, stored, or sent to a server. The participant-only **Create account** button is disabled. Expand an exercise to see its plan details. Select **My progress** to see session history and switch the chart between four and eight weeks.
+2. Select **View admin portal**, enter any Name and Password, and select **Sign in** to open the instructor workspace. Search or filter the roster, open a participant record, and change their demo rep target.
 3. Select **Prepare a session**, choose the participants, and start the demo. Rep counts advance from a local timer. Pause, resume, or end and save it.
 4. Open **Session history** and select **View summary**. Saved demo session summaries stay in sessionStorage for this browser tab. Target changes last on the current page.
 

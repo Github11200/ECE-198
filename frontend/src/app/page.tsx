@@ -50,7 +50,7 @@ export default function ClinicPage() {
                 same care team.
               </p>
               <div className="hero-actions">
-                <Link href="/participant" className="button">
+                <Link href="/login/participant" className="button">
                   View your exercise plan <ArrowUpRight size={18} />
                 </Link>
                 <a href="#approach" className="text-link">
@@ -182,7 +182,7 @@ export default function ClinicPage() {
                 <Check /> Progress you and your instructor can follow
               </li>
             </ul>
-            <Link href="/participant" className="button button-outline">
+            <Link href="/login/participant" className="button button-outline">
               Visit the participant portal <ArrowUpRight size={17} />
             </Link>
           </div>
@@ -201,7 +201,7 @@ export default function ClinicPage() {
               See your exercise plan, upcoming sessions, and personal progress.
             </p>
           </div>
-          <Link href="/participant" className="button">
+          <Link href="/login/participant" className="button">
             Participant login <ArrowRight size={18} />
           </Link>
         </section>
@@ -220,7 +220,7 @@ export default function ClinicPage() {
               Already enrolled? Your programme and instructor’s details are
               available in your participant portal.
             </p>
-            <Link href="/participant" className="text-link">
+            <Link href="/login/participant" className="text-link">
               Find your care team <MoveUpRight size={17} />
             </Link>
             <p className="contact-small">
@@ -238,8 +238,8 @@ export default function ClinicPage() {
             <br />A plan for everyday life.
           </p>
           <nav aria-label="Footer">
-            <Link href="/participant">Participant portal</Link>
-            <Link href="/admin">Clinic administration</Link>
+            <Link href="/login/participant">Participant portal</Link>
+            <Link href="/login/admin">Clinic administration</Link>
             <a href="#approach">
               Our approach <ArrowUpRight size={14} />
             </a>

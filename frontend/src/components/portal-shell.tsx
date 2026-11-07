@@ -107,7 +107,7 @@ export default function PortalShell({
             </span>
             <span className="sample-badge">Demo account</span>
           </div>
-          <Link href={admin ? "/participant" : "/admin"}>
+          <Link href={admin ? "/login/participant" : "/login/admin"}>
             View {admin ? "participant" : "admin"} portal{" "}
             <ArrowUpRight size={14} />
           </Link>
