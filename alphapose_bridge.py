@@ -147,6 +147,29 @@ def writer_detection(person):
     }
 
 
+def camera_preview(image, participant_ids=()):
+    """Fit the complete camera image on screen, then label its fixed lanes."""
+    import cv2
+
+    height, width = image.shape[:2]
+    scale = min(1, 960 / width, 640 / height)
+    # Preserve the entire field of view. Resizing is display-only: the feed
+    # already received detections and the original width before this call.
+    image = (cv2.resize(image, (round(width * scale), round(height * scale)),
+                        interpolation=cv2.INTER_AREA) if scale < 1 else image.copy())
+    # The copy/resize also handles upstream's negative-stride empty frames.
+    width = image.shape[1]
+    for lane, participant_id in enumerate(participant_ids):
+        x = int(width * lane / len(participant_ids))
+        if lane:
+            cv2.line(image, (x, 0), (x, image.shape[0] - 1), (0, 220, 255), 2)
+        cv2.putText(image, f'{participant_id} | lane {lane + 1}', (x + 8, 25),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 3)
+        cv2.putText(image, f'{participant_id} | lane {lane + 1}', (x + 8, 25),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 220, 255), 1)
+    return image
+
+
 def run_camera(args, feed):
     repo = args.repo.resolve()
     demo = repo / "scripts" / "demo_inference.py"
@@ -192,20 +215,12 @@ def run_camera(args, feed):
             finally:
                 detections.clear()
             if args.show_camera:
-                if feed is not None:
-                    import cv2
-                    # Frames with no detections retain AlphaPose's reversed RGB
-                    # channel view; OpenCV drawing requires contiguous pixels.
-                    image = image.copy()
-                    width = image.shape[1]
-                    for lane, participant_id in enumerate(feed.participant_ids):
-                        x = int(width * lane / feed.seats)
-                        if lane:
-                            cv2.line(image, (x, 0), (x, image.shape[0] - 1), (0, 220, 255), 2)
-                        cv2.putText(image, f'{participant_id} | lane {lane + 1}', (x + 8, 25),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 3)
-                        cv2.putText(image, f'{participant_id} | lane {lane + 1}', (x + 8, 25),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 220, 255), 1)
+                original_size = image.shape[:2]
+                image = camera_preview(image, feed.participant_ids if feed is not None else ())
+                if not getattr(self, 'preview_size_reported', False):
+                    print(f'Camera preview: {original_size[1]}x{original_size[0]} -> '
+                          f'{image.shape[1]}x{image.shape[0]} (complete image)', flush=True)
+                    self.preview_size_reported = True
                 super().write_image(image, name, stream=stream)
 
     # These hooks run inside AlphaPose's single writer thread with --sp.

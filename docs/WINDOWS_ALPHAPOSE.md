@@ -2,6 +2,8 @@
 
 Verified November 7, 2026. This records the installed setup, alongside the general [runbook](RUNBOOK.md).
 
+The bridge's camera preview fits the complete image within 960 by 640 pixels while preserving aspect ratio. Active sessions show a label for each participant's lane. This prevents a full-resolution OpenCV window from extending off-screen and hiding the rightmost lanes, especially with Windows display scaling. Only the displayed image is resized; pose coordinates and lane assignment use the original image width. Startup logs show the source and preview dimensions.
+
 ## Installed layout
 
 ```text
