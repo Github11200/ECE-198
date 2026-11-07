@@ -9,6 +9,36 @@ from urllib.request import Request, urlopen
 
 from alphapose_bridge import local_request
 
+DISPLAY_TEXT = {
+    'READY': 'Ready',
+    'RANGE_OK': 'Range reached',
+    'CHECK_RANGE': 'Check range',
+    'TRACKING_LOST': 'Tracking lost',
+    'TARGET_REACHED': 'Target reached',
+    'ABOVE_TARGET': 'Above target',
+}
+
+
+def participant_feedback(person):
+    """Stable firmware codes plus short display text; scoring stays on laptop."""
+    if person.get('angle') is None:
+        code = 'TRACKING_LOST'
+    elif person.get('last_range') == 'Short range':
+        code = 'CHECK_RANGE'
+    elif person['reps'] > person['target']:
+        code = 'ABOVE_TARGET'
+    elif person['reps'] == person['target']:
+        code = 'TARGET_REACHED'
+    elif person.get('last_range') == 'Full range':
+        code = 'RANGE_OK'
+    else:
+        code = 'READY'
+    score = person.get('range_score')
+    if score is None and person['reps'] and 'full' in person:
+        score = round(person['full'] * 100 / person['reps'])
+    return {**{field: person[field] for field in ('id', 'reps', 'target', 'cue')},
+            'cue_code': code, 'display_text': DISPLAY_TEXT[code], 'range_score': score}
+
 
 def wearable_snapshot(session):
     if session is None:
@@ -19,7 +49,7 @@ def wearable_snapshot(session):
         'exercise': session.get('exercise', 'right_arm_curl'),
         'station': session.get('station', 'Station 1'),
         "participants": [
-            {field: person[field] for field in ("id", "reps", "target", "cue")}
+            participant_feedback(person)
             for person in session["participants"]
         ],
     }}

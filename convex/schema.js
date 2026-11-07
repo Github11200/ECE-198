@@ -13,6 +13,11 @@ export const session = v.union(
       reps: v.number(),
       target: v.number(),
       cue: v.string(),
+      cue_code: v.optional(v.union(v.literal('READY'), v.literal('RANGE_OK'),
+        v.literal('CHECK_RANGE'), v.literal('TRACKING_LOST'),
+        v.literal('TARGET_REACHED'), v.literal('ABOVE_TARGET'))),
+      display_text: v.optional(v.string()),
+      range_score: v.optional(v.union(v.number(), v.null())),
     })),
   }),
 );

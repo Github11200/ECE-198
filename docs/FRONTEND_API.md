@@ -25,28 +25,11 @@ The existing Convex implementation stores one latest-feedback snapshot, not sess
 
 ## Connecting a teammate's website
 
-For the laptop demonstration, serve the frontend and API from the same origin. A plain HTML/CSS/JS frontend can replace `web/index.html`, `web/style.css`, and `web/app.js` and use relative `/api/...` URLs.
+Leo's chosen path is to merge the simple frontend into this repository. Merge its HTML/CSS/JS into `web/index.html`, `web/style.css`, and `web/app.js`, keeping relative `/api/...` calls. The same Python app then serves both the frontend and session API at `http://127.0.0.1:8000`.
 
-For a React/Vite development frontend on the same laptop, a dev proxy can forward `/api` requests. The backend validates both `Host` and `Origin`; this example deliberately rewrites the local upstream Origin as well as Host instead of disabling those checks:
+Use the endpoint/field contract below when connecting buttons, participant cards, and history views. If the frontend adds asset filenames, update the server's explicit asset list deliberately. The actual frontend merge is pending the teammate's source/branch; the separate AlphaPose performance branch should not be assumed to be that frontend.
 
-```js
-// Inside Vite's defineConfig(...)
-server: {
-  proxy: {
-    '/api': {
-      target: 'http://127.0.0.1:8000',
-      changeOrigin: true,
-      configure(proxy) {
-        proxy.on('proxyReq', (request) => {
-          request.setHeader('Origin', 'http://127.0.0.1:8000');
-        });
-      },
-    },
-  },
-}
-```
-
-This is a local development arrangement, not a hosted deployment. The server currently serves only the three named web assets; a production React build with hashed asset paths needs an explicit static-serving integration after the teammate supplies that build. A hosted website cannot simply use its visitor's `localhost` to contact Leo's laptop. An online station dashboard would need authenticated cloud session-control/history endpoints, or a deliberate authenticated synchronization design in Convex. Those endpoints are not implemented by the feedback relay.
+The local frontend merge does not require moving session history from SQLite into Convex. Convex is currently the wearable feedback connection. Any later hosted station-control/history service would be a separate backend extension.
 
 ## HTTP contract
 
@@ -123,4 +106,4 @@ Use a roster with stable IDs, and have the instructor assign each station's lane
 
 The current participant preview communicates a short cue plus rep progress. At the end, the report separates dose progress, the percentage of attempts reaching the configured range, and tracking problems. Review notes describe observed measurements; they do not diagnose a condition or claim every posture issue is detectable. Clinician/instructor-specific rehabilitation targets will be agreed with CCCARE later.
 
-References: [Convex HTTP actions](https://docs.convex.dev/functions/http-actions), [Vite server proxy options](https://vite.dev/config/server-options.html#server-proxy), [OpenCV VideoCapture](https://docs.opencv.org/4.x/d8/dfe/classcv_1_1VideoCapture.html).
+References: [Convex HTTP actions](https://docs.convex.dev/functions/http-actions), [OpenCV VideoCapture](https://docs.opencv.org/4.x/d8/dfe/classcv_1_1VideoCapture.html).

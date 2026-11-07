@@ -6,6 +6,14 @@ Updated: November 7, 2026 (America/Toronto).
 
 This section supersedes the original computer's pending-check list below.
 
+### Wearable basics and frontend decision
+
+Leo chose to merge the teammate's simple frontend into this repository; keep the local Python API and merge web assets when that source is available. No actual frontend merge has been performed yet.
+
+Prepared the first P01 wearable contract: `reps`, `target`, stable `cue_code`, OLED-length `display_text` (at most 16 characters), and optional running `range_score`. The longer `cue` stays backward compatible. Codes cover ready, range reached, check range, tracking lost, target reached, and above target. The score means completed attempts reaching the fixed range criterion, not a medical or overall form grade. Finishing deactivates the relay; a final wearable results screen is not implemented.
+
+Updated the Convex validator source and `docs/WEARABLE.md` with Jinay's deployment checklist and a board-independent firmware loop. The first band only reads its assigned ID's feedback; heart-rate upload remains future work with no endpoint yet. All 14 local tests pass, including cue priorities, short display text, unknown score before reps, and participant ID preservation. Convex source syntax checks pass. Cloud deployment, tokens, Wi-Fi hardware, and physical OLED delivery still require Jinay/Erik's integration; no cloud project was created or deployed here.
+
 ### Station exercises and reports follow-up
 
 Leo requested exercise-specific station sessions, participant summaries, and an explanation of the frontend/backend handoff. He explicitly deferred an instructor-defined angle editor and asked for fixed demonstration criteria that can later be tailored with CCCARE.
