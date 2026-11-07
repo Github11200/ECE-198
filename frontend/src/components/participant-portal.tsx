@@ -12,7 +12,18 @@ import {
 import PortalShell from "./portal-shell";
 import ExerciseIllustration from "./exercise-illustration";
 import ProgressChart from "./progress-chart";
-import { exercisePlan, sessions } from "@/lib/demo-data";
+import SessionHistory from "./session-history";
+import ScoreBadge from "./score-badge";
+import { exercisePlan } from "@/lib/demo-data";
+import {
+  averageScore,
+  exerciseHistory,
+  historyDate,
+  latestExerciseResult,
+  latestSession,
+  recordedSessionCount,
+} from "@/lib/exercise-history";
+import historyStyles from "./session-history.module.css";
 
 export default function ParticipantPortal({
   view = "plan",
@@ -35,7 +46,7 @@ export default function ParticipantPortal({
           </p>
         </div>
         <div className="date-chip">
-          <CalendarDays size={16} /> Monday, 9 November 2026
+          <CalendarDays size={16} /> Saturday, 7 November 2026
         </div>
       </div>
       <div className="programme-banner">
@@ -63,18 +74,18 @@ export default function ParticipantPortal({
             Sessions attended <Check size={17} />
           </span>
           <strong>
-            8 <small>sessions</small>
+            {recordedSessionCount} <small>sessions</small>
           </strong>
           <p>Since your programme began</p>
         </article>
         <article>
           <span className="stat-label">
-            Latest curl progress <TrendingUp size={17} />
+            Latest session score <TrendingUp size={17} />
           </span>
-          <strong>
-            8 <small>/ 10 reps</small>
-          </strong>
-          <p>2 more reps than your first week</p>
+          <ScoreBadge score={averageScore(latestSession.exercises)} large />
+          <p>
+            {latestSession.name} · {historyDate(exerciseHistory[0].date, true)}
+          </p>
         </article>
         <article>
           <span className="stat-label">
@@ -90,7 +101,6 @@ export default function ParticipantPortal({
       {progress ? (
         <>
           <ProgressChart />
-          <SessionTable />
         </>
       ) : (
         <div className="participant-columns">
@@ -119,6 +129,7 @@ export default function ParticipantPortal({
                       <h3>{exercise.name}</h3>
                       <p>{exercise.target}</p>
                       <span className="equipment">{exercise.equipment}</span>
+                      <LatestExerciseScore exerciseId={exercise.id} />
                     </div>
                     <ChevronDown className="exercise-chevron" size={19} />
                   </summary>
@@ -146,10 +157,16 @@ export default function ParticipantPortal({
                   <TrendingUp size={20} />
                 </span>
                 <h3>Small steps add up.</h3>
-                <p>You completed 8 sessions in your programme so far.</p>
+                <p>
+                  You completed {recordedSessionCount} sessions in your
+                  programme so far.
+                </p>
               </div>
-              <Link href="/participant/progress" className="text-link">
-                See your progress <ArrowRight size={17} />
+              <Link
+                href="/participant/progress#session-history"
+                className="text-link"
+              >
+                View past sessions <ArrowRight size={17} />
               </Link>
             </div>
           </div>
@@ -179,6 +196,7 @@ export default function ParticipantPortal({
           </aside>
         </div>
       )}
+      <SessionHistory />
     </PortalShell>
   );
 }
@@ -198,54 +216,18 @@ function CareTeamCard() {
         “We will review your curl target together next week. It is good to see
         you finding your routine.”
       </p>
-      <span className="note-date">Added to your plan · 9 November</span>
+      <span className="note-date">Added to your plan · 6 November</span>
     </section>
   );
 }
 
-function SessionTable() {
+function LatestExerciseScore({ exerciseId }: { exerciseId: string }) {
+  const result = latestExerciseResult(exerciseId);
+  if (!result) return null;
   return (
-    <section className="surface session-table">
-      <div className="card-heading">
-        <div>
-          <h2>Your recent sessions</h2>
-          <p>A summary of the exercise recorded at your appointments.</p>
-        </div>
-        <span className="pill pill-neutral">4 recent sessions</span>
-      </div>
-      <div className="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Exercise</th>
-              <th>Completed reps</th>
-              <th>Full-range reps</th>
-              <th>Instructor note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.map((s) => (
-              <tr key={s.date}>
-                <td>
-                  <strong>{s.date} 2026</strong>
-                  <small>{s.day}</small>
-                </td>
-                <td>{s.exercise}</td>
-                <td>
-                  <strong>{s.completed}</strong>
-                  <span className="muted"> / {s.target}</span>
-                </td>
-                <td>{s.range}</td>
-                <td>{s.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="table-footnote">
-        Rep targets can change as your care team reviews your programme.
-      </p>
-    </section>
+    <span className={historyStyles.planScore}>
+      <span>Last score</span>
+      <ScoreBadge score={result.score} />
+    </span>
   );
 }

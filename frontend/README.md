@@ -24,12 +24,14 @@ In PowerShell environments where `npm.ps1` is blocked, use `npm.cmd`.
 
 ## Demo walkthrough
 
-1. Start on the clinic programme page and select **Participant login**. Enter any Name and Password and select **Sign in**. The fields are not validated, read, stored, or sent to a server. The participant-only **Create account** button is disabled. Expand an exercise to see its plan details. Select **My progress** to see session history and switch the chart between four and eight weeks.
+1. Start on the clinic programme page and select **Participant login**. Enter any Name and Password and select **Sign in**. The fields are not validated, read, stored, or sent to a server. The participant-only **Create account** button is disabled. Expand an exercise to see its plan details and latest demo score. In **Past exercise sessions**, expand a date to see each session that day, its time, and the recorded exercises. Select **My progress** to view the score trend across all recorded days or the last four recorded days.
 2. Select **View admin portal**, enter any Name and Password, and select **Sign in** to open the instructor workspace. Search or filter the roster, open a participant record, and change their demo rep target.
 3. Select **Prepare a session**, choose the participants, and start the demo. Rep counts advance from a local timer. Pause, resume, or end and save it.
 4. Open **Session history** and select **View summary**. Saved demo session summaries stay in sessionStorage for this browser tab. Target changes last on the current page.
 
 The participant portal only displays the exercise plan and progress. It does not run exercise sessions.
+
+Participant history contains eight mock sessions across six past dates, including two sessions on some days. Exercise scores are illustrative whole numbers out of 100, with the same colour rules on cards, history rows, averages, and chart points: **80–100 blue**, **60–79 green**, **40–59 yellow**, **20–39 orange**, **0–19 red**. Session and day scores are rounded averages of their exercise scores. The records and shared score-band rules are in `src/lib/exercise-history.ts`; date expansion uses native keyboard-accessible disclosure controls.
 
 All names, records, appointments, and instructor notes are fictional. No authentication, patient database, API requests, webcam access, AlphaPose connection, or Convex connection is implemented. The clinic image subjects are not the fictional participants. The existing Python tracker remains independently available through `start-dashboard.cmd` on port 8000.
 

@@ -119,45 +119,6 @@ export const exercisePlan = [
   },
 ];
 
-export const sessions = [
-  {
-    date: "9 Nov",
-    day: "Monday",
-    exercise: "Seated arm curl",
-    completed: 8,
-    target: 10,
-    range: "7",
-    note: "Steady progress",
-  },
-  {
-    date: "6 Nov",
-    day: "Friday",
-    exercise: "Seated arm curl",
-    completed: 8,
-    target: 10,
-    range: "6",
-    note: "Target unchanged",
-  },
-  {
-    date: "4 Nov",
-    day: "Wednesday",
-    exercise: "Seated arm curl",
-    completed: 7,
-    target: 10,
-    range: "6",
-    note: "Plan reviewed",
-  },
-  {
-    date: "2 Nov",
-    day: "Monday",
-    exercise: "Seated arm curl",
-    completed: 6,
-    target: 8,
-    range: "5",
-    note: "Good attendance",
-  },
-];
-
 export const groupSessions = [
   {
     id: "S08",
