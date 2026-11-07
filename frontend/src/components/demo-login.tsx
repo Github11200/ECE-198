@@ -35,27 +35,15 @@ export default function DemoLogin({ role }: { role: "admin" | "participant" }) {
       <main id="main" className={`${styles.main} container`}>
         <section className={styles.intro}>
           <p className="section-kicker">
-            {admin ? "FOR YOUR CARE TEAM" : "BETWEEN YOUR APPOINTMENTS"}
+            CCCARE EXERCISE TRACKER
           </p>
           <h1>
-            {admin ? (
-              <>
-                Your clinic
-                <br />
-                workspace.
-              </>
-            ) : (
-              <>
-                Your programme.
-                <br />
-                Your progress.
-              </>
-            )}
+            {admin ? "Instructor access" : "Participant access"}
           </h1>
           <p>
             {admin
-              ? "Keep your group’s plans, targets, and session records together."
-              : "Find your exercise plan and review your recent sessions, all in one place."}
+              ? "Set up exercise sessions, monitor participants, and review saved reports."
+              : "View the demonstration exercise plan and example progress records."}
           </p>
           <ul>
             {features.map((feature) => (

@@ -36,14 +36,14 @@ export default function ParticipantPortal({
       <div className="inline-notice" role="note">This participant programme uses illustrative records. The Admin Panel shows live tracking and saved workout reports.</div>
       <div className="portal-page-heading">
         <div>
-          <p className="section-kicker">YOUR NEXT STEP, AT YOUR PACE</p>
+          <p className="section-kicker">PARTICIPANT PROGRAMME · DEMO RECORDS</p>
           <h1>
-            {progress ? "Look how far you’ve come." : "Good morning, Alex."}
+            {progress ? "Exercise progress" : "Exercise plan"}
           </h1>
           <p>
             {progress
-              ? "A record of your sessions and the small steps along the way."
-              : "Here is your exercise plan. Take it one session at a time."}
+              ? "Recorded exercise scores and session history."
+              : "Assigned exercises, targets, and recent results."}
           </p>
         </div>
         <div className="date-chip">
@@ -157,7 +157,7 @@ export default function ParticipantPortal({
                 <span className="mini-icon">
                   <TrendingUp size={20} />
                 </span>
-                <h3>Small steps add up.</h3>
+                <h3>Session history</h3>
                 <p>
                   You completed {recordedSessionCount} sessions in your
                   programme so far.
@@ -177,7 +177,7 @@ export default function ParticipantPortal({
               <span className="mini-icon">
                 <CalendarDays size={21} />
               </span>
-              <h3>See you on Wednesday.</h3>
+              <h3>Next group session</h3>
               <p>
                 Your next group session is on{" "}
                 <strong>11 November at 10:30 AM.</strong>

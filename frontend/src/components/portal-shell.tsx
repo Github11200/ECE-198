@@ -77,10 +77,10 @@ export default function PortalShell({
         <div className="sidebar-bottom">
           <div className="sidebar-help">
             <CircleHelp size={19} />
-            <strong>Here to help</strong>
+            <strong>{admin ? "Lane assignments" : "Programme questions"}</strong>
             <p>
               {admin
-                ? "Questions about the workspace? Your programme coordinator can help."
+                ? "Assign an ID to each lane before starting. Participants stay in their assigned lanes during the session."
                 : "Have a question about your plan? Bring it to your next check-in."}
             </p>
           </div>

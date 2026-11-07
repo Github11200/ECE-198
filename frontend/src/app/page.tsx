@@ -1,258 +1,59 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  MoveUpRight,
-  Phone,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import ClinicHeader from "@/components/clinic-header";
-import { Brand, DemoNote } from "@/components/brand";
+import { Brand } from "@/components/brand";
 
-const steps = [
-  {
-    n: "01",
-    title: "Your first appointment",
-    text: "Discuss your current movement, daily activities, and goals with your care team. There is time to ask questions and agree on a starting point.",
-  },
-  {
-    n: "02",
-    title: "An individual exercise plan",
-    text: "Leave with a clear programme to follow. Your assigned exercises, rep targets, and appointments are available in your participant portal.",
-  },
-  {
-    n: "03",
-    title: "Regular reviews",
-    text: "Meet with your instructor to review your recent sessions, talk through any difficulties, and update your plan when needed.",
-  },
+const workflow = [
+  { title: "Set up the group", text: "Choose an exercise, assign participant IDs to camera lanes, and set a rep target for each person." },
+  { title: "Monitor the session", text: "Follow individual rep counts, range cues, and tracking availability while participants exercise." },
+  { title: "Save and review", text: "End the session to save each participant’s results. Review short attempts, tracking notes, and the workout report." },
 ];
 
 export default function ClinicPage() {
-  return (
-    <>
-      <ClinicHeader />
-      <main id="main">
-        <section className="clinic-hero" aria-labelledby="hero-heading">
-          <div className="container hero-grid">
-            <div className="hero-copy">
-              <div className="section-kicker">
-                <span /> PHYSIOTHERAPY & GUIDED EXERCISE
-              </div>
-              <h1 id="hero-heading">
-                Rehabilitation for
-                <br />
-                <em>everyday life.</em>
-              </h1>
-              <p>
-                Physiotherapy, guided exercise, and support as you return to
-                your usual activities. A practical programme, reviewed with the
-                same care team.
-              </p>
-              <div className="hero-actions">
-                <Link href="/login/participant" className="button">
-                  View your exercise plan <ArrowUpRight size={18} />
-                </Link>
-                <a href="#approach" className="text-link">
-                  Our approach <ArrowRight size={17} />
-                </a>
-              </div>
-              <div className="hero-reassurance">
-                <span>
-                  <Check size={15} /> Individual appointments
-                </span>
-                <span>
-                  <Check size={15} /> Small-group exercise
-                </span>
-              </div>
-            </div>
-            <figure className="hero-photo-wrap">
-              <div className="photo-frame">
-                <img
-                  className="hero-photo"
-                  src="/images/rehabilitation-session.jpg"
-                  alt="A physiotherapist supporting a man during a supervised movement exercise"
-                  fetchPriority="high"
-                />
-              </div>
-              <figcaption className="photo-caption">
-                <strong>Guidance with each movement.</strong>
-                <span>
-                  Individual support, in the clinic and between visits.
-                </span>
-              </figcaption>
-            </figure>
+  return <>
+    <ClinicHeader />
+    <main id="main" className="workspace-home">
+      <section className="container tracker-home-intro" aria-labelledby="home-title">
+        <div className="tracker-home-copy">
+          <p className="section-kicker">CCCARE · ECE 198 PROJECT</p>
+          <h1 id="home-title">Exercise session tracker</h1>
+          <p className="tracker-home-lead">Set participant targets, monitor exercise activity, and review the results of a supervised group session.</p>
+          <div className="tracker-home-actions">
+            <Link href="/login/admin" className="button">Open Admin Panel <ArrowRight size={17} /></Link>
+            <Link href="/login/participant" className="button button-outline">Participant portal</Link>
           </div>
-        </section>
-
-        <div className="programme-strip">
-          <div className="container">
-            <span>Practical rehabilitation</span>
-            <p>
-              Movement & mobility <i /> Recovery after injury <i /> Supported
-              exercise
-            </p>
-            <a href="#programme">
-              About the programme <ArrowRight size={17} />
-            </a>
-          </div>
+          <p className="tracker-home-caption">The Admin Panel connects to the local tracker. Participant programme pages contain sample records.</p>
         </div>
+        <figure className="tracker-home-photo">
+          <img src="/images/rehabilitation-session.jpg" alt="A physiotherapist supporting a participant during an exercise" fetchPriority="high" />
+          <figcaption>Supervised exercise · Stock photograph</figcaption>
+        </figure>
+      </section>
 
-        <section id="programme" className="section container programme-section">
-          <div className="programme-intro">
-            <p className="section-kicker">YOUR REHABILITATION PROGRAMME</p>
-            <h2>
-              A plan for your
-              <br />
-              daily routine.
-            </h2>
-          </div>
-          <div className="programme-description">
-            <p className="lead">
-              A personal plan, a dedicated instructor, and regular time to
-              review how you are doing.
-            </p>
-            <p>
-              Alder Rehabilitation combines individual appointments with guided
-              exercise. Your care team helps you understand the plan, keeps a
-              record of your sessions, and reviews your goals with you.
-            </p>
-            <a href="#approach" className="text-link">
-              Get to know the programme <ArrowUpRight size={17} />
-            </a>
-          </div>
-        </section>
+      <section id="workflow" className="container tracker-home-section" aria-labelledby="workflow-title">
+        <div className="tracker-home-section-heading"><h2 id="workflow-title">Session workflow</h2><p>One exercise and one group at a time.</p></div>
+        <ol className="tracker-workflow">{workflow.map((step, index) => <li key={step.title}>
+          <span className="tracker-step-number">{index + 1}</span><div><h3>{step.title}</h3><p>{step.text}</p></div>
+        </li>)}</ol>
+      </section>
 
-        <section id="approach" className="approach-section">
-          <div className="container">
-            <div className="section-heading">
-              <div>
-                <p className="section-kicker">WHAT TO EXPECT</p>
-                <h2>
-                  Getting started
-                  <br />
-                  with your programme.
-                </h2>
-              </div>
-              <p>
-                Know what to expect at your first appointment and how your care
-                team will support you between visits.
-              </p>
-            </div>
-            <div className="care-steps">
-              {steps.map((step) => (
-                <article className="care-step" key={step.n}>
-                  <span className="step-number">{step.n}</span>
-                  <h3>{step.title}</h3>
-                  <p>{step.text}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+      <section id="exercises" className="container tracker-home-section tracker-home-details" aria-labelledby="exercise-title">
+        <div><h2 id="exercise-title">Exercise options</h2><p>Select the movement and review its fixed demo criteria in the Admin Panel.</p></div>
+        <dl className="tracker-exercise-list">
+          <div><dt>Strength</dt><dd>Seated right-arm curls, squats, pushups</dd></div>
+          <div><dt>Chair-based movements</dt><dd>Seated knee extensions, shoulder raises, marches, and sit-to-stand</dd></div>
+          <div><dt>Saved results</dt><dd>Reps completed, range target reached, tracking coverage, and per-participant review notes</dd></div>
+        </dl>
+      </section>
 
-        <section id="care-team" className="section container team-section">
-          <div className="team-photo">
-            <img
-              src="/images/physiotherapy-care.jpg"
-              alt="A physiotherapist assisting a patient with a leg movement in a clinic"
-              loading="lazy"
-            />
-          </div>
-          <div className="team-copy">
-            <p className="section-kicker">CONTINUITY OF CARE</p>
-            <h2>
-              Work with a
-              <br />
-              dedicated care team.
-            </h2>
-            <p>
-              Discuss your goals with your instructor, ask questions about your
-              plan, and review what has changed since your last visit. Your
-              exercise record helps keep those conversations specific to you.
-            </p>
-            <ul className="check-list">
-              <li>
-                <Check /> An individual exercise plan
-              </li>
-              <li>
-                <Check /> Regular appointments and check-ins
-              </li>
-              <li>
-                <Check /> Progress you and your instructor can follow
-              </li>
-            </ul>
-            <Link href="/login/participant" className="button button-outline">
-              Visit the participant portal <ArrowUpRight size={17} />
-            </Link>
-          </div>
-        </section>
-
-        <section className="portal-callout container">
-          <div className="portal-mark">
-            <ShieldCheck size={29} />
-          </div>
-          <div>
-            <p className="section-kicker">
-              YOUR PROGRAMME, BETWEEN APPOINTMENTS
-            </p>
-            <h2>Your exercise plan and progress, in one place.</h2>
-            <p>
-              See your exercise plan, upcoming sessions, and personal progress.
-            </p>
-          </div>
-          <Link href="/login/participant" className="button">
-            Participant login <ArrowRight size={18} />
-          </Link>
-        </section>
-
-        <section id="contact" className="section container contact-section">
-          <div>
-            <p className="section-kicker">QUESTIONS ABOUT YOUR PROGRAMME?</p>
-            <h2>
-              Speak with
-              <br />
-              your care team.
-            </h2>
-          </div>
-          <div>
-            <p>
-              Already enrolled? Your programme and instructor’s details are
-              available in your participant portal.
-            </p>
-            <Link href="/login/participant" className="text-link">
-              Find your care team <MoveUpRight size={17} />
-            </Link>
-            <p className="contact-small">
-              <Phone size={15} /> Prefer to talk? Bring your questions to your
-              next appointment.
-            </p>
-          </div>
-        </section>
-      </main>
-      <footer className="clinic-footer">
-        <div className="container footer-top">
-          <Brand />
-          <p>
-            Physiotherapy & guided exercise.
-            <br />A plan for everyday life.
-          </p>
-          <nav aria-label="Footer">
-            <Link href="/login/participant">Participant portal</Link>
-            <Link href="/login/admin">Clinic administration</Link>
-            <a href="#approach">
-              Our approach <ArrowUpRight size={14} />
-            </a>
-          </nav>
-        </div>
-        <div className="container footer-bottom">
-          <span>
-            Alder Rehabilitation is a fictional clinic created for this
-            demonstration.
-          </span>
-          <DemoNote />
-        </div>
-      </footer>
-    </>
-  );
+      <section id="about" className="container tracker-home-section tracker-home-about" aria-labelledby="about-title">
+        <div><h2 id="about-title">About the prototype</h2><p>A Waterloo ECE 198 project for tracking exercise activity and range during supervised CCCARE sessions. Participants use numbered IDs assigned by the instructor.</p></div>
+        <Link className="text-link" href="/login/admin">Go to session setup <ArrowRight size={17} /></Link>
+      </section>
+    </main>
+    <footer className="clinic-footer tracker-home-footer"><div className="container">
+      <Brand compact /><span>CCCARE Exercise Tracker · Classroom prototype</span>
+      <nav aria-label="Footer"><Link href="/login/admin">Admin Panel</Link><Link href="/login/participant">Participant portal</Link></nav>
+    </div></footer>
+  </>;
 }

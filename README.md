@@ -20,6 +20,8 @@ The Nov. 11 checkpoint is a five-minute progress presentation. A five-person syn
 
 ## Stack and ownership
 
+For the current Next.js/Python architecture and proposed participant-ID and timed-round approaches, see [identity and measurements](docs/IDENTITY_AND_MEASUREMENT.md). Marker recognition and automatic timed rounds are proposals, not implemented features.
+
 | Part | Stack and role | Owner |
 | --- | --- | --- |
 | Pose input | AlphaPose FastPose, 17 COCO keypoints, Python adapter | Leo with Eric D |

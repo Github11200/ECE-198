@@ -43,8 +43,8 @@
 }
 
 .intro h1 {
-  font-size: clamp(38px, 4.1vw, 56px);
-  letter-spacing: -0.045em;
+  font-size: clamp(30px, 3vw, 40px);
+  letter-spacing: -0.025em;
   margin-bottom: 24px;
 }
 
@@ -75,8 +75,8 @@
   width: 100%;
   padding: 36px;
   border: 1px solid var(--line);
-  border-radius: 7px;
-  background: #fffdf9;
+  border-radius: 4px;
+  background: #fff;
 }
 
 .panel > p:first-child {

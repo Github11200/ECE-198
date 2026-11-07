@@ -6,6 +6,14 @@ Updated: November 7, 2026 (America/Toronto).
 
 This section supersedes the original computer's pending-check list below.
 
+### Visual refinement and identity/measurement discussion
+
+Leo requested a less generic website and asked how the stack fits together, how to identify six or more people, whether wearable colors could help, and whether to use reps or 30-second measurement intervals. Retained the Alder branding while replacing the long clinic marketing homepage with the actual tracker workflow and portal entry points. Simplified admin/login/participant headings, reduced decorative treatment, flattened the admin metrics into a summary strip, and improved table text contrast. Styles are in `frontend/src/app/refinements.css`. Rebuilt the existing local export; no server restart or session mutation was needed.
+
+Verified the production build/TypeScript and read-only HTTP checks for eight pages, homepage anchors, and 16 local assets. Browser visual QA remains unavailable. All AlphaPose/backend/scoring/storage/wearable files match the pre-refinement commit `8517fb9`; no new counter, timing, marker, identity, capacity, or report logic was added. Existing backend tests from the integration remain applicable; no redundant cosmetic-change test suite was added.
+
+`docs/IDENTITY_AND_MEASUREMENT.md` explains the Next.js static frontend, Python runtime, AlphaPose/OpenVINO/OpenCV roles, SQLite and optional Convex relay. It distinguishes temporary body tracking from participant identity, current five-lane capacity from roster IDs, and proposed marker-to-participant-to-wearable pairing. Printed ArUco/AprilTag trials and a temporal tracker are proposals requiring actual camera testing. Color remains a suggested human-facing aid; automatic marker reading is not implemented. Recommendation: keep continuous rep/range measurement, validate the ten-rep demo, then add an optional timed round as a session boundary. Do not sample just once every 30 seconds. Automatic timed sessions are not implemented.
+
 ### Frontend integration from the teammate's branch
 
 Leo explicitly identified `feat/alphapose-camera-performance` as the desired frontend and requested preserving every part of the current AlphaPose/backend logic. Integrated its `frontend/` from `7100c3538eca20a9c9ee845ee3aa3c63af5a0d38` with the current branch as the backend authority. The merge records both histories while retaining the current camera, acceleration, scoring, exercises, database, report generator, wearable relay, and Convex files byte-for-byte in Git against `1095a10`. `Session` and `SessionService` were also compared as syntax trees and are identical. Only static frontend asset serving was added to `app.py`.

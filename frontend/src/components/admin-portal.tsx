@@ -127,7 +127,7 @@ export default function AdminPortal({ view = "overview" }: { view?: "overview" |
   return <PortalShell role="admin">
     <div className="portal-page-heading">
       <div><p className="section-kicker">ALDER REHABILITATION · INSTRUCTOR WORKSPACE</p>
-        <h1>{view === "participants" ? "Your participants." : view === "sessions" ? "A record of every step." : "Your group, in view."}</h1>
+        <h1>{view === "participants" ? "Participants" : view === "sessions" ? "Session history" : "Session overview"}</h1>
         <p>{view === "sessions" ? "Review completed workouts and participant reports." : "Set individual targets and follow each participant’s exercise progress."}</p>
       </div>
       <button className="button" onClick={prepare} disabled={loading || busy || !connected || !exercises.length}>{active ? <Play size={17} /> : <Plus size={17} />}{active ? "View live session" : "Prepare a session"}</button>
@@ -145,7 +145,7 @@ export default function AdminPortal({ view = "overview" }: { view?: "overview" |
       <div className="portal-stats admin-stats">
         <article><span className="stat-label">Participant IDs <UsersRound size={18} /></span><strong>{loading ? "—" : people.length}<small> in roster</small></strong><p>Assign IDs to camera lanes before starting</p></article>
         <article><span className="stat-label">Completed sessions <ClipboardCheck size={18} /></span><strong>{loading ? "—" : history.length}<small> recent sessions</small></strong><p>Saved workout reports</p></article>
-        <article><span className="stat-label">Review measurements <CircleAlert size={18} /></span><strong>{loading ? "—" : people.filter(needsReview).length}<small> participants</small></strong><p>Range, dose, or tracking notes</p></article>
+        <article><span className="stat-label">Review needed <CircleAlert size={18} /></span><strong>{loading ? "—" : people.filter(needsReview).length}<small> participants</small></strong><p>Range, target, or tracking notes</p></article>
       </div>
       <section className="surface roster-table">
         <div className="card-heading"><div><h2>{view === "participants" ? "Participant directory" : "Your participants"}</h2><p>Current session or most recent saved results</p></div><span className="pill pill-neutral">Numbered IDs</span></div>

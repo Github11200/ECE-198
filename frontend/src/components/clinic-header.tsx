@@ -23,21 +23,18 @@ export default function ClinicHeader() {
           className={`clinic-nav ${open ? "is-open" : ""}`}
           aria-label="Main navigation"
         >
-          <a href="/#programme" onClick={() => setOpen(false)}>
-            Rehabilitation
+          <a href="/#workflow" onClick={() => setOpen(false)}>
+            Session workflow
           </a>
-          <a href="/#approach" onClick={() => setOpen(false)}>
-            Our approach
+          <a href="/#exercises" onClick={() => setOpen(false)}>
+            Exercises
           </a>
-          <a href="/#care-team" onClick={() => setOpen(false)}>
-            Your care team
-          </a>
-          <a href="/#contact" onClick={() => setOpen(false)}>
-            Contact
+          <a href="/#about" onClick={() => setOpen(false)}>
+            About
           </a>
           <div className="nav-logins">
             <Link href="/login/admin" className="admin-login">
-              Admin login
+              Admin Panel
             </Link>
             <Link href="/login/participant" className="button button-small">
               Participant login <ArrowUpRight size={15} />

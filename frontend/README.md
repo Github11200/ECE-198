@@ -53,7 +53,9 @@ frontend/
 
 ## Brand and assets
 
-Alder has an original SVG monogram, wordmark, and favicon. Its palette uses forest green (`#365343`), warm cream (`#f5f1e8`), and muted clay (`#ad6c50`). The public site and both portals use the same identity. Copy describes general rehabilitation rather than a particular real clinic or condition. The footer identifies Alder as a fictional demonstration clinic.
+Alder has an original SVG monogram, wordmark, and favicon. The public site and both portals retain that identity, using forest green (`#365343`) with white/grey surfaces and a few retained clinic accent colours. The homepage describes the CCCARE tracker workflow and identifies it as a classroom prototype. Alder is a fictional demonstration brand, not a real clinic.
+
+The subsequent visual refinement retains the Alder branding with a quieter white/grey treatment in `src/app/refinements.css`. The homepage now introduces the actual session tracker and workflow. Portal headings use direct labels, admin metrics use a compact summary strip, and table text has stronger contrast. Promotional slogans and repeated landing-page sections were removed. Participant records remain clearly labeled as demonstrations; the real Admin API and scoring/storage logic are unaffected.
 
 Photography is by **Funkcinės Terapijos Centras**, downloaded from Pexels. These are stock photographs, not images of the fictional clinic's staff or participants. Photo source pages:
 

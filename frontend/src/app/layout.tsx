@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./refinements.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Alder Rehabilitation | Physiotherapy & exercise",
+    default: "CCCARE Exercise Tracker | Alder Rehabilitation",
     template: "%s | Alder Rehabilitation",
   },
   description:
-    "Alder Rehabilitation is a fictional clinic for the ECE 198 demonstration, with individual exercise plans and participant progress portals.",
+    "CCCARE Exercise Tracker: supervised group sessions, individual rep targets, live range cues, and saved workout reports. Waterloo ECE 198 prototype.",
   robots: { index: false, follow: false },
 };
 
