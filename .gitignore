@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+data/
+.env
+.env.local
+node_modules/
+alphapose-results*.json
+*.sqlite3
+*.pth
+*.mp4
+*.mov
+.convex/
+convex/_generated/

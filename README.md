@@ -1,2 +1,64 @@
-# ECE-198
-ECE 198 Project
+# CCCARE Exercise Tracker
+
+ECE 198 · Fall 2026 · Progress demonstration for Nov. 11
+
+CCCARE instructors may supervise 10–12 participants at once, or up to 30 in a graduated group. They need a practical way to see how much exercise each person completed and which participants could use a closer look. Participants need short, individualized cues. The project focuses on **Subproblem 2, exercise tracking and measurement**, with one piece of **Subproblem 1, scale personalized care**. The instructor sets a rep target per participant and can look up that participant's previous sessions.
+
+## Start here
+
+Run `python app.py`, open [localhost:8000](http://localhost:8000), and click **Start demo replay**. After the five-second replay, click **End & save session**. See the [demo runbook](docs/RUNBOOK.md) for camera setup, measurement, learning checkpoints and GitHub commands. See the [wearable handoff](docs/WEARABLE.md) for the Convex connection.
+
+## What the prototype does
+
+The instructor starts a session for up to five numbered participants, selects a camera or synthetic replay, and sets one rep target per person. The dashboard shows seated right-arm curl attempts, target progress, whether the last completed attempt reached the prototype's range threshold, and tracking availability. Finishing saves a summary for each participant. History shows counts and target snapshots from completed sessions. The display presents a range cue for a single exercise. A qualified instructor still interprets the motion and sets the exercise plan.
+
+The Nov. 11 checkpoint is a five-minute progress presentation. A five-person synthetic replay demonstrates the software flow, followed by one volunteer on the camera if the AlphaPose setup is ready. The course handout lists Nov. 23 for the Stream 8 final symposium and Nov. 25 for Stream 4. The December note is later than either course date.
+
+## Stack and ownership
+
+| Part | Stack and role | Owner |
+| --- | --- | --- |
+| Pose input | AlphaPose FastPose, 17 COCO keypoints, Python adapter | Leo with Eric D |
+| Rep and range logic | Python, dot product and an angle-based state machine, one state per participant | Leo's integration baseline, Eric D owns exercise scoring refinement |
+| Dashboard | HTML, CSS and browser JavaScript, served on the demo laptop | Leo |
+| Session API and database | Python standard library HTTP and SQLite, same laptop | Leo |
+| Wearable and binding | Arduino or verified Wi-Fi hardware, OLED, optional pulse sensor, manual device-to-participant pairing for the demo | Erik Zhu |
+| Wearable feedback | Convex HTTPS contract for latest summaries and optional end-of-session sensor data | Jinay Patel, with Leo providing the laptop interface |
+| End-to-end test | Ground-truth rep labels, one wearable when available | Eric D and team |
+
+The laptop is the authority for the active session. The camera adapter assigns detections by fixed left-to-right camera lanes. A lane is a demo seat, so participants stay in place. The server computes counts and range cues. The browser reads current state, and SQLite saves completed results. The optional Convex handoff sends compact participant updates to the wearable over HTTPS. The camera and scoring path stays on the laptop.
+
+```mermaid
+flowchart TD
+    A["Laptop camera and AlphaPose"] --> B["COCO joints and lane assignment"]
+    C["Synthetic replay"] --> B
+    B --> D["Python rep and range logic"]
+    D --> E["Instructor dashboard"]
+    D --> F["SQLite session history"]
+    D -.-> G["Convex wearable handoff"]
+    G -.-> H["Paired wearable and OLED"]
+```
+
+## Constraints and acceptance
+
+- Spend at most CAD $50 and use existing or borrowed parts. The course lists one UNO R4 Minima, one OLED, and borrowable GY-MAX30102 and ADXL335 modules. Verify the actual display and Wi-Fi hardware before relying on color IDs or wireless delivery. The UNO R4 Minima itself lacks Wi-Fi. Use a numbered seat and manually pair the first device.
+- Set up an existing laptop and fixed camera with the right shoulder, elbow and wrist visible. Participants follow simple spoken cues, and the instructor can use a browser. Labels work alongside color.
+- Rep accuracy target is below 10% absolute count error against manual labels on a nonzero rep set. Form accuracy target is below 10% disagreement against instructor-labeled range cues on scored reps. Report occlusions separately.
+- Scale target is five people tracked simultaneously on the camera with independent counts. Five synthetic participants exercise the software path. Camera capacity requires a separate test.
+- Latency target is 100 ms from a captured frame that changes a cue to the visible dashboard update. Report median and 95th percentile on the actual laptop, separately from wearable delay. The targets require measurement before they can be claimed.
+- Rehearse with teammates and numbered demo IDs. Track arm range, dose progress, and camera visibility. Camera frames and joint coordinates are not written to the session database.
+
+## Build order for Leo
+
+1. Start the dashboard and trace one simulated pose frame to one participant card. Learn the HTTP request and response shapes.
+2. Open the scorer and work through one curl on paper. Compare a full range attempt, a shortened one, and an occluded arm.
+3. Finish a session, restart the server and reopen History. Trace the relationship between participants, sessions and per-participant results.
+4. Get AlphaPose working on one short test clip and the laptop camera. Run one volunteer before arranging five fixed seats.
+5. Share the data contract with Erik and Jinay. Pair one numbered lane to one band and confirm the same rep and cue appear on both screens.
+
+## References
+
+- ECE 198 project overview, pages 1–4, and course parts list, page 1, supplied in the course project.
+- [AlphaPose installation](https://github.com/MVIG-SJTU/AlphaPose/blob/master/docs/INSTALL.md), [inference examples](https://github.com/MVIG-SJTU/AlphaPose/blob/master/docs/GETTING_STARTED.md), and [COCO output format](https://github.com/MVIG-SJTU/AlphaPose/blob/master/docs/output.md).
+- [Arduino UNO board comparison](https://support.arduino.cc/hc/en-us/articles/9350551575964-What-s-the-difference-between-UNO-R3-and-UNO-R4-boards).
+- [Convex HTTP actions](https://docs.convex.dev/functions/http-actions).

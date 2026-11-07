@@ -1,0 +1,68 @@
+"""Mirror compact demo cues from the laptop to the optional Convex relay."""
+import argparse
+import json
+import os
+import sys
+from time import monotonic, sleep
+from urllib.parse import urlsplit
+from urllib.request import Request, urlopen
+
+from alphapose_bridge import local_request
+
+
+def wearable_snapshot(session):
+    if session is None:
+        return {"session": None}
+    return {"session": {
+        "id": session["id"],
+        "source": session["source"],
+        "participants": [
+            {field: person[field] for field in ("id", "reps", "target", "cue")}
+            for person in session["participants"]
+        ],
+    }}
+
+
+def post_feedback(url, token, payload):
+    request = Request(url, data=json.dumps(payload).encode(), headers={
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    })
+    with urlopen(request, timeout=2):
+        pass
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--url", required=True, help="Convex site URL, such as https://NAME.convex.site")
+    args = parser.parse_args()
+    destination = urlsplit(args.url)
+    if destination.scheme != "https" or not destination.hostname or not destination.hostname.endswith(".convex.site"):
+        parser.error("Use the HTTPS URL of the Convex deployment ending in .convex.site.")
+    if destination.path not in ("", "/") or destination.query or destination.fragment:
+        parser.error("Supply the base deployment URL without a path or query.")
+    token = os.environ.get("FEEDBACK_PUBLISH_TOKEN")
+    if not token:
+        parser.error("Set FEEDBACK_PUBLISH_TOKEN to the deployment's publish token.")
+    local = f"http://localhost:{args.port}"
+    remote = args.url.rstrip("/") + "/feedback"
+    print("Publishing demo feedback to Convex. Press Ctrl+C to stop.", flush=True)
+    last_payload, last_sent = None, 0
+    try:
+        while True:
+            try:
+                payload = wearable_snapshot(local_request(local, "/api/session")["session"])
+                if payload != last_payload or (payload["session"] and monotonic() - last_sent >= 2):
+                    post_feedback(remote, token, payload)
+                    last_payload, last_sent = payload, monotonic()
+                sleep(0.25)
+            except (OSError, ValueError) as error:
+                print(f"Feedback relay retrying: {error}", file=sys.stderr, flush=True)
+                sleep(1)
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()
