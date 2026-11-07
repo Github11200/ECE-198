@@ -7,6 +7,8 @@ node_modules/
 alphapose-results*.json
 *.sqlite3
 *.pth
+*.onnx
+*.weights
 *.mp4
 *.mov
 .convex/

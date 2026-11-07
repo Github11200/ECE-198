@@ -39,9 +39,15 @@
       <form id="setup" class="panel setup">
         <div class="panel-heading">
           <div><h2>Set up a session</h2><p>Choose an input and set a rep target for each participant.</p></div>
-          <span class="pill neutral">Seated right-arm curl</span>
+          <span id="exercise-category" class="pill neutral">Fixed demo criteria</span>
         </div>
         <div class="fields">
+          <label>Station
+            <input id="station" value="Station 1" maxlength="60" required>
+          </label>
+          <label>Exercise
+            <select id="exercise"><option value="right_arm_curl">Seated right-arm curl</option></select>
+          </label>
           <label>Pose input
             <select id="source">
               <option value="replay">Synthetic demo replay</option>
@@ -56,6 +62,9 @@
           </label>
         </div>
         <p id="source-help" class="hint"></p>
+        <p id="exercise-help" class="hint"></p>
+        <p id="exercise-criteria" class="hint"></p>
+        <p class="hint">Assign each camera lane a participant ID. Keep that ID when the participant changes stations. One active session supports up to five lanes.</p>
         <div id="targets" class="targets"></div>
         <button id="start" class="primary" type="submit">Start demo replay</button>
       </form>
@@ -64,7 +73,9 @@
         <div class="panel session-header">
           <div>
             <p class="eyebrow">CURRENT EXERCISE</p>
-            <h2>Seated right-arm curl</h2>
+            <h2 id="monitor-title">Seated right-arm curl</h2>
+            <p id="monitor-station"></p>
+            <p id="monitor-criteria" class="hint"></p>
             <p id="monitor-status" role="status"></p>
           </div>
           <button id="finish" class="primary" type="button">End &amp; save session</button>
@@ -72,7 +83,7 @@
         <div class="monitor-layout">
           <section class="panel roster" aria-labelledby="roster-title">
             <div class="panel-heading">
-              <div><h2 id="roster-title">Participants</h2><p>Select a participant to preview their cue.</p></div>
+              <div><h2 id="roster-title">Participants</h2><p>The number badge is the camera lane. Select a participant to preview their cue.</p></div>
               <span id="roster-count" class="pill neutral"></span>
             </div>
             <div id="participants" class="participants"></div>
@@ -81,7 +92,7 @@
           <aside class="participant-display" aria-labelledby="preview-title">
             <p class="eyebrow">PARTICIPANT DISPLAY PREVIEW</p>
             <h2 id="preview-title">Participant 01</h2>
-            <svg class="arm" viewBox="0 0 200 132" role="img" aria-label="Schematic of the measured elbow angle">
+            <svg id="joint-diagram" class="arm" viewBox="0 0 200 132" role="img" aria-label="Schematic of the measured joint angle">
               <path d="M30 96h140M30 37h140" stroke="#315652" stroke-dasharray="3 6"/>
               <path d="M84 27v50" stroke="#a7ded2" stroke-width="7" stroke-linecap="round"/>
               <line id="arm-segment" x1="84" y1="77" x2="121" y2="102" stroke="#a7ded2" stroke-width="7" stroke-linecap="round"/>
@@ -91,6 +102,7 @@
             <div class="preview-progress"><strong id="preview-reps">0</strong><span id="preview-target">/ 2 reps</span></div>
             <p id="preview-cue">Waiting for a clear view</p>
             <span id="preview-angle" class="angle">Elbow angle unavailable</span>
+            <p id="preview-tracking" class="hint"></p>
           </aside>
         </div>
       </div>
@@ -103,7 +115,7 @@
           <h1 id="history-title">Session history</h1>
           <p>Review dose progress and range counts from completed sessions.</p>
         </div>
-        <span class="badge">SQLITE</span>
+        <span class="badge">COMPLETED SESSIONS</span>
       </div>
       <div class="panel history-panel">
         <div class="panel-heading">
@@ -118,6 +130,7 @@
           </label>
         </div>
         <div id="history"></div>
+        <p class="hint">Range score = completed attempts reaching the fixed demo angle target. Dose progress and tracking coverage are reported separately. These criteria will be reviewed with CCCARE.</p>
       </div>
     </section>
     <footer>ECE 198 · Fall 2026 <span>Classroom prototype · Demo participants</span></footer>

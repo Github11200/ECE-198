@@ -6,11 +6,13 @@ CCCARE instructors may supervise 10–12 participants at once, or up to 30 in a 
 
 ## Start here
 
+The dashboard now has a fixed exercise catalog: seated right-arm curls, pushups, squats, seated knee extensions, seated shoulder raises, seated marches, and sit-to-stand. Choose a station name and assign a numbered participant ID to each camera lane. End-of-session reports separate rep targets, range scores, tracking coverage, and review notes. See [exercise criteria](docs/EXERCISES.md) and the [frontend/API handoff](docs/FRONTEND_API.md). The original curl path has been tried live; the added exercises have synthetic/API checks and still need volunteer validation. There is no custom-angle editor.
+
 Run `python app.py`, open [localhost:8000](http://localhost:8000), and click **Start demo replay**. After the five-second replay, click **End & save session**. See the [demo runbook](docs/RUNBOOK.md) for camera setup, measurement, learning checkpoints and GitHub commands. See the [wearable handoff](docs/WEARABLE.md) for the Convex connection.
 
 ## What the prototype does
 
-The instructor starts a session for up to five numbered participants, selects a camera or synthetic replay, and sets one rep target per person. The dashboard shows seated right-arm curl attempts, target progress, whether the last completed attempt reached the prototype's range threshold, and tracking availability. Finishing saves a summary for each participant. History shows counts and target snapshots from completed sessions. The display presents a range cue for a single exercise. A qualified instructor still interprets the motion and sets the exercise plan.
+The instructor starts one exercise session for up to five numbered participants, selects a camera or synthetic replay, assigns participant IDs to lanes, and sets one rep target per person. The dashboard shows completed attempts, target progress, whether the last attempt reached the selected exercise's demonstration range threshold, and specific tracking availability reasons. Finishing saves a report for each participant, including range score, observed peak angles, tracking coverage, and review notes. History keeps exercise, station, and target snapshots. A qualified instructor interprets the motion and sets the exercise plan.
 
 The Nov. 11 checkpoint is a five-minute progress presentation. A five-person synthetic replay demonstrates the software flow, followed by one volunteer on the camera if the AlphaPose setup is ready. The course handout lists Nov. 23 for the Stream 8 final symposium and Nov. 25 for Stream 4. The December note is later than either course date.
 
@@ -26,7 +28,7 @@ The Nov. 11 checkpoint is a five-minute progress presentation. A five-person syn
 | Wearable feedback | Convex HTTPS contract for latest summaries and optional end-of-session sensor data | Jinay Patel, with Leo providing the laptop interface |
 | End-to-end test | Ground-truth rep labels, one wearable when available | Eric D and team |
 
-The laptop is the authority for the active session. The camera adapter assigns detections by fixed left-to-right camera lanes. A lane is a demo seat, so participants stay in place. The server computes counts and range cues. The browser reads current state, and SQLite saves completed results. The optional Convex handoff sends compact participant updates to the wearable over HTTPS. The camera and scoring path stays on the laptop.
+The laptop is the authority for one active session. The camera adapter assigns detections by fixed left-to-right camera lanes, and the instructor maps participant IDs to those lanes before starting. Participants stay in their assigned lanes for that session; IDs can be reused at later stations. The server computes counts and range cues. The browser reads current state, and SQLite saves completed results. The optional Convex handoff sends compact participant updates to the wearable over HTTPS; it does not currently store session history. The camera and scoring path stays on the laptop.
 
 ```mermaid
 flowchart TD

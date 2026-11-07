@@ -6,6 +6,42 @@ Updated: November 7, 2026 (America/Toronto).
 
 This section supersedes the original computer's pending-check list below.
 
+### Station exercises and reports follow-up
+
+Leo requested exercise-specific station sessions, participant summaries, and an explanation of the frontend/backend handoff. He explicitly deferred an instructor-defined angle editor and asked for fixed demonstration criteria that can later be tailored with CCCARE.
+
+Implemented seven exercise definitions in `exercises.py`: right-arm curls, pushups, squats, seated right knee extensions, seated right shoulder raises, seated right marches, and sit-to-stand. Sit-to-stand uses both hip and knee angles; other movements use their listed joint triplets. These are prototype criteria, not individualized clinical targets. Only the original curl has been tried on a real volunteer; additional movements need real camera validation.
+
+The UI now selects an exercise and station, and maps persistent numbered participant IDs to up to five lanes. IDs P01–P99 are supported so P01–P30 can be reused across stations, but there remains one active session per server and no automatic cross-station identity recognition or 30-person simultaneous tracking. Reports save dose progress, range percentage, per-rep peak angles, tracking coverage/losses, discarded attempts, and review notes. Live unavailable angles now have specific joint/lane/feed reasons.
+
+SQLite was backed up locally before additive migrations. Leo had already saved the real curl session (4 attempts, 2 full, 2 short). Codex saved the completed replay (2,3,1,1,3 reps) and stopped the old camera/server before updating storage. Both actual history records survived migration. The updated server is running at http://127.0.0.1:8000 with no active session; the camera is stopped.
+
+Verification: all 11 automated tests pass, including seven exercise replays, independent mapped IDs, full/short boundaries, tracking loss, migration, saved reports, and finish retries. A separate temporary HTTP server/database exercised all seven exercises through real requests and a real server-process restart; all reports survived. JavaScript syntax checks passed for the dashboard and Convex files. No new browser-driven visual QA or live camera validation of the added movements was claimed.
+
+`docs/FRONTEND_API.md` documents the website integration contract and SQLite/Convex roles. SQLite still saves completed history; Convex remains the optional latest-feedback relay. Relay source now supports exercise/station metadata and P01–P99, but those cloud changes have not been deployed or tested against a live Convex backend. Friend website source/framework is not available yet, so its actual build has not been integrated.
+
+### Webcam and Intel GPU follow-up
+
+Leo confirmed the standalone webcam showed colored skeletons and tracked multiple people, but was extremely slow (initially about one processed frame every 2–3 seconds). This establishes the native camera path, not live rep-count accuracy.
+
+Added optional Intel GPU acceleration in `alphapose_acceleration.py`, an ONNX exporter in `export_alphapose.py`, and `preview`/OpenVINO flags in `alphapose_bridge.py`. OpenVINO 2024.6.0 recognizes the existing Arc 140V GPU; ONNX 1.14.1 and OpenVINO add three packages, bringing the compatible environment to 55 packages. Original CPU mode remains the default.
+
+The FP32 accelerated pipeline at 416-pixel detector input matched native counts (5, 5, 14), arm availability, and right-elbow angles within 0.001 degrees across all three upstream sample images. A lower-precision trial that added one crowded-image detection was rejected. Model conversion, manifest hashes, and shape checks guard against loading the wrong exports. Converted models/cache stay in ignored `data/openvino/`.
+
+A startup diagnostic found upstream's camera thread spinning on a full queue while FastPose initialized; the optional adapter now yields for 2 ms when that queue is full. The accelerated webcam then started and processed about 10–13 frames/s. Leo confirmed it was a lot smoother. The preview uses `alphapose_bridge.py preview --repo ..\AlphaPose --openvino-device GPU --cpu-threads 4 --profile`; stop it before starting the live bridge.
+
+The preview has been stopped, and a one-person camera session for P01 with target 3 has been started on port 8000. Target 3 leaves room to see the short-range cue after two attempts. The accelerated bridge now sends live frames to the session at about 10 frames/s initially. Requests using `localhost` took about 2.4 seconds on this laptop, versus 89 ms for `127.0.0.1` in a PowerShell comparison; the bridge now uses IPv4 directly to avoid connection fallback. The live profile's queue/send delay dropped from about 2 seconds/frame to below 1 ms. This is not a full camera-to-dashboard latency measurement.
+
+Leo confirmed the live dashboard counted his curls. A subsequent API snapshot showed 3 completed attempts (2 full, 1 short), with incoming frames continuing. These counts have not been compared against manual ground truth or saved yet. Leo finds the range criterion strict and reports intermittent "Elbow angle unavailable"; follow up on visibility/confidence versus multiple detections in the one-person lane before changing thresholds. Current constants in `pose.py` are lowered >=150 degrees, attempt start <=120, full-range minimum <=70, and minimum confidence 0.4 for the right shoulder/elbow/wrist. Losing a usable joint clears an unfinished attempt. Identity is fixed horizontal lanes, not persistent person recognition; two detections in one lane produce no usable pose.
+
+Leo confirmed one person and the full right arm were visible when the unavailable-angle message appeared. Added optional `--diagnostics data/tracking-diagnostics.json` to the camera bridge. It overwrites a lane/count/confidence/reason summary once per second, without images or joint coordinates. The bridge was restarted without ending the active session. A regression check verifies that diagnostics preserve the original feed payload and omit raw poses; all five bundled tests passed.
+
+The diagnostic found one detection throughout the sampled frames, not a lane collision. Good frames had shoulder/elbow/wrist confidence around 0.77–0.93 and valid angles of 127.2 and 147.5 degrees. Rejected frames had right wrist confidence 0.024 or 0.222, with the right elbow also at 0.367 in one frame, below the 0.4 cutoff. This establishes intermittent joint confidence as the observed reason, even when the arm is physically visible; it does not identify the visual cause. A later API snapshot showed 4 attempts (2 full, 2 short), still unsaved and not ground-truth validated. Confidence and range thresholds have not been changed.
+
+Next: improve/test the camera view for right-arm confidence, agree on any threshold changes with Leo/Eric, and end/save the real camera session. Rep/range accuracy, five-person camera accuracy, and camera-to-dashboard latency are still unverified. See [the Intel GPU commands](docs/WINDOWS_ALPHAPOSE.md#intel-gpu-mode).
+
+### Initial CPU installation record
+
 - Laptop checkout: `C:\Users\leosi\Desktop\ECE198 CCARE\ECE-198`, branch `leo/exercise-tracker`, tracking Leo's fork. The published handoff commit is `320b60e41c5f97338a66389e6c26aca3a368db21`.
 - Leo confirmed the replay/save/restart/History checkpoint himself. Codex did not verify the browser workflow; Chrome control was declined. The four bundled unit tests passed on the laptop's system Python 3.14.5.
 - Hardware query reported Intel Arc 140V graphics and an Intel Core Ultra 9 288V CPU. AlphaPose is installed for CPU inference; NVIDIA/CUDA was not installed.
@@ -18,7 +54,7 @@ This section supersedes the original computer's pending-check list below.
 - That one sample reported approximately 0.503 seconds for detection and 0.606 seconds for pose inference. These are sample processing times, not a camera-to-dashboard latency measurement or evidence of meeting 100 ms.
 - The editable install regenerated AlphaPose's `alphapose/version.py`; its inference code was not edited. Tracker application code was not changed.
 
-Working launch commands and local build notes are in [Windows AlphaPose setup](docs/WINDOWS_ALPHAPOSE.md). Next: standalone webcam on CPU, then one participant through the live bridge, full/short curls, and saving the session. Live webcam access, live bridge delivery, actual exercise counts/range, five-person live tracking, latency, and wearable delivery remain unverified.
+Working launch commands and local build notes are in [Windows AlphaPose setup](docs/WINDOWS_ALPHAPOSE.md). The webcam follow-up above supersedes the initial camera status. Live bridge delivery, actual exercise counts/range, five-person tracking accuracy, latency, and wearable delivery remain unverified.
 
 ## Read this first, next Codex
 

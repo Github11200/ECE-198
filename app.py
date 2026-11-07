@@ -3,13 +3,15 @@ import argparse
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import re
 from pathlib import Path
 from threading import Lock
 from time import monotonic
 from uuid import uuid4
 
 import database
-from pose import Curl, REPLAY_FPS, REPLAY_FRAMES, elbow_angle, replay_frame
+from pose import MIN_CONFIDENCE, REPLAY_FPS, REPLAY_FRAMES, replay_frame
+from exercises import DEFAULT_EXERCISE, EXERCISES, catalog, counter, criteria, measure, report
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = {"/": ("index.html", "text/html"), "/style.css": ("style.css", "text/css"),
@@ -29,37 +31,59 @@ def timestamp():
 
 
 class Session:
-    def __init__(self, source, targets):
+    def __init__(self, source, targets, exercise=DEFAULT_EXERCISE, station='Station 1', participant_ids=None):
         self.id = uuid4().hex
         self.source = source
         self.started_at = timestamp()
         self.started = monotonic()
-        self.people = [Curl(target) for target in targets]
+        self.exercise = exercise
+        self.station = station
+        self.participant_ids = participant_ids or [f'P{index:02}' for index in range(1, len(targets) + 1)]
+        self.people = [counter(exercise, target) for target in targets]
+        self.metrics = [dict(samples=0, valid_samples=0, tracking_losses=0,
+                             reason='Waiting for input') for _ in targets]
         self.last_frame = -1
         self.last_input = None
 
-    def update(self, poses):
-        for person, keypoints in zip(self.people, poses):
-            person.observe(elbow_angle(keypoints))
+    def update(self, poses, lane_counts=None, sample=True, stale=False):
+        for index, (person, keypoints, metrics) in enumerate(zip(self.people, poses, self.metrics)):
+            angle, reason = measure(keypoints, self.exercise)
+            if stale:
+                reason = 'Camera feed paused'
+            elif keypoints is None and lane_counts is not None:
+                reason = 'Multiple people in this lane' if lane_counts[index] > 1 else 'No person detected in this lane'
+            if angle is None and person.angle is not None:
+                metrics['tracking_losses'] += 1
+            if sample:
+                metrics['samples'] += 1
+                metrics['valid_samples'] += angle is not None
+            metrics['reason'] = reason
+            person.observe(angle)
 
     def advance(self):
         if self.source == "replay":
             current_frame = min(int((monotonic() - self.started) * REPLAY_FPS), REPLAY_FRAMES - 1)
             while self.last_frame < current_frame:
                 self.last_frame += 1
-                self.update(replay_frame(self.last_frame, len(self.people)))
+                self.update(replay_frame(self.last_frame, len(self.people), EXERCISES[self.exercise]))
         elif self.last_input is None or monotonic() - self.last_input > CAMERA_STALE_SECONDS:
-            self.update([None] * len(self.people))
+            self.update([None] * len(self.people), sample=False, stale=True)
 
     def snapshot(self, finished=False):
         self.advance()
         people = [
-            {"id": f"P{index:02}", "label": f"Participant {index:02}",
-             **(person.summary() if finished else person.live())}
-            for index, person in enumerate(self.people, 1)
+            {"id": participant_id, "label": f"Participant {participant_id[1:]}", "lane": index,
+             **(person.summary() if finished else person.live()),
+             **report(person, metrics, self.exercise),
+             **({} if finished else {'tracking_reason': metrics['reason']})}
+            for index, (participant_id, person, metrics) in enumerate(zip(self.participant_ids, self.people, self.metrics), 1)
         ]
         result = {"id": self.id, "source": self.source, "started_at": self.started_at,
-                  "finished_at": timestamp() if finished else None, "participants": people}
+                  "finished_at": timestamp() if finished else None, "participants": people,
+                  'exercise': self.exercise, 'exercise_label': EXERCISES[self.exercise]['label'],
+                  'station': self.station, 'criteria': dict(
+                      **{key: EXERCISES[self.exercise][key] for key in ('rest_angle', 'start_angle', 'full_angle', 'increasing', 'angle_label')},
+                      description=criteria(EXERCISES[self.exercise]), minimum_confidence=MIN_CONFIDENCE)}
         if not finished:
             result["last_frame"] = self.last_frame
             result["replay_done"] = self.source == "replay" and self.last_frame == REPLAY_FRAMES - 1
@@ -85,10 +109,21 @@ class SessionService:
             type(target) is not int or not 1 <= target <= 99 for target in targets
         ):
             raise RequestError(400, "Set 1–5 whole-number rep targets between 1 and 99.")
+        exercise = data.get('exercise', DEFAULT_EXERCISE)
+        if not isinstance(exercise, str) or exercise not in EXERCISES:
+            raise RequestError(400, 'Choose an exercise from /api/exercises.')
+        station = data.get('station', 'Station 1')
+        if not isinstance(station, str) or not 1 <= len(station.strip()) <= 60:
+            raise RequestError(400, 'Set a station name between 1 and 60 characters.')
+        ids = data.get('participant_ids', [f'P{index:02}' for index in range(1, len(targets) + 1)])
+        if (not isinstance(ids, list) or len(ids) != len(targets)
+                or any(not isinstance(value, str) or not re.fullmatch(r'P(?:0[1-9]|[1-9][0-9])', value) for value in ids)
+                or len(set(ids)) != len(ids)):
+            raise RequestError(400, 'Assign one unique participant ID (P01–P99) to each lane.')
         with self.lock:
             if self.active:
                 raise RequestError(409, "Finish the active session first.")
-            self.active = Session(source, targets)
+            self.active = Session(source, targets, exercise, station.strip(), ids)
             return self.active.snapshot()
 
     def ingest(self, data):
@@ -99,9 +134,15 @@ class SessionService:
             frame, poses = data.get("frame"), data.get("poses")
             if type(frame) is not int or frame < 0 or not isinstance(poses, list) or len(poses) != len(session.people):
                 raise RequestError(400, "Send a nonnegative frame number and one pose per seat.")
+            lane_counts = data.get('lane_counts')
+            if lane_counts is not None and (not isinstance(lane_counts, list) or len(lane_counts) != len(poses)
+                    or any(type(count) is not int or not 0 <= count <= 50 for count in lane_counts)):
+                raise RequestError(400, 'lane_counts must contain one nonnegative detection count per lane (up to 50).')
+            if lane_counts is not None and any(pose is not None and count != 1 for pose, count in zip(poses, lane_counts)):
+                raise RequestError(400, 'A usable pose requires exactly one detection in its lane.')
             if frame > session.last_frame:
                 session.advance()
-                session.update(poses)
+                session.update(poses, lane_counts)
                 session.last_frame = frame
                 session.last_input = monotonic()
             return {"accepted_frame": session.last_frame}
@@ -143,6 +184,10 @@ def handler_for(service, port):
                 if self.headers.get("Host") not in hosts:
                     raise RequestError(403, "Open the demo using localhost.")
                 if self.command == "GET":
+                    if self.path == '/api/exercises':
+                        self.send_json(200, {'exercises': catalog(), 'max_active_lanes': 5,
+                                             'identity_mode': 'manual participant-to-lane assignment'})
+                        return
                     if self.path in ASSETS:
                         filename, mime = ASSETS[self.path]
                         self.send(200, (ROOT / "web" / filename).read_bytes(), mime)

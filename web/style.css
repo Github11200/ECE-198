@@ -47,7 +47,13 @@ label { display: grid; gap: 5px; font-weight: 650; font-size: .88rem; }
 input, select { width: 100%; border: 1px solid #acc0b9; border-radius: 7px; padding: 8px 10px; background: #fff; color: var(--ink); min-height: 41px; }
 .hint { font-size: .86rem; }
 .targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(125px, 100%), 1fr)); gap: 11px; margin: 18px 0; }
-.targets label { background: #f4f8f6; padding: 10px; border-radius: 8px; }
+.lane-setup { display: grid; gap: 9px; background: #f4f8f6; padding: 12px; border-radius: 8px; }
+.lane-setup > strong { font-size: .85rem; }
+.targets { grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); }
+.history-item td { vertical-align: top; }
+.history-item td details { min-width: 170px; }
+.history-item td summary { font-size: .82rem; }
+.history-item ul { padding-left: 18px; line-height: 1.5; font-size: .8rem; }
 .primary { border: 1px solid var(--teal); border-radius: 8px; padding: 10px 15px; background: var(--teal); color: white; font-weight: 700; }
 .primary:hover { background: #094b43; }
 .monitor-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 15px; margin-top: 15px; align-items: start; }

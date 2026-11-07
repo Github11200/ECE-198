@@ -7,6 +7,7 @@ import database
 from app import RequestError, SessionService
 from pose import Curl, REPLAY_FRAMES, assign_lanes, elbow_angle, replay_frame
 from publish_feedback import wearable_snapshot
+from alphapose_bridge import PoseFeed
 
 
 class PoseTests(unittest.TestCase):
@@ -65,6 +66,27 @@ class SessionTests(unittest.TestCase):
         with self.assertRaises(RequestError):
             self.service.ingest(payload)
         self.assertEqual(self.service.current()["participants"][0]["reps"], 0)
+
+
+class DiagnosticTests(unittest.TestCase):
+    def test_low_wrist_diagnostic_keeps_original_feed_and_omits_coordinates(self):
+        import json
+        points = replay_frame(0, 1)[0]
+        points[32] = 0.2
+        detection = {'box': [0, 0, 200, 200], 'keypoints': points}
+        active = {'session': {'source': 'camera', 'id': 'demo',
+                              'participants': [{'id': 'P01'}], 'last_frame': -1}}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'tracking.json'
+            with patch('alphapose_bridge.local_request', side_effect=[active, {'accepted_frame': 0}]) as request:
+                feed = PoseFeed('http://127.0.0.1:8000', 'camera', path)
+                feed.send([detection], 200)
+                self.assertEqual(request.call_args.args[2]['poses'], [points])
+            snapshot = json.loads(path.read_text())
+            self.assertEqual(snapshot['lanes'][0]['reason'], 'Low confidence in right wrist')
+            self.assertIsNone(snapshot['lanes'][0]['candidates'][0]['angle'])
+            self.assertNotIn('keypoints', path.read_text())
+            self.assertNotIn('box', path.read_text())
 
 
 if __name__ == "__main__":

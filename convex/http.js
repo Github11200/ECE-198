@@ -38,8 +38,8 @@ router.route({
       return Response.json({ error: "Unauthorized" }, { status: 401, headers });
     }
     const participantId = new URL(request.url).searchParams.get("participant_id");
-    if (!/^P0[1-5]$/.test(participantId ?? "")) {
-      return Response.json({ error: "Choose a demo participant from P01 to P05" }, { status: 400, headers });
+    if (!/^P(?:0[1-9]|[1-9][0-9])$/.test(participantId ?? "")) {
+      return Response.json({ error: "Choose a numbered participant from P01 to P99" }, { status: 400, headers });
     }
     const feedback = await ctx.runQuery(internal.feedback.read, { participantId, now: Date.now() });
     return Response.json(feedback, { headers });

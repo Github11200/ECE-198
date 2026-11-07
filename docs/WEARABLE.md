@@ -1,6 +1,8 @@
 # Wearable handoff for Erik and Jinay
 
-The first band is manually paired with seat `P01`. Erik can put the ID in the firmware or use a setup input. Jinay can read a compact participant-specific snapshot using HTTP over Wi-Fi. The laptop still scores every pose and saves history in SQLite. The firmware can use the same contract with synthetic or camera inputs.
+The first band is manually paired with participant `P01`. Erik can put the ID in the firmware or use a setup input. Jinay can read a compact participant-specific snapshot using HTTP over Wi-Fi. The laptop still scores every pose and saves history in SQLite. The firmware can use the same contract with synthetic or camera inputs.
+
+With station assignments, P01 is a participant ID, independent of the camera lane. Keep the same participant ID when that person moves stations. The updated relay source accepts IDs P01–P99 and optional `exercise`/`station` labels; deploying and physically verifying those updates is still pending. It remains one latest-feedback snapshot for one laptop relay, not a multi-station session-history service. See [the frontend/API handoff](FRONTEND_API.md) for the storage distinction.
 
 ## Optional Convex deployment
 

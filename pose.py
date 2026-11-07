@@ -1,5 +1,5 @@
 """Reduce 17 COCO joints to an elbow angle and one curl state per seat."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import acos, cos, degrees, hypot, isfinite, radians, sin
 
 RIGHT_ARM = (6, 8, 10)  # COCO shoulder, elbow, wrist
@@ -12,9 +12,14 @@ REPLAY_FPS = 10
 
 def elbow_angle(keypoints):
     """Return the angle at the elbow in degrees, or None for unusable joints."""
+    return joint_angle(keypoints, RIGHT_ARM)
+
+
+def joint_angle(keypoints, joints):
+    """Measure the angle at the middle COCO joint when all three are usable."""
     if not isinstance(keypoints, list) or len(keypoints) != 17 * 3:
         return None
-    arm = [keypoints[index * 3:index * 3 + 3] for index in RIGHT_ARM]
+    arm = [keypoints[index * 3:index * 3 + 3] for index in joints]
     if any(not all(type(value) in (int, float) and -1_000_000 <= value <= 1_000_000 for value in joint)
            or joint[2] < MIN_CONFIDENCE for joint in arm):
         return None
@@ -43,7 +48,7 @@ def assign_lanes(detections, width, seats):
 
 @dataclass
 class Curl:
-    """A rep starts below 120° and ends at 150° after a visible lowered pose."""
+    """A visible rest → excursion → rest cycle with fixed exercise criteria."""
     target: int
     armed: bool = False
     minimum: float | None = None
@@ -51,21 +56,34 @@ class Curl:
     reps: int = 0
     full: int = 0
     last_range: str | None = None
+    rest_angle: float = LOWERED
+    start_angle: float = CURL_STARTED
+    full_angle: float = FULL_RANGE
+    increasing: bool = False
+    discarded_attempts: int = 0
+    rep_angles: list = field(default_factory=list)
 
     def observe(self, angle):
         self.angle = angle
+        value = 180 - angle if self.increasing and angle is not None else angle
+        rest = 180 - self.rest_angle if self.increasing else self.rest_angle
+        start = 180 - self.start_angle if self.increasing else self.start_angle
+        full = 180 - self.full_angle if self.increasing else self.full_angle
         if angle is None:
+            self.discarded_attempts += self.minimum is not None
             self.armed = False
             self.minimum = None
-        elif angle >= LOWERED:
+        elif value >= rest:
             if self.minimum is not None:
                 self.reps += 1
-                self.last_range = "Full range" if self.minimum <= FULL_RANGE else "Short range"
-                self.full += self.minimum <= FULL_RANGE
+                self.last_range = "Full range" if self.minimum <= full else "Short range"
+                self.full += self.minimum <= full
+                peak = 180 - self.minimum if self.increasing else self.minimum
+                self.rep_angles.append(peak)
             self.armed = True
             self.minimum = None
-        elif self.armed and angle <= CURL_STARTED:
-            self.minimum = angle if self.minimum is None else min(self.minimum, angle)
+        elif self.armed and value <= start:
+            self.minimum = value if self.minimum is None else min(self.minimum, value)
 
     def summary(self):
         return {"target": self.target, "reps": self.reps, "full": self.full,
@@ -74,12 +92,12 @@ class Curl:
     def live(self):
         if self.angle is None:
             cue = "Waiting for a clear view"
+        elif self.last_range == "Short range":
+            cue = "Check your range with the instructor"
         elif self.reps > self.target:
             cue = "Above rep target"
         elif self.reps == self.target:
             cue = "Target reached"
-        elif self.last_range == "Short range":
-            cue = "Check your range with the instructor"
         elif self.last_range == "Full range":
             cue = "Full range on last rep"
         else:
@@ -95,7 +113,7 @@ _MOTIONS = ((2, (), None), (3, (0, 2), None), (1, (), None),
 REPLAY_FRAMES = 49
 
 
-def replay_frame(frame, seats):
+def replay_frame(frame, seats, exercise=None):
     detections = []
     for index, (cycles, short_cycles, hide_frame) in enumerate(_MOTIONS[:seats]):
         tick = max(0, frame - index)
@@ -103,15 +121,32 @@ def replay_frame(frame, seats):
             continue
         cycle, step = divmod(tick, len(_CYCLE))
         angle = _CYCLE[step] if cycle < cycles else 165
-        if cycle in short_cycles:
+        if exercise is not None:
+            rest = exercise['rest_angle']
+            peak = ((exercise['start_angle'] + exercise['full_angle']) / 2 if cycle in short_cycles
+                    else exercise['full_angle'] + (10 if exercise['increasing'] else -10))
+            rest = max(0, rest - 15) if exercise['increasing'] else min(175, rest + 15)
+            phase = (165 - angle) / 105 if cycle < cycles else 0
+            angle = rest + phase * (peak - rest)
+        elif cycle in short_cycles:
             angle = max(angle, 95)
 
         x, y, length = index * 200 + 100, 165, 45
         keypoints = [0.0] * 51
-        keypoints[18:21] = [x, y - length, 0.95]
-        keypoints[24:27] = [x, y, 0.95]
-        keypoints[30:33] = [
+        groups = exercise['joints'] if exercise is not None else [RIGHT_ARM]
+        first, middle, last = groups[0]
+        keypoints[first * 3:first * 3 + 3] = [x, y - length, 0.95]
+        keypoints[middle * 3:middle * 3 + 3] = [x, y, 0.95]
+        keypoints[last * 3:last * 3 + 3] = [
             x + length * sin(radians(angle)), y - length * cos(radians(angle)), 0.95,
         ]
+        for first, middle, last in groups[1:]:
+            bx, by = keypoints[middle * 3:middle * 3 + 2]
+            cx, cy = keypoints[last * 3:last * 3 + 2]
+            dx, dy = cx - bx, cy - by
+            theta = radians(angle)
+            keypoints[first * 3:first * 3 + 3] = [
+                bx + dx * cos(theta) - dy * sin(theta),
+                by + dx * sin(theta) + dy * cos(theta), 0.95]
         detections.append({"box": [x - 70, 50, 140, 220], "keypoints": keypoints})
     return assign_lanes(detections, seats * 200, seats)

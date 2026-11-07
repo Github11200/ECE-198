@@ -27,6 +27,7 @@ export const read = internalQuery({
     const participant = row.session.participants.find((entry) => entry.id === participantId);
     if (!participant) return { active: false };
     return { active: true, session_id: row.session.id, source: row.session.source,
+      exercise: row.session.exercise ?? 'right_arm_curl', station: row.session.station ?? 'Station 1',
       updated_at_ms: row.updatedAt, ...participant };
   },
 });

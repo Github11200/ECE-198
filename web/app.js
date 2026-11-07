@@ -6,6 +6,8 @@ const sources = {
 };
 const defaultTargets = [2, 4, 1, 3, 2];
 const targets = [...defaultTargets];
+const participantIds = Array.from({ length: 5 }, (_, index) => `P${String(index + 1).padStart(2, "0")}`);
+let exercises = new Map();
 const cards = new Map();
 let active = null;
 let selected = "P01";
@@ -35,18 +37,44 @@ function alertMessage(message) {
 function setupTargets() {
   byId("targets").replaceChildren();
   for (let index = 0; index < Number(byId("count").value); index += 1) {
+    const group = document.createElement("div");
+    group.className = "lane-setup";
+    const title = document.createElement("strong");
+    title.textContent = `Camera lane ${index + 1}`;
+    const idLabel = document.createElement("label");
+    idLabel.textContent = "Participant ID";
+    const idInput = document.createElement("input");
+    idInput.className = "participant-id";
+    idInput.value = participantIds[index];
+    idInput.pattern = "P(?:0[1-9]|[1-9][0-9])";
+    idInput.maxLength = 3;
+    idInput.required = true;
+    idInput.setAttribute("aria-label", `Lane ${index + 1} participant ID`);
+    idInput.addEventListener("input", () => { idInput.value = idInput.value.toUpperCase(); participantIds[index] = idInput.value; });
+    idLabel.append(idInput);
     const label = document.createElement("label");
-    label.textContent = `Participant ${String(index + 1).padStart(2, "0")} target`;
+    label.textContent = "Rep target";
     const input = document.createElement("input");
     input.type = "number";
     input.min = "1";
     input.max = "99";
     input.required = true;
+    input.className = "rep-target";
+    input.setAttribute("aria-label", `Lane ${index + 1} rep target`);
     input.value = targets[index];
     input.addEventListener("input", () => { targets[index] = input.value; });
     label.append(input);
-    byId("targets").append(label);
+    group.append(title, idLabel, label);
+    byId("targets").append(group);
   }
+}
+
+function setupExercise() {
+  const exercise = exercises.get(byId("exercise").value);
+  if (!exercise) return;
+  byId("exercise-help").textContent = exercise.help;
+  byId("exercise-criteria").textContent = `Fixed demo angles: ${exercise.criteria}`;
+  byId("exercise-category").textContent = exercise.category;
 }
 
 function setupSource() {
@@ -57,11 +85,16 @@ function setupSource() {
 
 function showParticipant(person) {
   const available = person.angle !== null;
-  byId("preview-title").textContent = person.label;
+  byId("preview-title").textContent = `${person.id} · ${person.label}`;
   byId("preview-reps").textContent = person.reps;
   byId("preview-target").textContent = `/ ${person.target} reps`;
   byId("preview-cue").textContent = person.cue;
-  byId("preview-angle").textContent = available ? `Elbow angle ${person.angle}°` : "Elbow angle unavailable";
+  const angleLabel = active?.criteria?.angle_label || "Elbow angle";
+  byId("preview-angle").textContent = available ? `${angleLabel}: ${person.angle}°` : `${angleLabel} unavailable`;
+  byId("joint-diagram").setAttribute("aria-label", `Schematic of ${angleLabel.toLowerCase()}`);
+  byId("preview-tracking").textContent = available
+    ? `Last attempt: ${person.last_range || "none yet"}. Range score: ${person.range_score ?? "—"}${person.range_score === null ? "" : "%"}.`
+    : (person.tracking_reason || "Waiting for a usable pose");
   byId("arm-segment").style.visibility = available ? "visible" : "hidden";
   byId("wrist").style.visibility = available ? "visible" : "hidden";
   if (available) {
@@ -77,8 +110,8 @@ function showParticipant(person) {
 
 function buildCard(person) {
   const card = byId("participant-template").content.firstElementChild.cloneNode(true);
-  card.querySelector(".seat").textContent = person.id.slice(1);
-  card.querySelector(".name").textContent = person.label;
+  card.querySelector(".seat").textContent = String(person.lane).padStart(2, "0");
+  card.querySelector(".name").textContent = `${person.id} · ${person.label}`;
   card.querySelector("progress").setAttribute("aria-label", `${person.label} target progress`);
   card.addEventListener("click", () => {
     selected = person.id;
@@ -93,13 +126,16 @@ function renderMonitor(session) {
   if (active?.id !== session?.id) {
     cards.clear();
     byId("participants").replaceChildren();
-    selected = "P01";
+    selected = session?.participants[0]?.id || "P01";
   }
   active = session;
   byId("setup").hidden = Boolean(session);
   byId("monitor").hidden = !session;
   byId("source-badge").textContent = session ? sources[session.source].label.toUpperCase() : "SETUP";
   if (!session) return;
+  byId("monitor-title").textContent = session.exercise_label;
+  byId("monitor-station").textContent = session.station;
+  byId("monitor-criteria").textContent = session.criteria?.description || "";
 
   const visible = session.participants.filter((person) => person.angle !== null).length;
   const status = session.source === "replay"
@@ -117,9 +153,9 @@ function renderMonitor(session) {
     progress.value = person.reps;
     const state = card.querySelector(".state");
     const status = person.angle === null ? ["No clear view", "neutral"]
+      : person.last_range === "Short range" ? ["Check range", "watch"]
       : person.reps > person.target ? ["Above target", "watch"]
       : person.reps === person.target ? ["Target met", "good"]
-      : person.last_range === "Short range" ? ["Check range", "watch"]
       : ["Tracking", "good"];
     state.textContent = status[0];
     state.className = `pill state ${status[1]}`;
@@ -151,12 +187,19 @@ function renderHistory(openId = null) {
     source.className = "pill neutral";
     source.textContent = sources[session.source].label;
     summary.append(source);
+    const exercise = document.createElement("span");
+    exercise.className = "pill neutral";
+    exercise.textContent = `${session.station} · ${session.exercise_label}`;
+    summary.append(exercise);
+    const rule = document.createElement("p");
+    rule.className = "hint";
+    rule.textContent = session.criteria?.description || "";
 
     const wrapper = document.createElement("div");
     wrapper.className = "table-scroll";
     const table = document.createElement("table");
     const header = table.createTHead().insertRow();
-    for (const label of ["Participant", "Target", "Reps", "Full range", "Short range"]) {
+    for (const label of ["Participant", "Dose", "Full", "Short", "Range score", "Tracking", "Review"]) {
       const th = document.createElement("th");
       th.scope = "col";
       th.textContent = label;
@@ -165,12 +208,30 @@ function renderHistory(openId = null) {
     const body = table.createTBody();
     for (const person of session.participants.filter((entry) => !filter || filter === entry.id)) {
       const row = body.insertRow();
-      for (const value of [person.label, person.target, person.reps, person.full, person.short]) {
+      for (const value of [person.id, `${person.reps} / ${person.target}`, person.full, person.short,
+        person.range_score == null ? "—" : `${person.range_score}%`,
+        person.tracking_coverage == null ? "Not recorded" : `${person.tracking_coverage}%`]) {
         row.insertCell().textContent = value;
       }
+      const review = document.createElement("details");
+      const reviewTitle = document.createElement("summary");
+      reviewTitle.textContent = person.issues?.length ? `${person.issues.length} review notes` : "Target and range met";
+      const notes = document.createElement("ul");
+      for (const issue of person.issues || []) {
+        const item = document.createElement("li");
+        item.textContent = issue;
+        notes.append(item);
+      }
+      for (const rep of person.rep_details || []) {
+        const item = document.createElement("li");
+        item.textContent = `Rep ${rep.number}: peak ${rep.peak_angle.toFixed(2)}° — ${rep.reached_range ? "demo range reached" : "below demo range target"}`;
+        notes.append(item);
+      }
+      review.append(reviewTitle, notes);
+      row.insertCell().append(review);
     }
     wrapper.append(table);
-    details.append(summary, wrapper);
+    details.append(summary, rule, wrapper);
     history.append(details);
   }
 }
@@ -186,6 +247,16 @@ async function showHistory(openId) {
   view(true);
   try {
     ({ sessions } = await request("/api/history"));
+    const currentFilter = byId("history-filter").value;
+    const ids = [...new Set(sessions.flatMap((session) => session.participants.map((person) => person.id)))].sort();
+    byId("history-filter").replaceChildren();
+    for (const id of ["", ...ids]) {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = id || "All participants";
+      byId("history-filter").append(option);
+    }
+    byId("history-filter").value = ids.includes(currentFilter) ? currentFilter : "";
     renderHistory(openId);
   } catch (error) {
     alertMessage(error.message);
@@ -230,11 +301,15 @@ async function poll() {
 
 byId("count").addEventListener("change", setupTargets);
 byId("source").addEventListener("change", setupSource);
+byId("exercise").addEventListener("change", setupExercise);
 byId("setup").addEventListener("submit", (event) => {
   event.preventDefault();
   changeSession(byId("start"), async () => {
-    const values = [...byId("targets").querySelectorAll("input")].map((input) => input.valueAsNumber);
-    renderMonitor(await request("/api/session/start", { source: byId("source").value, targets: values }));
+    const values = [...byId("targets").querySelectorAll(".rep-target")].map((input) => input.valueAsNumber);
+    const ids = [...byId("targets").querySelectorAll(".participant-id")].map((input) => input.value.toUpperCase());
+    renderMonitor(await request("/api/session/start", { source: byId("source").value,
+      exercise: byId("exercise").value, station: byId("station").value,
+      participant_ids: ids, targets: values }));
   });
 });
 byId("finish").addEventListener("click", () => {
@@ -249,6 +324,25 @@ byId("finish").addEventListener("click", () => {
 byId("live-tab").addEventListener("click", () => { alertMessage(""); view(false); });
 byId("history-tab").addEventListener("click", () => { alertMessage(""); showHistory(); });
 byId("history-filter").addEventListener("change", () => renderHistory());
-setupTargets();
-setupSource();
-poll();
+async function initialize() {
+  setupTargets();
+  setupSource();
+  byId("start").disabled = true;
+  try {
+    const payload = await request("/api/exercises");
+    exercises = new Map(payload.exercises.map((exercise) => [exercise.id, exercise]));
+    byId("exercise").replaceChildren();
+    for (const exercise of exercises.values()) {
+      const option = document.createElement("option");
+      option.value = exercise.id;
+      option.textContent = exercise.label;
+      byId("exercise").append(option);
+    }
+    setupExercise();
+    byId("start").disabled = false;
+  } catch (error) {
+    alertMessage(`Could not load exercises: ${error.message}. Refresh after starting the server.`);
+  }
+  poll();
+}
+initialize();

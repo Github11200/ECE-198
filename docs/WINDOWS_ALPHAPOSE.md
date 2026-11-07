@@ -19,7 +19,48 @@ C:\Users\leosi\Desktop\ECE198 CCARE\
 
 AlphaPose is pinned to `c60106d19afb443e964df6f06ed1842962f5f1f7`. CPU inference uses `torch==1.13.1+cpu`, `torchvision==0.14.1+cpu`, `numpy==1.23.5`, `scipy==1.10.1`, `opencv-python==4.8.1.78`, `matplotlib==3.7.5`, and `timm==0.1.20`. The environment contains the remaining dependencies declared by upstream as well. No Conda or CUDA installation is needed to run this CPU setup.
 
-`uv pip check` passed for all 52 installed packages. The command-line help, compiled bounding-box/mask operations, and upstream sample-image inference passed. No live webcam or volunteer test has been completed yet.
+The original CPU setup passed `uv pip check` for 52 packages. With optional OpenVINO/ONNX installed, the check now passes for 55 packages. The command-line help, compiled bounding-box/mask operations, and upstream sample-image inference passed. Leo confirmed that the native webcam displayed skeletons for multiple people, but it was extremely slow. The accelerated webcam then processed about 12–13 frames/s in its initial live profile. Actual curl counting and camera-to-dashboard latency remain unverified.
+
+## Intel GPU mode
+
+This laptop's Intel Arc 140V is available to OpenVINO 2024.6.0 with the existing driver. The optional mode keeps the pinned FastPose and YOLOv3-SPP weights, COCO joints, postprocessing, lane assignment, and scoring code. It uses a 416-pixel detector input rather than the upstream default 608, so camera accuracy must be checked at the chosen resolution.
+
+After preparing a terminal as described below, these are the setup commands for an already installed AlphaPose environment:
+
+```powershell
+uv pip install --python $alphaPython --cache-dir ..\.uv-cache 'openvino==2024.6.0' 'onnx==1.14.1' 'numpy==1.23.5'
+& $alphaPython export_alphapose.py --repo ..\AlphaPose
+```
+
+Exports and a manifest go into ignored `data/openvino/`. The manifest binds the exports to SHA256 hashes of the source weights and config; the runtime also checks export hashes and shapes. Each person's pose is evaluated with a fixed batch-one model, and copied outputs prevent subsequent inference from overwriting a previous person's heatmaps.
+
+For a standalone preview with no dashboard session:
+
+```powershell
+& $alphaPython alphapose_bridge.py preview --repo ..\AlphaPose --openvino-device GPU --cpu-threads 4 --profile
+```
+
+For the live bridge, after starting a one-person camera session in the dashboard:
+
+```powershell
+& $alphaPython alphapose_bridge.py camera --repo ..\AlphaPose --openvino-device GPU --cpu-threads 4 --show-camera --profile
+```
+
+Press Ctrl+C to stop a preview before starting the bridge. Both modes suppress live pose JSON saving. Omitting `--openvino-device` keeps the original PyTorch path and 608-pixel detector default. `--detector-size` and `--cpu-threads` are explicit tuning options; exports must match the selected detector size.
+
+The runtime requests FP32 inference. An initial reduced-precision trial added one detection in a crowded sample and was rejected. With FP32, native and accelerated inference at 416 pixels matched detection counts **5, 5, 14** on all three upstream sample images. Matching boxes had IoU above 0.99999; maximum right-elbow-angle difference on usable arms was below 0.001 degrees, and arm-availability decisions agreed. This verifies conversion on these samples, not rep accuracy on volunteers.
+
+The adapter briefly yields when upstream's webcam queue is full, preventing its busy loop from starving Python initialization/postprocessing. No upstream inference source file is edited for this mode. Export temporarily removes a `Tensor.data` detach in memory, because otherwise the historical YOLO forward traces into an invalid constant ONNX graph; the exporter checks that the graph has an input. Optional OpenVINO conversion telemetry is disabled in a task-local configuration.
+
+The initial accelerated webcam profile reported roughly 60 ms waiting for detector/camera input and 17–25 ms pose processing, at about 12–13 processed frames/s. These timings exclude a measured camera-to-dashboard path and do not establish the 100 ms target. The slower original CPU mode remains available.
+
+Leo confirmed the accelerated preview was a lot smoother. When connecting the live bridge, Windows' `localhost` connection fallback added roughly two seconds per frame. The bridge now uses `127.0.0.1`, matching the server's IPv4 bind address; the initial live bridge then ran at about 10 processed frames/s. Open [http://127.0.0.1:8000](http://127.0.0.1:8000) for the curl checkpoint. Live counts now reach the dashboard; agreement with manual counts/range labels and saved history from a real curl remain to be verified.
+
+### Diagnose unavailable angles
+
+Append `--diagnostics data/tracking-diagnostics.json` to the **camera** command to overwrite a local summary once per second. It includes the number of detections per lane, right shoulder/elbow/wrist confidence, usable angle, and a reason such as low wrist confidence or multiple detections. It excludes images, joint coordinates, and detection boxes. The default camera command does not write this summary.
+
+During Leo's one-person test, unavailable angles coincided with wrist confidence 0.024 or 0.222, and one elbow confidence of 0.367, all below the 0.4 cutoff. Other frames had strong joint confidence and valid angles. Detection count stayed at one in the sampled diagnostics. Physical visibility does not guarantee a confident model prediction. The confidence and curl-angle cutoffs remain unchanged in `pose.py`.
 
 ## Prepare a PowerShell terminal
 

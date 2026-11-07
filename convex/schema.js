@@ -6,6 +6,8 @@ export const session = v.union(
   v.object({
     id: v.string(),
     source: v.union(v.literal("replay"), v.literal("camera"), v.literal("recording")),
+    exercise: v.optional(v.string()),
+    station: v.optional(v.string()),
     participants: v.array(v.object({
       id: v.string(),
       reps: v.number(),
