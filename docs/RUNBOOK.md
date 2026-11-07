@@ -10,7 +10,9 @@ Open the project directory in VS Code and run this in its terminal. On Windows, 
 python app.py
 ```
 
-Open [http://localhost:8000](http://localhost:8000). The demo uses Python 3.10 or later. The core app requires no package installation or internet access. Keep the terminal running. Use `python app.py --port 8001` if port 8000 is busy and pass `--port 8001` to bridge commands before the subcommand.
+After building the new frontend with `start-frontend.cmd` (or `npm.cmd --prefix frontend ci` followed by `npm.cmd --prefix frontend run build`), open [http://127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin login**, enter any demo values, and use **Prepare a session**. Select the exercise, pose input, participant count, IDs, and per-lane targets. The Admin Panel uses the current real backend. The login is demo navigation only; participant programme pages retain illustrative records.
+
+The original walkthrough below is available at [http://127.0.0.1:8000/tracker](http://127.0.0.1:8000/tracker), or at the homepage if no frontend build exists. The demo uses Python 3.10 or later. The core app requires no package installation or internet access; building the React frontend requires Node and its locked dependencies. Keep the terminal running. Use `python app.py --port 8001` if port 8000 is busy and pass `--port 8001` to bridge commands before the subcommand.
 
 1. Leave the five demo seats and the default targets in place. Click **Start demo replay**.
 2. Wait five seconds. Select **Participant 02** to show its short-range cue. Participant 03 reaches its target and Participant 05 goes above it.
@@ -26,6 +28,8 @@ A five-minute presentation can give 45 seconds to the CCCARE problem, 90 seconds
 3. Each person completes ten squat attempts, returning to standing between attempts. Current demo criteria: stand/return at knee angle >=160 degrees, attempt begins at <=130 degrees, range reached at <=100 degrees. A completed short attempt still counts and is marked short. Compare against a manual count; these squat criteria have not yet been validated on real volunteers.
 4. When everyone finishes, click **End & save session**. Targets do not automatically end the session. In the expanded History entry, click **Open workout report / print**. The generated report contains actual per-person dose, full/short counts, range score, tracking coverage, review notes, and per-rep angles. Use **Print / save as PDF** to export it.
 5. Stop the camera bridge with Ctrl+C. Completed results and printable reports remain available after restarting the server.
+
+In the new Admin Panel, **View live session** / **Open monitor** shows per-lane reps and cues. Closing that dialog keeps tracking active. **End & save session** opens the report summary; **Session history** retains it across reloads/restarts. Starting a new camera session still requires restarting the bridge for its new session ID.
 
 ## Try a real AlphaPose input
 

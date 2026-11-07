@@ -4,6 +4,9 @@ data/
 .env
 .env.local
 node_modules/
+frontend/.next/
+frontend/out/
+frontend/*.tsbuildinfo
 alphapose-results*.json
 *.sqlite3
 *.pth

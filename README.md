@@ -8,7 +8,9 @@ CCCARE instructors may supervise 10–12 participants at once, or up to 30 in a 
 
 The dashboard now has a fixed exercise catalog: seated right-arm curls, pushups, squats, seated knee extensions, seated shoulder raises, seated marches, and sit-to-stand. Choose a station name and assign a numbered participant ID to each camera lane. End-of-session reports separate rep targets, range scores, tracking coverage, and review notes. See [exercise criteria](docs/EXERCISES.md) and the [frontend/API handoff](docs/FRONTEND_API.md). The original curl path has been tried live; the added exercises have synthetic/API checks and still need volunteer validation. There is no custom-angle editor.
 
-Run `python app.py`, open [localhost:8000](http://localhost:8000), and click **Start demo replay**. After the five-second replay, click **End & save session**. See the [demo runbook](docs/RUNBOOK.md) for camera setup, measurement, learning checkpoints and GitHub commands. See the [wearable handoff](docs/WEARABLE.md) for the Convex connection.
+Run `start-frontend.cmd` to install missing frontend dependencies, build the website, and start the Python app at [127.0.0.1:8000](http://127.0.0.1:8000). Open **Admin login**, enter any demo values, and choose **Prepare a session**. The Alder frontend now controls the real tracker API: exercise/station setup, one to five lane assignments, targets, live cues, SQLite history, and printable reports. Demo login is navigation only. The participant programme pages still contain clearly labeled illustrative records.
+
+Once built, `python app.py` or `start-dashboard.cmd` serves the same integrated site without a Node server. The original dashboard remains at [/tracker](http://127.0.0.1:8000/tracker), and remains the homepage fallback if the frontend has not been built. For a camera-free trial, select **Synthetic demo replay**, then **End & save session** after five seconds. See the [frontend guide](frontend/README.md), [demo runbook](docs/RUNBOOK.md), and [wearable handoff](docs/WEARABLE.md).
 
 ## What the prototype does
 
@@ -22,7 +24,7 @@ The Nov. 11 checkpoint is a five-minute progress presentation. A five-person syn
 | --- | --- | --- |
 | Pose input | AlphaPose FastPose, 17 COCO keypoints, Python adapter | Leo with Eric D |
 | Rep and range logic | Python, dot product and an angle-based state machine, one state per participant | Leo's integration baseline, Eric D owns exercise scoring refinement |
-| Dashboard | HTML, CSS and browser JavaScript, served on the demo laptop | Leo |
+| Dashboard | Next.js/React static export, served by the local Python app; original HTML dashboard retained | Leo and frontend teammate |
 | Session API and database | Python standard library HTTP and SQLite, same laptop | Leo |
 | Wearable and binding | Arduino or verified Wi-Fi hardware, OLED, optional pulse sensor, manual device-to-participant pairing for the demo | Erik Zhu |
 | Wearable feedback | Convex HTTPS contract for latest summaries and optional end-of-session sensor data | Jinay Patel, with Leo providing the laptop interface |

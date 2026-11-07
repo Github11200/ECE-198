@@ -3,11 +3,13 @@ import argparse
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import mimetypes
 import re
 from pathlib import Path
 from threading import Lock
 from time import monotonic
 from uuid import uuid4
+from urllib.parse import unquote, urlsplit
 
 import database
 from pose import MIN_CONFIDENCE, REPLAY_FPS, REPLAY_FRAMES, replay_frame
@@ -16,7 +18,8 @@ from reports import workout_report
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = {"/": ("index.html", "text/html"), "/style.css": ("style.css", "text/css"),
-          "/app.js": ("app.js", "text/javascript")}
+          "/app.js": ("app.js", "text/javascript"),
+          "/tracker": ("index.html", "text/html"), "/tracker/": ("index.html", "text/html")}
 SOURCES = ("replay", "camera", "recording")
 CAMERA_STALE_SECONDS = 1.5
 
@@ -29,6 +32,24 @@ class RequestError(Exception):
 
 def timestamp():
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+
+
+def frontend_asset(target):
+    """Resolve only exported public files, including Next client-navigation data."""
+    root = (ROOT / 'frontend' / 'out').resolve()
+    if not (root / 'index.html').is_file():
+        return None
+    path = unquote(urlsplit(target).path)
+    if '\\' in path or '\x00' in path or any(part in ('.', '..') for part in path.split('/')):
+        return None
+    asset = (root / path.lstrip('/')).resolve()
+    if not asset.is_relative_to(root):
+        return None
+    if asset.is_dir():
+        asset = (asset / 'index.html').resolve()
+    if asset.is_relative_to(root) and asset.is_file():
+        return asset, mimetypes.guess_type(asset.name)[0] or 'application/octet-stream'
+    return None
 
 
 class Session:
@@ -197,6 +218,11 @@ def handler_for(service, port):
                                              'identity_mode': 'manual participant-to-lane assignment'})
                         return
                     if self.path in ASSETS:
+                        exported = frontend_asset(self.path) if self.path == '/' else None
+                        if exported:
+                            asset, mime = exported
+                            self.send(200, asset.read_bytes(), mime)
+                            return
                         filename, mime = ASSETS[self.path]
                         self.send(200, (ROOT / "web" / filename).read_bytes(), mime)
                         return
@@ -205,6 +231,11 @@ def handler_for(service, port):
                         return
                     if self.path == "/api/history":
                         self.send_json(200, {"sessions": database.history(service.db_path)})
+                        return
+                    exported = frontend_asset(self.path)
+                    if exported:
+                        asset, mime = exported
+                        self.send(200, asset.read_bytes(), mime)
                         return
                 else:
                     routes = {"/api/session/start": (201, service.start),
