@@ -1,0 +1,8 @@
+{
+  "name": "cccare-wearable-handoff",
+  "private": true,
+  "description": "Optional Convex feedback relay for the CCCARE classroom prototype",
+  "dependencies": {
+    "convex": "1.49.0"
+  }
+}

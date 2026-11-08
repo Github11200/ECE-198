@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#103434">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+  <title>CCCARE Exercise Tracker</title>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell topbar">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 36 36" fill="none"><path d="M6 19h7l3-8 5 15 3-7h6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div><strong>CCCARE Exercise Tracker</strong><span>ECE 198 · Instructor console</span></div>
+      </div>
+      <nav aria-label="Dashboard views">
+        <button id="live-tab" type="button" aria-current="page">Session</button>
+        <button id="history-tab" type="button">History</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div id="alert" class="notice" role="alert" hidden></div>
+    <section id="live-view" aria-labelledby="live-title">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">GROUP EXERCISE PROTOTYPE</p>
+          <h1 id="live-title">Session monitor</h1>
+          <p>See rep progress and range cues for each participant.</p>
+        </div>
+        <span class="badge" id="source-badge">SETUP</span>
+      </div>
+
+      <form id="setup" class="panel setup">
+        <div class="panel-heading">
+          <div><h2>Set up a session</h2><p>Choose an input and set a rep target for each participant.</p></div>
+          <span id="exercise-category" class="pill neutral">Fixed demo criteria</span>
+        </div>
+        <div class="fields">
+          <label>Station
+            <input id="station" value="Station 1" maxlength="60" required>
+          </label>
+          <label>Exercise
+            <select id="exercise"><option value="right_arm_curl">Seated right-arm curl</option></select>
+          </label>
+          <label>Pose input
+            <select id="source">
+              <option value="replay">Synthetic demo replay</option>
+              <option value="camera">Live AlphaPose camera</option>
+              <option value="recording">AlphaPose JSON replay</option>
+            </select>
+          </label>
+          <label>Participants
+            <select id="count">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option>
+            </select>
+          </label>
+        </div>
+        <p id="source-help" class="hint"></p>
+        <p id="exercise-help" class="hint"></p>
+        <p id="exercise-criteria" class="hint"></p>
+        <p class="hint">Assign each camera lane a participant ID. Keep that ID when the participant changes stations. One active session supports up to five lanes.</p>
+        <div id="targets" class="targets"></div>
+        <button id="start" class="primary" type="submit">Start demo replay</button>
+      </form>
+
+      <div id="monitor" hidden>
+        <div class="panel session-header">
+          <div>
+            <p class="eyebrow">CURRENT EXERCISE</p>
+            <h2 id="monitor-title">Seated right-arm curl</h2>
+            <p id="monitor-station"></p>
+            <p id="monitor-criteria" class="hint"></p>
+            <p id="monitor-status" role="status"></p>
+          </div>
+          <button id="finish" class="primary" type="button">End &amp; save session</button>
+        </div>
+        <div class="monitor-layout">
+          <section class="panel roster" aria-labelledby="roster-title">
+            <div class="panel-heading">
+              <div><h2 id="roster-title">Participants</h2><p>The number badge is the camera lane. Select a participant to preview their cue.</p></div>
+              <span id="roster-count" class="pill neutral"></span>
+            </div>
+            <div id="participants" class="participants"></div>
+          </section>
+
+          <aside class="participant-display" aria-labelledby="preview-title">
+            <p class="eyebrow">PARTICIPANT DISPLAY PREVIEW</p>
+            <h2 id="preview-title">Participant 01</h2>
+            <svg id="joint-diagram" class="arm" viewBox="0 0 200 132" role="img" aria-label="Schematic of the measured joint angle">
+              <path d="M30 96h140M30 37h140" stroke="#315652" stroke-dasharray="3 6"/>
+              <path d="M84 27v50" stroke="#a7ded2" stroke-width="7" stroke-linecap="round"/>
+              <line id="arm-segment" x1="84" y1="77" x2="121" y2="102" stroke="#a7ded2" stroke-width="7" stroke-linecap="round"/>
+              <circle cx="84" cy="27" r="6" fill="#d4fff3"/><circle cx="84" cy="77" r="7" fill="#d4fff3"/>
+              <circle id="wrist" cx="121" cy="102" r="6" fill="#d4fff3"/>
+            </svg>
+            <div class="preview-progress"><strong id="preview-reps">0</strong><span id="preview-target">/ 2 reps</span></div>
+            <p id="preview-cue">Waiting for a clear view</p>
+            <span id="preview-angle" class="angle">Elbow angle unavailable</span>
+            <p id="preview-tracking" class="hint"></p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="history-view" aria-labelledby="history-title" hidden>
+      <div class="hero">
+        <div>
+          <p class="eyebrow">SAVED RESULTS</p>
+          <h1 id="history-title">Session history</h1>
+          <p>Review dose progress and range counts from completed sessions.</p>
+        </div>
+        <span class="badge">COMPLETED SESSIONS</span>
+      </div>
+      <div class="panel history-panel">
+        <div class="panel-heading">
+          <div><h2>Completed sessions</h2><p id="history-count"></p></div>
+          <label>Participant
+            <select id="history-filter">
+              <option value="">All participants</option>
+              <option value="P01">Participant 01</option><option value="P02">Participant 02</option>
+              <option value="P03">Participant 03</option><option value="P04">Participant 04</option>
+              <option value="P05">Participant 05</option>
+            </select>
+          </label>
+        </div>
+        <div id="history"></div>
+        <p class="hint">Range score = completed attempts reaching the fixed demo angle target. Dose progress and tracking coverage are reported separately. These criteria will be reviewed with CCCARE.</p>
+      </div>
+    </section>
+    <footer>ECE 198 · Fall 2026 <span>Classroom prototype · Demo participants</span></footer>
+  </main>
+
+  <template id="participant-template">
+    <button class="person" type="button" aria-pressed="false">
+      <span class="seat"></span>
+      <span class="person-info"><strong class="name"></strong><span class="cue"></span></span>
+      <span class="progress-cell"><strong class="reps"></strong><progress></progress></span>
+      <span class="pill state"></span>
+    </button>
+  </template>
+</body>
+</html>
