@@ -8,7 +8,7 @@ import sys
 import textwrap
 import types
 
-from alphapose_acceleration import MODEL_FILES, ROOT, sha256
+from .acceleration import MODEL_FILES, ROOT, sha256
 
 
 def main():

@@ -9,15 +9,15 @@ from unittest.mock import patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-import app
+from backend.tracker import server as app
 
 
 class FrontendTests(unittest.TestCase):
     def test_export_routes_legacy_fallback_and_session_contract(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
-            (root / 'web').mkdir()
-            (root / 'web' / 'index.html').write_text('Original tracker', encoding='utf-8')
+            (root / 'legacy-dashboard').mkdir()
+            (root / 'legacy-dashboard' / 'index.html').write_text('Original tracker', encoding='utf-8')
             (root / 'private.txt').write_text('must stay private', encoding='utf-8')
             service = app.SessionService(root / 'sessions.sqlite3')
             server = ThreadingHTTPServer(('127.0.0.1', 0), app.handler_for(service, 0))

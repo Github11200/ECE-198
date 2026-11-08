@@ -12,8 +12,8 @@ from time import monotonic, sleep, time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from pose import MIN_CONFIDENCE, assign_lanes
-from exercises import DEFAULT_EXERCISE, EXERCISES, JOINT_NAMES, measure
+from ..tracker.pose import MIN_CONFIDENCE, assign_lanes
+from ..tracker.exercises import DEFAULT_EXERCISE, EXERCISES, JOINT_NAMES, measure
 
 
 def local_request(base, route, data=None):
@@ -190,7 +190,7 @@ def run_camera(args, feed):
         torch.set_num_threads(args.cpu_threads)
     restore_acceleration = None
     if args.openvino_device:
-        from alphapose_acceleration import MODEL_FILES, prepare_openvino
+        from .acceleration import MODEL_FILES, prepare_openvino
         if (str(args.cfg).replace('\\', '/') != MODEL_FILES['pose_config']
                 or str(args.checkpoint).replace('\\', '/') != MODEL_FILES['pose_weights']):
             raise ValueError('OpenVINO mode requires the default COCO FastPose config and checkpoint.')
@@ -265,7 +265,7 @@ def main():
             camera.add_argument('--diagnostics', type=Path,
                                 help='Overwrite a local lane/confidence summary once per second; no images or joint coordinates')
         camera.add_argument("--openvino-device", choices=('CPU', 'GPU'))
-        camera.add_argument("--openvino-models", type=Path, default=Path(__file__).resolve().parent / 'data' / 'openvino')
+        camera.add_argument("--openvino-models", type=Path, default=Path(__file__).resolve().parents[2] / 'data' / 'openvino')
     args = parser.parse_args()
     if args.mode == "recording" and (args.width < 1 or not 0 < args.fps <= 120):
         parser.error("--width must be positive and --fps must be greater than 0 and at most 120")

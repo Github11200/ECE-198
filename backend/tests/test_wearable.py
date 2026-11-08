@@ -1,6 +1,6 @@
 import unittest
 
-from publish_feedback import DISPLAY_TEXT, participant_feedback, wearable_snapshot
+from backend.wearable.publish_feedback import DISPLAY_TEXT, participant_feedback, wearable_snapshot
 
 
 class WearableContractTests(unittest.TestCase):

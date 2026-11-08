@@ -2,7 +2,7 @@
 from contextlib import contextmanager
 import sqlite3
 import json
-from exercises import DEFAULT_EXERCISE, EXERCISES, criteria
+from .exercises import DEFAULT_EXERCISE, EXERCISES, criteria
 
 
 @contextmanager

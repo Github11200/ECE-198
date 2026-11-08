@@ -1,6 +1,6 @@
 # Fixed demonstration exercises
 
-The initial catalog is in `exercises.py`. These are team-chosen prototype thresholds for testing the software. They are not a personalized exercise prescription; CCCARE instructors will help tailor criteria later. There is no custom-angle editor.
+The initial catalog is in `backend/tracker/exercises.py`. These are team-chosen prototype thresholds for testing the software. They are not a personalized exercise prescription; CCCARE instructors will help tailor criteria later. There is no custom-angle editor.
 
 Each rep requires a visible starting/rest pose, an excursion past the attempt threshold, and a return to rest. Angles are internal joint angles: a straight elbow or knee is approximately 180 degrees. All required joints must meet the confidence cutoff, currently 0.4. A lost joint clears an unfinished attempt; completed counts remain.
 

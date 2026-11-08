@@ -7,12 +7,12 @@ For the expanded exercise menu, station/participant assignments, and report defi
 Open the project directory in VS Code and run this in its terminal. On Windows, use `py` instead of `python` if that is how you start Python.
 
 ```sh
-python app.py
+python -m backend.tracker.server
 ```
 
-After building the new frontend with `start-frontend.cmd` (or `npm.cmd --prefix frontend ci` followed by `npm.cmd --prefix frontend run build`), open [http://127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin login**, enter any demo values, and use **Prepare a session**. Select the exercise, pose input, participant count, IDs, and per-lane targets. The Admin Panel uses the current real backend. The login is demo navigation only; participant programme pages retain illustrative records.
+After building the new frontend with `scripts/start-frontend.cmd` (or `npm.cmd --prefix frontend ci` followed by `npm.cmd --prefix frontend run build`), open [http://127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin login**, enter any demo values, and use **Prepare a session**. Select the exercise, pose input, participant count, IDs, and per-lane targets. The Admin Panel uses the current real backend. The login is demo navigation only; participant programme pages retain illustrative records.
 
-The original walkthrough below is available at [http://127.0.0.1:8000/tracker](http://127.0.0.1:8000/tracker), or at the homepage if no frontend build exists. The demo uses Python 3.10 or later. The core app requires no package installation or internet access; building the React frontend requires Node and its locked dependencies. Keep the terminal running. Use `python app.py --port 8001` if port 8000 is busy and pass `--port 8001` to bridge commands before the subcommand.
+The original walkthrough below is available at [http://127.0.0.1:8000/tracker](http://127.0.0.1:8000/tracker), or at the homepage if no frontend build exists. The demo uses Python 3.10 or later. The core app requires no package installation or internet access; building the React frontend requires Node and its locked dependencies. Keep the terminal running. Use `python -m backend.tracker.server --port 8001` if port 8000 is busy and pass `--port 8001` to bridge commands before the subcommand.
 
 1. Leave the five demo seats and the default targets in place. Click **Start demo replay**.
 2. Wait five seconds. Select **Participant 02** to show its short-range cue. Participant 03 reaches its target and Participant 05 goes above it.
@@ -23,7 +23,7 @@ A five-minute presentation can give 45 seconds to the CCCARE problem, 90 seconds
 
 ## Three participants: ten squats each
 
-On Leo's installed Intel laptop, start a **Live AlphaPose camera** session in the Admin Panel, then run `start-camera-intel.cmd` from the project folder. It supplies the already verified environment and GPU arguments. Start it again for each new camera session; keep its terminal open while tracking. It does not start a session by itself.
+On Leo's installed Intel laptop, start a **Live AlphaPose camera** session in the Admin Panel, then run `scripts/start-camera-intel.cmd` from the project folder. It supplies the already verified environment and GPU arguments. Start it again for each new camera session; keep its terminal open while tracking. It does not start a session by itself.
 
 1. Select **Squats**, **Live AlphaPose camera**, and **3** participants. Assign P01, P02, P03 to lanes 1, 2, 3 and set each target to **10**. Start the session, then run the installed Intel GPU camera bridge from [WINDOWS_ALPHAPOSE.md](WINDOWS_ALPHAPOSE.md#intel-gpu-mode) with `--show-camera`.
 2. Use the labeled left, middle, and right thirds of the preview. Each person stays in their lane. Move the camera back to include all three full bodies, with a side view of each person's right hip, knee, and ankle. Start standing.
@@ -55,7 +55,7 @@ python scripts/demo_inference.py --cfg configs/coco/resnet/256x192_res50_lr1e-3_
 Use a fixed camera, good lighting and one consenting teammate. Sit in frame with the right shoulder, elbow and wrist visible. Close any app using the webcam. Start the dashboard in one terminal. In the dashboard select **Live AlphaPose camera**, choose **1** participant, and start the session. Open a second terminal from this project directory and activate the AlphaPose environment.
 
 ```sh
-python alphapose_bridge.py camera --repo ../AlphaPose
+python -m backend.camera.bridge camera --repo ../AlphaPose
 ```
 
 Append `--gpus -1` for a CPU trial or `--index 1` to select a second camera. Use `--show-camera` to also open AlphaPose's native view. Begin with a lowered arm. Try a full curl, a shortened curl and an obstructed wrist. Finish the session on the dashboard, then press Ctrl+C in the camera terminal.
@@ -67,7 +67,7 @@ For five volunteers, seat them left to right in five equal image-width lanes. Ke
 Run AlphaPose's standard CLI with `--video PATH_TO_CLIP` in place of `--webcam 0` on a short consenting teammate clip. Record its image width and fps. The CLI writes `alphapose-results.json` under its output directory. Then start an **AlphaPose JSON replay** session in the dashboard and run the bridge from the project directory.
 
 ```sh
-python alphapose_bridge.py recording path/to/alphapose-results.json --width 1280 --fps 15
+python -m backend.camera.bridge recording path/to/alphapose-results.json --width 1280 --fps 15
 ```
 
 Replace the width and fps with the source clip's values. The 17-joint COCO export must contain `image_id`, `box` and `keypoints` for each detection. Use camera mode only for the live input and JSON replay for a clip.
@@ -76,18 +76,18 @@ Replace the width and fps with the source clip's values. The 17-joint COCO expor
 
 | Question | Open this |
 | --- | --- |
-| What does AlphaPose produce? | `alphapose_bridge.py` → `writer_detection` turns each joint into an x, y, confidence triple |
-| How does one curl become one rep? | `pose.py` → `elbow_angle` and `Curl.observe` |
-| Where is the session managed? | `app.py` → `SessionService` |
-| Where is it saved? | `database.py` → `save` and `history` |
-| How does the browser render the data? | `web/app.js` → `poll` and `renderMonitor` |
-| How can the wearable read it? | `publish_feedback.py` → `convex/http.js` → [Wearable handoff](WEARABLE.md) |
+| What does AlphaPose produce? | `backend/camera/bridge.py` → `writer_detection` turns each joint into an x, y, confidence triple |
+| How does one curl become one rep? | `backend/tracker/pose.py` → `elbow_angle` and `Curl.observe` |
+| Where is the session managed? | `backend/tracker/server.py` → `SessionService` |
+| Where is it saved? | `backend/tracker/database.py` → `save` and `history` |
+| How does the browser render the data? | `legacy-dashboard/app.js` → `poll` and `renderMonitor` |
+| How can the wearable read it? | `backend/wearable/publish_feedback.py` → `convex/http.js` → [Wearable handoff](WEARABLE.md) |
 
 ### Work through one rep
 
 Subtract the elbow position from both the shoulder and wrist positions. These two vectors point out of the elbow. The dot product divided by the product of their lengths gives the cosine of the elbow angle. A near-straight arm gives an angle close to 180°.
 
-Try the sequence **165° → 110° → 60° → 160°**. At 165°, the state is armed. At 110°, it begins an attempt. At 60°, it records the smallest angle so far. At 160°, it counts one completed attempt and classifies its range. Replacing 60° with 95° gives one shortened attempt. Losing the wrist mid-rep clears the incomplete attempt. These demonstration thresholds are easy to change in `pose.py`. Reaching the target is based on completed attempts.
+Try the sequence **165° → 110° → 60° → 160°**. At 165°, the state is armed. At 110°, it begins an attempt. At 60°, it records the smallest angle so far. At 160°, it counts one completed attempt and classifies its range. Replacing 60° with 95° gives one shortened attempt. Losing the wrist mid-rep clears the incomplete attempt. These demonstration thresholds are easy to change in `backend/tracker/pose.py`. Reaching the target is based on completed attempts.
 
 For a small change you can own, edit a participant's target, run the replay, and predict how the dashboard's final cue changes. Then open the browser's Network tab and examine the JSON from `GET /api/session`. Use `python -m unittest -v` to rerun the bundled checks.
 

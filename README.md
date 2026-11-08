@@ -8,11 +8,31 @@ CCCARE instructors may supervise 10–12 participants at once, or up to 30 in a 
 
 The dashboard now has a fixed exercise catalog: seated right-arm curls, pushups, squats, seated knee extensions, seated shoulder raises, seated marches, and sit-to-stand. Choose a station name and assign a numbered participant ID to each camera lane. End-of-session reports separate rep targets, range scores, tracking coverage, and review notes. See [exercise criteria](docs/EXERCISES.md) and the [frontend/API handoff](docs/FRONTEND_API.md). The original curl path has been tried live; the added exercises have synthetic/API checks and still need volunteer validation. There is no custom-angle editor.
 
-Run `start-frontend.cmd` to install missing frontend dependencies, build the website, and start the Python app at [127.0.0.1:8000](http://127.0.0.1:8000). Open **Admin login**, enter any demo values, and choose **Prepare a session**. The Alder frontend now controls the real tracker API: exercise/station setup, one to five lane assignments, targets, live cues, SQLite history, and printable reports. Demo login is navigation only. The participant programme pages still contain clearly labeled illustrative records.
+Run `scripts/start-frontend.cmd` to install missing frontend dependencies, build the website, and start the Python app at [127.0.0.1:8000](http://127.0.0.1:8000). Open **Admin login**, enter any demo values, and choose **Prepare a session**. The Alder frontend now controls the real tracker API: exercise/station setup, one to five lane assignments, targets, live cues, SQLite history, and printable reports. Demo login is navigation only. The participant programme pages still contain clearly labeled illustrative records.
 
-Once built, `python app.py` or `start-dashboard.cmd` serves the same integrated site without a Node server. The original dashboard remains at [/tracker](http://127.0.0.1:8000/tracker), and remains the homepage fallback if the frontend has not been built. For a camera-free trial, select **Synthetic demo replay**, then **End & save session** after five seconds. See the [frontend guide](frontend/README.md), [demo runbook](docs/RUNBOOK.md), and [wearable handoff](docs/WEARABLE.md).
+Once built, `python -m backend.tracker.server` or `scripts/start-dashboard.cmd` serves the same integrated site without a Node server. The original dashboard remains at [/tracker](http://127.0.0.1:8000/tracker), and remains the homepage fallback if the frontend has not been built. For a camera-free trial, select **Synthetic demo replay**, then **End & save session** after five seconds. See the [frontend guide](frontend/README.md), [demo runbook](docs/RUNBOOK.md), and [wearable handoff](docs/WEARABLE.md).
 
-For a real session on Leo's installed Intel laptop, start a Live AlphaPose camera session in the Admin Panel, then run `start-camera-intel.cmd`. The [Leo acceptance checklist](docs/LEO_ACCEPTANCE.md) maps the backend requirement to the existing database and separates the laptop handoff from wearable implementation.
+For a real session on Leo's installed Intel laptop, start a Live AlphaPose camera session in the Admin Panel, then run `scripts/start-camera-intel.cmd`. The [Leo acceptance checklist](docs/LEO_ACCEPTANCE.md) maps the backend requirement to the existing database and separates the laptop handoff from wearable implementation.
+
+On Linux or macOS, each launcher has a bash equivalent: `./scripts/start-frontend.sh`, `./scripts/start-dashboard.sh`, and `./scripts/start-camera-intel.sh`. They accept the same arguments. The camera launcher looks for `../.venv-alphapose/bin/python` and `../AlphaPose` by default; override them with `ALPHAPOSE_PYTHON`, `ALPHAPOSE_REPO`, or `OPENVINO_DEVICE`.
+
+## Project layout
+
+```
+backend/
+  tracker/     server.py (HTTP API + session), pose.py, exercises.py, database.py, reports.py
+  camera/      bridge.py (AlphaPose → /api/pose), acceleration.py, export_models.py (OpenVINO)
+  wearable/    publish_feedback.py (optional Convex relay)
+  tests/       unit tests: python -m unittest
+frontend/      Next.js site, built to frontend/out and served by the backend
+legacy-dashboard/  original HTML dashboard at /tracker
+convex/        Convex HTTP functions for the wearable
+scripts/       start-*.sh (Linux/macOS) and start-*.cmd (Windows) launchers
+docs/          runbook, API, exercises, hardware notes
+data/          local SQLite database and diagnostics (ignored)
+```
+
+Run Python commands from the repository root as modules, for example `python -m backend.tracker.server` or `python -m backend.camera.bridge camera --repo ../AlphaPose`.
 
 ## What the prototype does
 

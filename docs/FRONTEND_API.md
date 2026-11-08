@@ -1,6 +1,6 @@
 # Frontend handoff: stations, sessions, and reports
 
-The frontend can be replaced independently of the pose code. The camera laptop runs `app.py`, computes scores, and exposes the HTTP contract below. Use numbered demo participant IDs; do not derive identities from skeleton detections.
+The frontend can be replaced independently of the pose code. The camera laptop runs `backend/tracker/server.py`, computes scores, and exposes the HTTP contract below. Use numbered demo participant IDs; do not derive identities from skeleton detections.
 
 ## What runs where
 
@@ -12,7 +12,7 @@ flowchart LR
     Score --> API[Local session HTTP API]
     API --> UI[Instructor frontend]
     API --> SQLite[SQLite completed history]
-    API --> Relay[Optional publish_feedback.py]
+    API --> Relay[Optional backend/wearable/publish_feedback.py]
     Relay --> Convex[Convex latest feedback]
     Convex --> Band[Paired participant wearable]
 ```
@@ -27,9 +27,9 @@ The existing Convex implementation stores one latest-feedback snapshot, not sess
 
 The frontend from `feat/alphapose-camera-performance` at `7100c35` has been integrated selectively. Its Next.js/React website, demo login pages, and styling live in `frontend/`. The Admin Panel uses relative `/api/...` calls through `src/lib/tracker-api.ts` and `src/lib/use-tracker.ts`. Its local count timer and sessionStorage history have been replaced with the current Python API and SQLite reports. Participant programme/progress pages retain labeled illustrative records; they are not an authenticated personal-results service.
 
-Run `npm.cmd --prefix frontend ci` once, then `npm.cmd --prefix frontend run build`. Static export produces ignored `frontend/out/`. `python app.py` serves the website and unchanged API together at `http://127.0.0.1:8000`; no CORS changes or second backend are needed. Direct page reloads, Next navigation data, fonts, images, and JS/CSS are served from that export only. `/tracker` retains the original dashboard. `start-frontend.cmd` automates build/start. Rebuild and refresh after editing React source.
+Run `npm.cmd --prefix frontend ci` once, then `npm.cmd --prefix frontend run build`. Static export produces ignored `frontend/out/`. `python -m backend.tracker.server` serves the website and unchanged API together at `http://127.0.0.1:8000`; no CORS changes or second backend are needed. Direct page reloads, Next navigation data, fonts, images, and JS/CSS are served from that export only. `/tracker` retains the original dashboard. `scripts/start-frontend.cmd` automates build/start. Rebuild and refresh after editing React source.
 
-The current AlphaPose bridge/acceleration, pose/exercise scoring, SQLite implementation, printable report generator, and wearable relay/Convex source were preserved from `1095a10`. In `app.py`, only public frontend asset serving was added; `Session` and `SessionService` remain identical. Starting a camera session still requires the existing separate AlphaPose bridge command. Closing the new live monitor does not pause the session; the backend has no pause endpoint. Targets edited in participant details apply to the next setup on that page, while started-session targets are saved as snapshots. Fake login fields are still not read or submitted.
+The current AlphaPose bridge/acceleration, pose/exercise scoring, SQLite implementation, printable report generator, and wearable relay/Convex source were preserved from `1095a10`. In `backend/tracker/server.py`, only public frontend asset serving was added; `Session` and `SessionService` remain identical. Starting a camera session still requires the existing separate AlphaPose bridge command. Closing the new live monitor does not pause the session; the backend has no pause endpoint. Targets edited in participant details apply to the next setup on that page, while started-session targets are saved as snapshots. Fake login fields are still not read or submitted.
 
 The local frontend merge does not require moving session history from SQLite into Convex. Convex is currently the wearable feedback connection. Any later hosted station-control/history service would be a separate backend extension.
 

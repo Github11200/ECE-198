@@ -1,5 +1,5 @@
 import unittest
-from reports import workout_report
+from backend.tracker.reports import workout_report
 
 
 class ReportTests(unittest.TestCase):

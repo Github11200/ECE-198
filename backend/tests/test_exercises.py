@@ -5,10 +5,10 @@ from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
-import database
-from app import RequestError, SessionService
-from exercises import EXERCISES, counter, measure, report
-from pose import REPLAY_FRAMES, replay_frame
+from backend.tracker import database
+from backend.tracker.server import RequestError, SessionService
+from backend.tracker.exercises import EXERCISES, counter, measure, report
+from backend.tracker.pose import REPLAY_FRAMES, replay_frame
 
 
 class ExerciseTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class ExerciseTests(unittest.TestCase):
                     path = Path(directory) / (exercise + '.sqlite3')
                     service = SessionService(path)
                     ids = ['P30', 'P07', 'P18', 'P02', 'P11']
-                    with patch('app.monotonic', side_effect=[0, 0, REPLAY_FRAMES, REPLAY_FRAMES]):
+                    with patch('backend.tracker.server.monotonic', side_effect=[0, 0, REPLAY_FRAMES, REPLAY_FRAMES]):
                         started = service.start(dict(source='replay', exercise=exercise, station='Station B',
                                                      targets=[2, 4, 1, 3, 2], participant_ids=ids))
                         live = service.current()

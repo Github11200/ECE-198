@@ -7,10 +7,10 @@ A Next.js App Router frontend for the ECE 198 project, branded as **Alder Rehabi
 From the repository root on Windows:
 
 ```powershell
-.\start-frontend.cmd
+.\scripts\start-frontend.cmd
 ```
 
-Open **http://127.0.0.1:8000**. The script installs missing dependencies, builds a static export, and starts Python. To use another port, run `.\start-frontend.cmd --port 8001`. Do not start a second server on an occupied port.
+Open **http://127.0.0.1:8000**. The script installs missing dependencies, builds a static export, and starts Python. To use another port, run `.\scripts\start-frontend.cmd --port 8001`. Do not start a second server on an occupied port.
 
 On another machine, install Node.js 20.9 or newer, then:
 
@@ -49,7 +49,7 @@ frontend/
   public/fonts/    Inter fonts and their OFL license
 ```
 
-`npm run build` checks TypeScript and generates ignored `out/`. `npm run typecheck` checks types independently. After building, `npm start` serves the website and API through `../app.py`. Next.js/Node are needed to build, not to run the built export. Follow `AGENTS.md` and the installed Next.js documentation before changing framework conventions.
+`npm run build` checks TypeScript and generates ignored `out/`. `npm run typecheck` checks types independently. After building, `npm start` serves the website and API through `python -m backend.tracker.server`, run from the repository root. Next.js/Node are needed to build, not to run the built export. Follow `AGENTS.md` and the installed Next.js documentation before changing framework conventions.
 
 ## Brand and assets
 

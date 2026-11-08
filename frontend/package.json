@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "python ../app.py",
+    "start": "cd .. && python -m backend.tracker.server",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

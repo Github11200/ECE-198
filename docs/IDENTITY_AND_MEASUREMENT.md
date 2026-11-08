@@ -8,11 +8,11 @@ This records the current implementation and proposed next steps. The identity-ma
 | --- | --- |
 | Website | Next.js App Router, React, TypeScript and CSS in `frontend/` |
 | Build | Node/npm compiles a static export in `frontend/out/` |
-| Runtime | `app.py` serves that export and the JSON API on the same local origin; no Next.js/Node server is required after building |
+| Runtime | `backend/tracker/server.py` serves that export and the JSON API on the same local origin; no Next.js/Node server is required after building |
 | Pose | The pinned AlphaPose FastPose/YOLO models; optional OpenVINO runs their exported networks on the Intel GPU |
 | Camera input/drawing | OpenCV supplies frames and draws the native preview |
-| Counting and range | Python `pose.py` and `exercises.py`, with independent state per active participant |
-| Completed history | SQLite through `database.py`; printable reports through `reports.py` |
+| Counting and range | Python `backend/tracker/pose.py` and `backend/tracker/exercises.py`, with independent state per active participant |
+| Completed history | SQLite through `backend/tracker/database.py`; printable reports through `backend/tracker/reports.py` |
 | Wearable feedback | Optional Python publisher and Convex HTTPS latest-feedback relay; physical delivery/deployment still needs integration |
 
 The Admin Panel reads actual API results. Demo login performs navigation only. The participant programme/progress pages still contain labeled illustrative records.

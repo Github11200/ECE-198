@@ -16,7 +16,7 @@ For this demo, participant ID and label are the user information. Names, editabl
 
 1. Open http://127.0.0.1:8000, enter the Admin Panel through the demo login, and choose **Prepare a session**.
 2. Select Squats, Live AlphaPose camera, three participants and targets 10/10/10. Assign P01, P02, P03 left to right. For a simpler first check, use one volunteer and one lane.
-3. Start the session, then run `start-camera-intel.cmd` on Leo's installed laptop. The launcher uses the existing AlphaPose/OpenVINO logic and opens the preview. Other laptops should follow their hardware-specific setup instead.
+3. Start the session, then run `scripts/start-camera-intel.cmd` on Leo's installed laptop. The launcher uses the existing AlphaPose/OpenVINO logic and opens the preview. Other laptops should follow their hardware-specific setup instead.
 4. Keep each participant in their assigned lane with the right hip, knee and ankle visible from a suitable side view. Begin standing. Check each required knee angle is available before exercising.
 5. Have each person attempt ten squats, returning to standing between attempts. Record a manual count and label full/short attempts independently of the app.
 6. Click **End & save session**. Check each actual result, notes, and the printable report. A prescribed target is not an automatically invented final count.
@@ -26,7 +26,7 @@ The live path is available for testing, not a claim of validated squat accuracy.
 
 ## What Leo hands over for wearable integration
 
-- `publish_feedback.py` and the local `/api/session` feed.
+- `backend/wearable/publish_feedback.py` and the local `/api/session` feed.
 - `convex/` relay source and [WEARABLE.md](WEARABLE.md), including payload, ID pairing and cue codes.
 - A first P01 test showing the same count, target and cue on the dashboard and wearable.
 

@@ -7,7 +7,7 @@ from time import monotonic, sleep
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
-from alphapose_bridge import local_request
+from ..camera.bridge import local_request
 
 DISPLAY_TEXT = {
     'READY': 'Ready',

@@ -4,7 +4,7 @@
 
 | Owner | Integration boundary |
 | --- | --- |
-| Leo | Camera/scoring, stable participant IDs, local session API and SQLite history, and `publish_feedback.py` producing the agreed feedback payload |
+| Leo | Camera/scoring, stable participant IDs, local session API and SQLite history, and `backend/wearable/publish_feedback.py` producing the agreed feedback payload |
 | Jinay | Team Convex deployment/schema/route setup, private token configuration, wearable networking/receiver and OLED update logic |
 | Erik | Confirmed networking hardware, display wiring, and device-to-participant pairing with Jinay |
 
@@ -35,7 +35,7 @@ Use a dedicated Convex dev project for the prototype. If the team already has a 
 5. With the dashboard server running, start the optional relay in another terminal.
 
 ```sh
-python publish_feedback.py --url https://YOUR-DEPLOYMENT.convex.site
+python -m backend.wearable.publish_feedback --url https://YOUR-DEPLOYMENT.convex.site
 ```
 
 The relay publishes changed cues and sends a heartbeat every two seconds during a session. After five seconds without an update, the read endpoint returns inactive. Finishing a session sends an inactive update. A single laptop relay owns this demo deployment.

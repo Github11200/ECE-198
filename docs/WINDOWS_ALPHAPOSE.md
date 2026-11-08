@@ -31,7 +31,7 @@ After preparing a terminal as described below, these are the setup commands for 
 
 ```powershell
 uv pip install --python $alphaPython --cache-dir ..\.uv-cache 'openvino==2024.6.0' 'onnx==1.14.1' 'numpy==1.23.5'
-& $alphaPython export_alphapose.py --repo ..\AlphaPose
+& $alphaPython -m backend.camera.export_models --repo ..\AlphaPose
 ```
 
 Exports and a manifest go into ignored `data/openvino/`. The manifest binds the exports to SHA256 hashes of the source weights and config; the runtime also checks export hashes and shapes. Each person's pose is evaluated with a fixed batch-one model, and copied outputs prevent subsequent inference from overwriting a previous person's heatmaps.
@@ -39,13 +39,13 @@ Exports and a manifest go into ignored `data/openvino/`. The manifest binds the 
 For a standalone preview with no dashboard session:
 
 ```powershell
-& $alphaPython alphapose_bridge.py preview --repo ..\AlphaPose --openvino-device GPU --cpu-threads 4 --profile
+& $alphaPython -m backend.camera.bridge preview --repo ..\AlphaPose --openvino-device GPU --cpu-threads 4 --profile
 ```
 
 For the live bridge, after starting a one-person camera session in the dashboard:
 
 ```powershell
-& $alphaPython alphapose_bridge.py camera --repo ..\AlphaPose --openvino-device GPU --cpu-threads 4 --show-camera --profile
+& $alphaPython -m backend.camera.bridge camera --repo ..\AlphaPose --openvino-device GPU --cpu-threads 4 --show-camera --profile
 ```
 
 Press Ctrl+C to stop a preview before starting the bridge. Both modes suppress live pose JSON saving. Omitting `--openvino-device` keeps the original PyTorch path and 608-pixel detector default. `--detector-size` and `--cpu-threads` are explicit tuning options; exports must match the selected detector size.
@@ -62,7 +62,7 @@ Leo confirmed the accelerated preview was a lot smoother. When connecting the li
 
 Append `--diagnostics data/tracking-diagnostics.json` to the **camera** command to overwrite a local summary once per second. It includes the number of detections per lane, right shoulder/elbow/wrist confidence, usable angle, and a reason such as low wrist confidence or multiple detections. It excludes images, joint coordinates, and detection boxes. The default camera command does not write this summary.
 
-During Leo's one-person test, unavailable angles coincided with wrist confidence 0.024 or 0.222, and one elbow confidence of 0.367, all below the 0.4 cutoff. Other frames had strong joint confidence and valid angles. Detection count stayed at one in the sampled diagnostics. Physical visibility does not guarantee a confident model prediction. The confidence and curl-angle cutoffs remain unchanged in `pose.py`.
+During Leo's one-person test, unavailable angles coincided with wrist confidence 0.024 or 0.222, and one elbow confidence of 0.367, all below the 0.4 cutoff. Other frames had strong joint confidence and valid angles. Detection count stayed at one in the sampled diagnostics. Physical visibility does not guarantee a confident model prediction. The confidence and curl-angle cutoffs remain unchanged in `backend/tracker/pose.py`.
 
 ## Prepare a PowerShell terminal
 
@@ -96,12 +96,12 @@ Upstream's standalone demo writes `alphapose-results.json` to its output directo
 
 ## Connect the dashboard
 
-Run `python app.py` from `ECE-198` in the dashboard terminal, if it is not already running. Open `http://localhost:8000`, select **Live AlphaPose camera**, set **1** participant and a small rep target, and start the session.
+Run `python -m backend.tracker.server` from `ECE-198` in the dashboard terminal, if it is not already running. Open `http://localhost:8000`, select **Live AlphaPose camera**, set **1** participant and a small rep target, and start the session.
 
 In a second terminal, run the preparation block above, then:
 
 ```powershell
-& $alphaPython alphapose_bridge.py camera --repo ..\AlphaPose --gpus -1 --show-camera
+& $alphaPython -m backend.camera.bridge camera --repo ..\AlphaPose --gpus -1 --show-camera
 ```
 
 The bridge supplies `--sp`. Begin with the arm lowered, then perform a full curl and a shortened curl. Check counts and range cues on the dashboard, click **End & save session**, stop the bridge with Ctrl+C, and review History. Actual performance remains to be measured.

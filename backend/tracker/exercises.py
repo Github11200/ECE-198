@@ -1,6 +1,6 @@
 """Fixed demonstration criteria, not individualized rehabilitation prescriptions."""
 from copy import deepcopy
-from pose import Curl, MIN_CONFIDENCE, LOWERED, CURL_STARTED, FULL_RANGE, joint_angle
+from .pose import Curl, MIN_CONFIDENCE, LOWERED, CURL_STARTED, FULL_RANGE, joint_angle
 
 DEFAULT_EXERCISE = 'right_arm_curl'
 JOINT_NAMES = {6: 'right shoulder', 8: 'right elbow', 10: 'right wrist',

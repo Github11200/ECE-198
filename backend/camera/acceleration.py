@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from time import sleep
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]  # repository root
 MODEL_FILES = {
     'pose_weights': 'pretrained_models/fast_res50_256x192.pth',
     'detector_weights': 'detector/yolo/data/yolov3-spp.weights',
@@ -39,7 +39,7 @@ def prepare_openvino(repo, model_dir, device, detector_size):
 
     manifest_path = model_dir / 'manifest.json'
     if not manifest_path.is_file():
-        raise ValueError('Export models first with export_alphapose.py; missing ' + str(manifest_path))
+        raise ValueError('Export models first with python -m backend.camera.export_models; missing ' + str(manifest_path))
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     if manifest.get('detector_size') != detector_size:
         raise ValueError('The exported detector size does not match --detector-size.')

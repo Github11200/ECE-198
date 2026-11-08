@@ -11,12 +11,12 @@ from time import monotonic
 from uuid import uuid4
 from urllib.parse import unquote, urlsplit
 
-import database
-from pose import MIN_CONFIDENCE, REPLAY_FPS, REPLAY_FRAMES, replay_frame
-from exercises import DEFAULT_EXERCISE, EXERCISES, catalog, counter, criteria, measure, report
-from reports import workout_report
+from . import database
+from .pose import MIN_CONFIDENCE, REPLAY_FPS, REPLAY_FRAMES, replay_frame
+from .exercises import DEFAULT_EXERCISE, EXERCISES, catalog, counter, criteria, measure, report
+from .reports import workout_report
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]  # repository root
 ASSETS = {"/": ("index.html", "text/html"), "/style.css": ("style.css", "text/css"),
           "/app.js": ("app.js", "text/javascript"),
           "/tracker": ("index.html", "text/html"), "/tracker/": ("index.html", "text/html")}
@@ -224,7 +224,7 @@ def handler_for(service, port):
                             self.send(200, asset.read_bytes(), mime)
                             return
                         filename, mime = ASSETS[self.path]
-                        self.send(200, (ROOT / "web" / filename).read_bytes(), mime)
+                        self.send(200, (ROOT / "legacy-dashboard" / filename).read_bytes(), mime)
                         return
                     if self.path == "/api/session":
                         self.send_json(200, {"session": service.current()})
