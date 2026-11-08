@@ -14,7 +14,7 @@ Once built, `python -m backend.tracker.server` or `scripts/start-dashboard.cmd` 
 
 For a real session on Leo's installed Intel laptop, start a Live AlphaPose camera session in the Admin Panel, then run `scripts/start-camera-intel.cmd`. The [Leo acceptance checklist](docs/LEO_ACCEPTANCE.md) maps the backend requirement to the existing database and separates the laptop handoff from wearable implementation.
 
-On Linux or macOS, each launcher has a bash equivalent: `./scripts/start-frontend.sh`, `./scripts/start-dashboard.sh`, and `./scripts/start-camera-intel.sh`. They accept the same arguments. The camera launcher looks for `../.venv-alphapose/bin/python` and `../AlphaPose` by default; override them with `ALPHAPOSE_PYTHON`, `ALPHAPOSE_REPO`, or `OPENVINO_DEVICE`.
+On Linux or macOS, each launcher has a bash equivalent: `./scripts/start-frontend.sh`, `./scripts/start-dashboard.sh`, and `./scripts/start-camera-intel.sh`. They accept the same arguments. For the usual laptop flow, `./scripts/start-local.sh` installs and builds the frontend if needed, starts the backend that serves the website, and opens the browser. Add `--camera` to have it wait for a Live AlphaPose camera session and then start the bridge automatically. The camera launcher looks for `../.venv-alphapose/bin/python` and `../AlphaPose` by default; override them with `ALPHAPOSE_PYTHON`, `ALPHAPOSE_REPO`, or `OPENVINO_DEVICE`.
 
 ## Project layout
 

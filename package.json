@@ -1,8 +1,21 @@
 {
   "name": "cccare-wearable-handoff",
   "private": true,
-  "description": "Optional Convex feedback relay for the CCCARE classroom prototype",
+  "description": "Convex session archive and live exercise feedback",
   "dependencies": {
     "convex": "1.49.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "convex-test": "^0.0.67",
+    "jsdom": "^31.0.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "typecheck": "tsc --noEmit -p convex",
+    "test:live": "node tests/live-convex.mjs"
   }
 }

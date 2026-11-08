@@ -37,6 +37,7 @@ def participant_feedback(person):
     if score is None and person['reps'] and 'full' in person:
         score = round(person['full'] * 100 / person['reps'])
     return {**{field: person[field] for field in ('id', 'reps', 'target', 'cue')},
+            'angle': person.get('angle'),
             'cue_code': code, 'display_text': DISPLAY_TEXT[code], 'range_score': score}
 
 
@@ -48,11 +49,17 @@ def wearable_snapshot(session):
         "source": session["source"],
         'exercise': session.get('exercise', 'right_arm_curl'),
         'station': session.get('station', 'Station 1'),
+        'frame': session.get('last_frame'),
         "participants": [
             participant_feedback(person)
             for person in session["participants"]
         ],
     }}
+
+
+def publisher_payload(session):
+    """Publish compact wearable cues and the same full dashboard snapshot atomically."""
+    return {**wearable_snapshot(session), "dashboard": session}
 
 
 def post_feedback(url, token, payload):
@@ -62,6 +69,15 @@ def post_feedback(url, token, payload):
     })
     with urlopen(request, timeout=2):
         pass
+
+
+def sync_pending(local, remote, token):
+    """Only acknowledge locally after Convex commits; retries reuse event IDs."""
+    events = local_request(local, "/api/convex/pending")["events"]
+    for event in events:
+        post_feedback(remote + "/archive", token, {"event": event})
+        local_request(local, "/api/convex/ack", {"eventId": event["eventId"]})
+    return len(events)
 
 
 def main():
@@ -84,7 +100,9 @@ def main():
     try:
         while True:
             try:
-                payload = wearable_snapshot(local_request(local, "/api/session")["session"])
+                sync_pending(local, args.url.rstrip("/"), token)
+                current = local_request(local, "/api/session")["session"]
+                payload = publisher_payload(current)
                 if payload != last_payload or (payload["session"] and monotonic() - last_sent >= 2):
                     post_feedback(remote, token, payload)
                     last_payload, last_sent = payload, monotonic()

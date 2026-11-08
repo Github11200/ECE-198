@@ -1,3 +1,4 @@
+import { LiveFeedbackProvider } from "@/lib/live-feedback";
 import type { Metadata } from "next";
 import "./globals.css";
 import "./refinements.css";
@@ -21,7 +22,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        {children}
+        <LiveFeedbackProvider>{children}</LiveFeedbackProvider>
       </body>
     </html>
   );

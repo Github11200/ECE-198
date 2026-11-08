@@ -9,15 +9,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "convex": "^1.49.0",
+    "lucide-react": "latest",
     "next": "16.4.5",
     "react": "19.3.1",
-    "react-dom": "19.3.1",
-    "lucide-react": "latest"
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "typescript": "latest",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "latest",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "jsdom": "^31.0.0",
+    "typescript": "latest"
   }
 }

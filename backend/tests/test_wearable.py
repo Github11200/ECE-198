@@ -1,6 +1,6 @@
 import unittest
 
-from backend.wearable.publish_feedback import DISPLAY_TEXT, participant_feedback, wearable_snapshot
+from backend.wearable.publish_feedback import DISPLAY_TEXT, participant_feedback, wearable_snapshot, publisher_payload
 
 
 class WearableContractTests(unittest.TestCase):
@@ -21,7 +21,7 @@ class WearableContractTests(unittest.TestCase):
             self.assertEqual(result['cue'], person['cue'])
             self.assertEqual(result['display_text'], DISPLAY_TEXT[code])
             self.assertLessEqual(len(result['display_text']), 16)
-            self.assertNotIn('angle', result)
+            self.assertEqual(result['angle'], person['angle'])
 
     def test_range_score_is_completed_range_fraction_and_unknown_before_reps(self):
         person = self.person()
@@ -35,6 +35,21 @@ class WearableContractTests(unittest.TestCase):
         person = self.person()
         person['id'] = 'P27'
         result = wearable_snapshot(dict(id='demo', source='camera', exercise='squat',
-                                       station='Station B', participants=[person]))
+                                       station='Station B', last_frame=42, participants=[person]))
         self.assertEqual(result['session']['exercise'], 'squat')
+        self.assertEqual(result['session']['frame'], 42)
         self.assertEqual(result['session']['participants'][0]['id'], 'P27')
+        self.assertEqual(result['session']['participants'][0]['angle'], 165)
+
+
+class DashboardRelayTests(unittest.TestCase):
+    def test_full_dashboard_and_compact_feedback_share_session_and_clear_together(self):
+        from backend.tracker.server import Session
+        session = Session('replay', [8]).snapshot()
+        payload = publisher_payload(session)
+        self.assertEqual(payload['dashboard'], session)
+        self.assertEqual(payload['session']['id'], session['id'])
+        self.assertEqual(payload['session']['participants'][0]['reps'],
+                         session['participants'][0]['reps'])
+        self.assertIn('criteria', payload['dashboard'])
+        self.assertEqual(publisher_payload(None), {'session': None, 'dashboard': None})

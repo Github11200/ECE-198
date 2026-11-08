@@ -1,3 +1,7 @@
+> Current architecture: Convex now archives sessions, people, attendance metrics and accepted AlphaPose frames. Frontend history and live feedback subscribe to Convex. SQLite is retained for recovery and durable upload retries. See [setup, data model and tests](REALTIME_ARCHITECTURE.md); older local-history descriptions below describe the compatibility path.
+
+> Update: live frontend session state now subscribes to Convex rather than polling `/api/session`. Local controls/history remain HTTP. See [current architecture and setup](REALTIME_ARCHITECTURE.md).
+
 # Frontend handoff: stations, sessions, and reports
 
 The frontend can be replaced independently of the pose code. The camera laptop runs `backend/tracker/server.py`, computes scores, and exposes the HTTP contract below. Use numbered demo participant IDs; do not derive identities from skeleton detections.

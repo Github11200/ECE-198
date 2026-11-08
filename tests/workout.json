@@ -1,0 +1,66 @@
+{
+  "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "source": "camera",
+  "started_at": "2026-11-08T17:00:00+00:00",
+  "finished_at": null,
+  "participants": [
+    {
+      "id": "P01",
+      "label": "Participant 01",
+      "lane": 1,
+      "target": 8,
+      "reps": 0,
+      "full": 0,
+      "short": 0,
+      "last_range": null,
+      "angle": null,
+      "cue": "Waiting for a clear view",
+      "range_score": null,
+      "target_remaining": 8,
+      "tracking_coverage": null,
+      "tracking_losses": 0,
+      "discarded_attempts": 0,
+      "issues": [
+        "8 rep(s) remaining to target"
+      ],
+      "rep_details": [],
+      "tracking_reason": "Camera feed paused"
+    },
+    {
+      "id": "P27",
+      "label": "Participant 27",
+      "lane": 2,
+      "target": 10,
+      "reps": 0,
+      "full": 0,
+      "short": 0,
+      "last_range": null,
+      "angle": null,
+      "cue": "Waiting for a clear view",
+      "range_score": null,
+      "target_remaining": 10,
+      "tracking_coverage": null,
+      "tracking_losses": 0,
+      "discarded_attempts": 0,
+      "issues": [
+        "10 rep(s) remaining to target"
+      ],
+      "rep_details": [],
+      "tracking_reason": "Camera feed paused"
+    }
+  ],
+  "exercise": "right_arm_curl",
+  "exercise_label": "Seated right-arm curl",
+  "station": "Station 1",
+  "criteria": {
+    "rest_angle": 150,
+    "start_angle": 120,
+    "full_angle": 70,
+    "increasing": false,
+    "angle_label": "Right elbow angle",
+    "description": "Start/return at \u2265150\u00b0. Attempt begins at \u2264120\u00b0. Demo range reached at \u226470\u00b0.",
+    "minimum_confidence": 0.4
+  },
+  "last_frame": -1,
+  "replay_done": false
+}

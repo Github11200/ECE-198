@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useCloudHistory } from "./use-cloud-history";
+import { useLiveFeedback } from "./live-feedback";
 import { trackerRequest, type Exercise, type SessionSetup, type Workout } from "./tracker-api";
 
 export function useTracker() {
-  const [active, setActive] = useState<Workout | null>(null);
-  const [history, setHistory] = useState<Workout[]>([]);
+  const live = useLiveFeedback();
+  const cloudHistory = useCloudHistory();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -23,19 +25,12 @@ export function useTracker() {
       if (!changing.current) {
         const observedRevision = revision.current;
         try {
-          const [current, metadata] = await Promise.all([
-            trackerRequest<{ session: Workout | null }>("/api/session"),
-            Date.now() >= metadataDue ? Promise.all([
-              trackerRequest<{ exercises: Exercise[] }>("/api/exercises"),
-              trackerRequest<{ sessions: Workout[] }>("/api/history"),
-            ]) : Promise.resolve(null),
-          ]);
+          const metadata = Date.now() >= metadataDue
+            ? await trackerRequest<{ exercises: Exercise[] }>("/api/exercises") : null;
           if (!disposed && !changing.current && revision.current === observedRevision) {
-            setActive(current.session);
-            interval = current.session ? 120 : 700;
+            interval = 5000;
             if (metadata) {
-              setExercises(metadata[0].exercises);
-              setHistory(metadata[1].sessions);
+              setExercises(metadata.exercises);
               metadataDue = Date.now() + 5000;
             }
             setConnected(true);
@@ -64,8 +59,8 @@ export function useTracker() {
     setBusy(true);
     try {
       const result = await trackerRequest<Workout>(path, body);
-      setActive(finished ? null : result);
-      if (finished) setHistory((current) => [result, ...current.filter(s => s.id !== result.id)].slice(0, 30));
+
+
       setConnected(true);
       return result;
     } finally {
@@ -75,7 +70,9 @@ export function useTracker() {
   }
 
   return {
-    active, history, exercises, loading, connected, error, busy,
+    active: live.active, history: cloudHistory.records, exercises, loading: loading || live.loading,
+    historyHasMore: cloudHistory.hasMore, loadMoreHistory: cloudHistory.loadMore,
+    connected, error: error || cloudHistory.error || live.error, busy,
     start: (setup: SessionSetup) => change("/api/session/start", setup, false),
     finish: (sessionId: string) => change("/api/session/finish", { session_id: sessionId }, true),
   };

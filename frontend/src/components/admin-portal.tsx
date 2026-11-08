@@ -10,7 +10,7 @@ import { percent, sourceNames, totalRangeScore, workoutDate, type ParticipantRes
 const defaultIds = ["P01", "P02", "P03", "P04", "P05"];
 type Lane = { id: string; target: number };
 
-function ResultNotes({ person }: { person: ParticipantResult }) {
+export function ResultNotes({ person }: { person: ParticipantResult }) {
   return <>
     {person.issues.length ? <ul className="tracker-notes">{person.issues.map(issue => <li key={issue}>{issue}</li>)}</ul>
       : <p className="tracker-hint">Rep target and measured range criteria met.</p>}
@@ -24,7 +24,7 @@ function ResultNotes({ person }: { person: ParticipantResult }) {
   </>;
 }
 
-function WorkoutDetails({ workout }: { workout: Workout }) {
+export function WorkoutDetails({ workout }: { workout: Workout }) {
   const reps = workout.participants.reduce((sum, p) => sum + p.reps, 0);
   const target = workout.participants.reduce((sum, p) => sum + p.target, 0);
   return <>
@@ -49,7 +49,7 @@ function WorkoutDetails({ workout }: { workout: Workout }) {
     </details>)}
     <p className="tracker-hint">Range score measures completed attempts reaching the fixed angle target. Dose completion and tracking coverage are separate measurements.</p>
     <div className="modal-actions">
-      <a className="button" href={`/reports/${workout.id}`} target="_blank" rel="noopener">Open workout report / print <ArrowRight size={16} /></a>
+      <button className="button" onClick={() => window.print()}>Print session report</button>
     </div>
   </>;
 }
@@ -120,7 +120,7 @@ export default function AdminPortal({ view = "overview" }: { view?: "overview" |
       const result = await tracker.finish(active.id);
       setMonitorOpen(false);
       setSaved(result);
-      setNotice("Session saved. Your workout report and participant results are available in Session history.");
+      setNotice("Session stopped and queued for upload. It will appear in history when Convex confirms the save.");
     } catch (cause) { setActionError(cause instanceof Error ? cause.message : "Could not save the session. Retry End & save."); }
   }
 
@@ -233,6 +233,7 @@ export default function AdminPortal({ view = "overview" }: { view?: "overview" |
       <div className="modal-actions"><button className="button button-outline" onClick={() => setMonitorOpen(false)}>Close monitor</button><button className="button" disabled={busy || !connected} onClick={() => void finishSession()}><Check size={16} />{busy ? "Saving…" : "End & save session"}</button></div>
     </Modal>}
 
+    {tracker.historyHasMore && <button className="button button-outline" onClick={tracker.loadMoreHistory}>Load more sessions</button>}
     {saved && <Modal title="Session summary" onClose={() => setSaved(null)} wide><WorkoutDetails workout={saved} /></Modal>}
   </PortalShell>;
 }

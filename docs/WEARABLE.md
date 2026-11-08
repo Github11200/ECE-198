@@ -1,3 +1,7 @@
+> Current architecture: Convex now archives sessions, people, attendance metrics and accepted AlphaPose frames. Frontend history and live feedback subscribe to Convex. SQLite is retained for recovery and durable upload retries. See [setup, data model and tests](REALTIME_ARCHITECTURE.md); older local-history descriptions below describe the compatibility path.
+
+> Update: the frontend now has a reactive Convex subscription, and the publisher also sends dashboard state. See [current architecture and setup](REALTIME_ARCHITECTURE.md). The firmware HTTP contract below remains a polling fallback. Cloud deployment remains unverified.
+
 # Wearable handoff for Erik and Jinay
 
 ## Who supplies what

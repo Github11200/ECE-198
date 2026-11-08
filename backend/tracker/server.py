@@ -66,6 +66,7 @@ class Session:
                              reason='Waiting for input') for _ in targets]
         self.last_frame = -1
         self.last_input = None
+        self.last_archived_frame = -1
 
     def update(self, poses, lane_counts=None, sample=True, stale=False):
         for index, (person, keypoints, metrics) in enumerate(zip(self.people, poses, self.metrics)):
@@ -121,7 +122,13 @@ class SessionService:
 
     def current(self):
         with self.lock:
-            return self.active.snapshot() if self.active else None
+            if not self.active:
+                return None
+            snapshot = self.active.snapshot()
+            if self.active.source == "replay" and self.active.last_frame > self.active.last_archived_frame:
+                database.enqueue(self.db_path, "update", snapshot)
+                self.active.last_archived_frame = self.active.last_frame
+            return snapshot
 
     def start(self, data):
         source, targets = data.get("source"), data.get("targets")
@@ -145,8 +152,12 @@ class SessionService:
         with self.lock:
             if self.active:
                 raise RequestError(409, "Finish the active session first.")
-            self.active = Session(source, targets, exercise, station.strip(), ids)
-            return self.active.snapshot()
+            candidate = Session(source, targets, exercise, station.strip(), ids)
+            snapshot = candidate.snapshot()
+            database.enqueue(self.db_path, "start", snapshot)
+            candidate.last_archived_frame = candidate.last_frame
+            self.active = candidate
+            return snapshot
 
     def ingest(self, data):
         with self.lock:
@@ -156,6 +167,10 @@ class SessionService:
             frame, poses = data.get("frame"), data.get("poses")
             if type(frame) is not int or frame < 0 or not isinstance(poses, list) or len(poses) != len(session.people):
                 raise RequestError(400, "Send a nonnegative frame number and one pose per seat.")
+            import math
+            if any(p is not None and (not isinstance(p, list) or len(p) != 51 or
+                   any(type(n) not in (int, float) or not math.isfinite(n) for n in p)) for p in poses):
+                raise RequestError(400, 'Each pose must contain 51 finite numbers or be null.')
             lane_counts = data.get('lane_counts')
             if lane_counts is not None and (not isinstance(lane_counts, list) or len(lane_counts) != len(poses)
                     or any(type(count) is not int or not 0 <= count <= 50 for count in lane_counts)):
@@ -163,10 +178,17 @@ class SessionService:
             if lane_counts is not None and any(pose is not None and count != 1 for pose, count in zip(poses, lane_counts)):
                 raise RequestError(400, 'A usable pose requires exactly one detection in its lane.')
             if frame > session.last_frame:
+                from copy import deepcopy
+                session = deepcopy(session)
                 session.advance()
                 session.update(poses, lane_counts)
                 session.last_frame = frame
                 session.last_input = monotonic()
+                pose = {'frame': frame, 'poses': poses}
+                if lane_counts is not None:
+                    pose['lane_counts'] = lane_counts
+                database.enqueue(self.db_path, "update", session.snapshot(), pose)
+                self.active = session
             return {"accepted_frame": session.last_frame}
 
     def finish(self, data):
@@ -229,6 +251,12 @@ def handler_for(service, port):
                     if self.path == "/api/session":
                         self.send_json(200, {"session": service.current()})
                         return
+                    if self.path == "/api/convex/pending":
+                        self.send_json(200, {"events": database.pending(service.db_path)})
+                        return
+                    if self.path == "/api/convex/status":
+                        self.send_json(200, database.sync_status(service.db_path))
+                        return
                     if self.path == "/api/history":
                         self.send_json(200, {"sessions": database.history(service.db_path)})
                         return
@@ -240,7 +268,9 @@ def handler_for(service, port):
                 else:
                     routes = {"/api/session/start": (201, service.start),
                               "/api/session/finish": (200, service.finish),
-                              "/api/pose": (200, service.ingest)}
+                              "/api/pose": (200, service.ingest),
+                              "/api/convex/ack": (200, lambda data: (
+                                  database.acknowledge(service.db_path, data.get("eventId", "")) or {"ok": True}))}
                     if self.path in routes:
                         origin = self.headers.get("Origin")
                         if origin and origin != f"http://{self.headers.get('Host')}":

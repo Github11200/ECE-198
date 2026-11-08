@@ -15,4 +15,3 @@ alphapose-results*.json
 *.mp4
 *.mov
 .convex/
-convex/_generated/

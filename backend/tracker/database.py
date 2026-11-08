@@ -21,6 +21,13 @@ def initialize(path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with connect(path) as db:
         db.executescript("""
+            CREATE TABLE IF NOT EXISTS convex_outbox (
+                sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_id TEXT UNIQUE NOT NULL,
+                payload TEXT NOT NULL,
+                delivered INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS outbox_pending ON convex_outbox(delivered, sequence);
             CREATE TABLE IF NOT EXISTS participants (
                 id TEXT PRIMARY KEY,
                 label TEXT NOT NULL
@@ -54,6 +61,12 @@ def initialize(path):
                 if column not in existing:
                     db.execute(f'ALTER TABLE {table} ADD COLUMN {column} {declaration}')
 
+        for saved in db.execute("""SELECT * FROM sessions
+            WHERE NOT EXISTS (SELECT 1 FROM convex_outbox WHERE event_id = 'import:' || sessions.id)
+            ORDER BY finished_at"""):
+            snapshot = _with_results(db, saved)
+            _enqueue(db, 'import', snapshot, event_id='import:' + snapshot['id'])
+
 
 def save(path, session):
     with connect(path) as db:
@@ -62,6 +75,7 @@ def save(path, session):
             session.get('exercise', DEFAULT_EXERCISE), session.get('station', 'Station 1'),
             json.dumps({'exercise_label': session.get('exercise_label'), 'criteria': session.get('criteria')}),
         ))
+        _enqueue(db, "finish", session)
         for person in session["participants"]:
             db.execute("INSERT OR IGNORE INTO participants VALUES (?, ?)", (person["id"], person["label"]))
             details = {key: person[key] for key in ('range_score', 'target_remaining', 'tracking_coverage',
@@ -111,3 +125,33 @@ def find(path, session_id):
     with connect(path) as db:
         session = db.execute("SELECT * FROM sessions WHERE id = ?", (session_id,)).fetchone()
         return _with_results(db, session) if session else None
+
+
+def _enqueue(db, kind, snapshot, pose=None, event_id=None):
+    from uuid import uuid4
+    payload = {'kind': kind, 'snapshot': snapshot}
+    if pose is not None:
+        payload['pose'] = pose
+    db.execute('INSERT OR IGNORE INTO convex_outbox (event_id, payload) VALUES (?, ?)',
+               (event_id or uuid4().hex, json.dumps(payload, allow_nan=False)))
+
+
+def enqueue(path, kind, snapshot, pose=None):
+    with connect(path) as db:
+        _enqueue(db, kind, snapshot, pose)
+
+
+def pending(path, limit=25):
+    with connect(path) as db:
+        rows = db.execute('SELECT sequence, event_id, payload FROM convex_outbox WHERE delivered = 0 ORDER BY sequence LIMIT ?', (limit,))
+        return [{**json.loads(row['payload']), 'eventId': row['event_id'], 'sequence': row['sequence']} for row in rows]
+
+
+def acknowledge(path, event_id):
+    with connect(path) as db:
+        db.execute('UPDATE convex_outbox SET delivered = 1 WHERE event_id = ?', (event_id,))
+
+
+def sync_status(path):
+    with connect(path) as db:
+        return {'pending': db.execute('SELECT COUNT(*) FROM convex_outbox WHERE delivered = 0').fetchone()[0]}
