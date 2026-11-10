@@ -1,0 +1,167 @@
+- generic [ref=f5e2]:
+  - link "Skip to content" [ref=f5e3] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=f5e4]:
+    - banner [ref=f5e5]:
+      - generic [ref=f5e6]:
+        - link "Alder Rehabilitation home" [ref=f5e7] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f5e11]:
+            - strong [ref=f5e12]: Alder
+            - generic [ref=f5e13]: REHABILITATION
+        - button "Open navigation" [ref=f5e14]
+    - main [ref=f5e16]:
+      - region "Supervised exercise, measured with care." [ref=f5e18]:
+        - generic [ref=f5e19]:
+          - generic [ref=f5e20]:
+            - paragraph [ref=f5e21]: CCCARE · ECE 198 PROJECT
+            - heading "Supervised exercise, measured with care." [level=1] [ref=f5e22]
+            - paragraph [ref=f5e23]: Set a rep target for every participant, follow range cues and tracking availability through the session, then close out with a record you can review together. One exercise, one group, one clear report.
+            - generic [ref=f5e24]:
+              - link "Open admin panel" [ref=f5e25] [cursor=pointer]:
+                - /url: /login/admin/
+              - link "Participant portal" [ref=f5e26] [cursor=pointer]:
+                - /url: /login/participant/
+            - list [ref=f5e27]:
+              - listitem [ref=f5e28]:
+                - generic [ref=f5e33]: Local-first records
+              - listitem [ref=f5e34]:
+                - generic [ref=f5e40]: Numbered participant IDs
+              - listitem [ref=f5e41]:
+                - generic [ref=f5e46]: No face recognition
+          - figure "Supervised exercise · stock photograph" [ref=f5e48]:
+            - generic [ref=f5e50]:
+              - img "A physiotherapist supporting a participant during a mat-based exercise" [ref=f5e51]
+              - generic [ref=f5e52]:
+                - generic [ref=f5e53]: Live session
+                - generic [ref=f5e61]:
+                  - generic [ref=f5e62]:
+                    - paragraph [ref=f5e63]: "5"
+                    - paragraph [ref=f5e64]: Camera lanes
+                  - generic [ref=f5e65]:
+                    - paragraph [ref=f5e66]: Rep targets set
+                    - paragraph [ref=f5e67]: All participants
+      - region "How a session works" [ref=f5e69]:
+        - generic [ref=f5e70]:
+          - paragraph [ref=f5e71]: SESSION WORKFLOW
+          - heading "How a session works" [level=2] [ref=f5e72]
+          - paragraph [ref=f5e73]: One exercise and one group at a time — set up, observe, then save a record for every participant.
+        - list [ref=f5e74]:
+          - listitem [ref=f5e75]:
+            - generic [ref=f5e76]:
+              - generic [ref=f5e77]:
+                - generic [ref=f5e78]: "01"
+                - heading "Set up the group" [level=3] [ref=f5e85]
+              - paragraph [ref=f5e87]: Choose the exercise, assign each participant’s numbered ID to a camera lane, and set a rep target for every person in the group.
+          - listitem [ref=f5e88]:
+            - generic [ref=f5e89]:
+              - generic [ref=f5e90]:
+                - generic [ref=f5e91]: "02"
+                - heading "Monitor the session" [level=3] [ref=f5e97]
+              - paragraph [ref=f5e99]: Follow individual rep counts, range cues and tracking availability while participants exercise. Short attempts are visible as they happen.
+          - listitem [ref=f5e100]:
+            - generic [ref=f5e101]:
+              - generic [ref=f5e102]:
+                - generic [ref=f5e103]: "03"
+                - heading "Save and review" [level=3] [ref=f5e108]
+              - paragraph [ref=f5e110]: End the session to save each participant’s results, then review short attempts, tracking notes and the workout report together.
+      - region "Movements with clear criteria" [ref=f5e112]:
+        - generic [ref=f5e113]:
+          - generic [ref=f5e114]:
+            - paragraph [ref=f5e115]: EXERCISE LIBRARY
+            - heading "Movements with clear criteria" [level=2] [ref=f5e116]
+            - paragraph [ref=f5e117]: Each exercise keeps a fixed demonstration standard for range and rep counting, so every participant is measured the same way each session.
+            - paragraph [ref=f5e123]: Select the movement and review its fixed demo criteria in the admin panel.
+            - link "Open the admin panel" [ref=f5e124] [cursor=pointer]:
+              - /url: /login/admin/
+          - generic [ref=f5e125]:
+            - generic [ref=f5e126]:
+              - paragraph [ref=f5e127]: Included in the demo
+              - generic [ref=f5e128]: 3 groups
+            - list [ref=f5e129]:
+              - listitem [ref=f5e130]:
+                - generic [ref=f5e137]:
+                  - heading "Strength" [level=3] [ref=f5e138]
+                  - paragraph [ref=f5e139]: Seated right-arm curls, squats and pushups, each with a fixed demonstration standard.
+              - listitem [ref=f5e140]:
+                - generic [ref=f5e146]:
+                  - heading "Chair-based movements" [level=3] [ref=f5e147]
+                  - paragraph [ref=f5e148]: Seated knee extensions, shoulder raises, marches and sit-to-stand.
+              - listitem [ref=f5e149]:
+                - generic [ref=f5e154]:
+                  - heading "Saved results" [level=3] [ref=f5e155]
+                  - paragraph [ref=f5e156]: Reps completed, range target reached, tracking coverage and per-participant review notes.
+      - region "Built for supervised CCCARE sessions" [ref=f5e157]:
+        - generic [ref=f5e158]:
+          - figure "One-to-one guidance · stock photograph" [ref=f5e159]:
+            - img "A clinician guiding a participant through an assisted leg stretch" [ref=f5e161]
+          - generic [ref=f5e163]:
+            - paragraph [ref=f5e164]: ABOUT THE PROTOTYPE
+            - heading "Built for supervised CCCARE sessions" [level=2] [ref=f5e165]
+            - paragraph [ref=f5e166]: "Alder Rehabilitation is a University of Waterloo ECE 198 project for the CCCARE exercise programme. It supports instructor-led group sessions: participants receive numbered IDs at setup, their repetitions and range are followed by camera lane, and results stay attached to that number."
+            - paragraph [ref=f5e167]: The tracker records what happened in the room — reps, range, tracking coverage and notes. It does not diagnose, score health, or identify anyone automatically.
+            - list [ref=f5e168]:
+              - listitem [ref=f5e169]:
+                - generic [ref=f5e173]: Supervised group sessions
+              - listitem [ref=f5e174]:
+                - generic [ref=f5e178]: Individual rep targets
+              - listitem [ref=f5e179]:
+                - generic [ref=f5e183]: Printable session reports
+            - generic [ref=f5e184]:
+              - link "Go to session setup" [ref=f5e185] [cursor=pointer]:
+                - /url: /login/admin/
+              - link "Programme overview" [ref=f5e186] [cursor=pointer]:
+                - /url: /rehabilitation-programme/
+      - region "Ready for the next session?" [ref=f5e189]:
+        - generic [ref=f5e191]:
+          - generic [ref=f5e192]:
+            - paragraph [ref=f5e193]: NEXT SESSION
+            - heading "Ready for the next session?" [level=2] [ref=f5e194]
+            - paragraph [ref=f5e195]: Bring the group, set the targets, and leave with individual results you can review and print.
+          - generic [ref=f5e196]:
+            - link "Open admin panel" [ref=f5e197] [cursor=pointer]:
+              - /url: /login/admin/
+            - link "Participant portal" [ref=f5e198] [cursor=pointer]:
+              - /url: /login/participant/
+    - contentinfo [ref=f5e199]:
+      - generic [ref=f5e200]:
+        - generic [ref=f5e201]:
+          - generic [ref=f5e202]:
+            - link "Alder Rehabilitation home" [ref=f5e203] [cursor=pointer]:
+              - /url: /
+              - generic [ref=f5e207]:
+                - strong [ref=f5e208]: Alder
+                - generic [ref=f5e209]: REHABILITATION
+            - paragraph [ref=f5e210]: A Waterloo ECE 198 project exploring supervised exercise tracking, individual rep targets and clear end-of-session reports.
+          - generic [ref=f5e211]:
+            - generic [ref=f5e212]:
+              - paragraph [ref=f5e213]: Clinic
+              - list [ref=f5e214]:
+                - listitem [ref=f5e215]:
+                  - link "How it works" [ref=f5e216] [cursor=pointer]:
+                    - /url: /#workflow
+                - listitem [ref=f5e217]:
+                  - link "Exercises" [ref=f5e218] [cursor=pointer]:
+                    - /url: /#exercises
+                - listitem [ref=f5e219]:
+                  - link "About the prototype" [ref=f5e220] [cursor=pointer]:
+                    - /url: /#about
+            - generic [ref=f5e221]:
+              - paragraph [ref=f5e222]: Access
+              - list [ref=f5e223]:
+                - listitem [ref=f5e224]:
+                  - link "Admin panel" [ref=f5e225] [cursor=pointer]:
+                    - /url: /login/admin/
+                - listitem [ref=f5e226]:
+                  - link "Participant portal" [ref=f5e227] [cursor=pointer]:
+                    - /url: /login/participant/
+                - listitem [ref=f5e228]:
+                  - link "Programme overview" [ref=f5e229] [cursor=pointer]:
+                    - /url: /rehabilitation-programme/
+            - generic [ref=f5e230]:
+              - paragraph [ref=f5e231]: Demo
+              - paragraph [ref=f5e232]: Classroom prototype. Participant records are fictional. Login is navigation only.
+        - generic [ref=f5e233]:
+          - paragraph [ref=f5e234]: © 2026 Alder Rehabilitation · CCCARE Exercise Tracker
+          - paragraph [ref=f5e235]: ECE 198 · Fall 2026 · University of Waterloo
+  - region "Notifications alt+T"

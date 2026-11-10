@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/participants/page": "app/admin/participants/page.js",
+  "/admin/sessions/page": "app/admin/sessions/page.js",
+  "/cancer-exercise-program/page": "app/cancer-exercise-program/page.js",
+  "/icon.svg/route": "app/icon.svg/route.js",
+  "/login/admin/page": "app/login/admin/page.js",
+  "/login/participant/page": "app/login/participant/page.js",
+  "/page": "app/page.js",
+  "/participant/page": "app/participant/page.js",
+  "/participant/progress/page": "app/participant/progress/page.js",
+  "/rehabilitation-programme/page": "app/rehabilitation-programme/page.js"
+}
