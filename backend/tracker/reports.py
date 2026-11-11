@@ -51,7 +51,7 @@ section{{margin-top:28px;break-inside:avoid}}button{{padding:10px 16px;backgroun
 <p>Started: {stamp(session['started_at'])}<br>Finished: {stamp(session['finished_at'])}</p>
 <div class="totals"><div>Completed / prescribed<strong>{reps} / {target}</strong></div>
 <div>Range target reached<strong>{full} attempts</strong></div><div>Range score<strong>{score}</strong></div></div>
-<p><strong>Fixed demo criteria:</strong> {text(criteria.get('description', 'Not recorded'))}</p>
+<p><strong>Fixed criteria:</strong> {text(criteria.get('description', 'Not recorded'))}</p>
 <p class="muted">Range score is the percentage of completed attempts that reached the configured angle target.
 It is separate from dose completion and tracking coverage. Review notes describe measured observations.</p>
 <div class="table-wrap"><table><thead><tr><th>Participant</th><th>Lane</th><th>Reps / target</th><th>Full</th><th>Short</th>

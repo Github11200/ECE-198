@@ -226,7 +226,7 @@ def handler_for(service, port):
         def dispatch(self):
             try:
                 if self.headers.get("Host") not in hosts:
-                    raise RequestError(403, "Open the demo using localhost.")
+                    raise RequestError(403, "Open the app using localhost.")
                 if self.command == "GET":
                     match = re.fullmatch(r'/reports/([0-9a-f]{32})', self.path)
                     if match:

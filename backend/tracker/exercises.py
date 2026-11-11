@@ -23,16 +23,16 @@ EXERCISES = {
     'squat': definition('Squats', 'Strength', [(12, 14, 16)],
         'Right knee angle', 160, 130, 100, False,
         'Use a side view with the right hip, knee and ankle visible. Begin standing.'),
-    'knee_extension': definition('Seated knee extensions', 'Rehabilitation demo', [(12, 14, 16)],
+    'knee_extension': definition('Seated knee extensions', 'Rehabilitation', [(12, 14, 16)],
         'Right knee angle', 105, 125, 155, True,
         'Count the right leg. Keep the hip, knee and ankle visible; begin with the knee bent.'),
-    'shoulder_raise': definition('Seated shoulder raises', 'Rehabilitation demo', [(12, 6, 8)],
+    'shoulder_raise': definition('Seated shoulder raises', 'Rehabilitation', [(12, 6, 8)],
         'Right shoulder angle', 25, 45, 80, True,
         'Count the right arm moving out to the side and back down. Keep the hip, shoulder and elbow visible.'),
-    'seated_march': definition('Seated marches', 'Rehabilitation demo', [(6, 12, 14)],
+    'seated_march': definition('Seated marches', 'Rehabilitation', [(6, 12, 14)],
         'Right hip angle', 85, 75, 60, False,
         'Count right-knee lifts only. Use a side view with the shoulder, hip and knee visible.'),
-    'sit_to_stand': definition('Sit-to-stand', 'Rehabilitation demo', [(12, 14, 16), (6, 12, 14)],
+    'sit_to_stand': definition('Sit-to-stand', 'Rehabilitation', [(12, 14, 16), (6, 12, 14)],
         'Minimum right hip/knee angle', 105, 125, 155, True,
         'Keep the right shoulder, hip, knee and ankle visible. Both hip and knee must extend; a leg extension alone is not a stand.'),
 }
@@ -45,8 +45,8 @@ def catalog():
 def criteria(spec):
     rest, start, full = (spec[key] for key in ('rest_angle', 'start_angle', 'full_angle'))
     if spec['increasing']:
-        return f'Start/return at ≤{rest}°. Attempt begins at ≥{start}°. Demo range reached at ≥{full}°.'
-    return f'Start/return at ≥{rest}°. Attempt begins at ≤{start}°. Demo range reached at ≤{full}°.'
+        return f'Start/return at ≤{rest}°. Attempt begins at ≥{start}°. Target range reached at ≥{full}°.'
+    return f'Start/return at ≥{rest}°. Attempt begins at ≤{start}°. Target range reached at ≤{full}°.'
 
 
 def counter(exercise_id, target):
@@ -81,7 +81,7 @@ def report(person, metrics, exercise_id):
     issues = []
     short = person.reps - person.full
     if short:
-        issues.append(f'{short} attempt(s) did not reach the demo range target')
+        issues.append(f'{short} attempt(s) did not reach the target range')
     if person.discarded_attempts:
         issues.append(f'{person.discarded_attempts} unfinished attempt(s) discarded after tracking loss')
     remaining = max(0, person.target - person.reps)

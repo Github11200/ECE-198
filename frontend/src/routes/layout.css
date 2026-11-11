@@ -1,0 +1,205 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn-svelte/tailwind.css';
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Alder Rehabilitation design tokens.
+ * Warm paper surfaces, pine green primary, sage accents and clay highlights.
+ * Palette and type follow the ui-ux-pro-max healthcare recommendation:
+ * calm cyan/green health tones with Atkinson Hyperlegible for accessibility.
+ */
+:root {
+	--background: oklch(0.972 0.008 94);
+	--foreground: oklch(0.298 0.026 157);
+	--card: oklch(0.996 0.004 95);
+	--card-foreground: oklch(0.298 0.026 157);
+	--popover: oklch(0.996 0.004 95);
+	--popover-foreground: oklch(0.298 0.026 157);
+	--primary: oklch(0.425 0.055 160);
+	--primary-foreground: oklch(0.985 0.008 145);
+	--secondary: oklch(0.936 0.017 143);
+	--secondary-foreground: oklch(0.36 0.04 158);
+	--muted: oklch(0.948 0.009 92);
+	--muted-foreground: oklch(0.515 0.018 157);
+	--accent: oklch(0.925 0.027 152);
+	--accent-foreground: oklch(0.35 0.036 160);
+	--destructive: oklch(0.552 0.148 32);
+	--border: oklch(0.897 0.011 95);
+	--input: oklch(0.872 0.012 95);
+	--ring: oklch(0.57 0.046 156);
+	--chart-1: oklch(0.46 0.058 159);
+	--chart-2: oklch(0.66 0.055 145);
+	--chart-3: oklch(0.74 0.11 75);
+	--chart-4: oklch(0.65 0.075 45);
+	--chart-5: oklch(0.57 0.04 235);
+	--radius: 0.75rem;
+	--sidebar: oklch(0.985 0.006 95);
+	--sidebar-foreground: oklch(0.298 0.026 157);
+	--sidebar-primary: oklch(0.425 0.055 160);
+	--sidebar-primary-foreground: oklch(0.985 0.008 145);
+	--sidebar-accent: oklch(0.936 0.017 143);
+	--sidebar-accent-foreground: oklch(0.35 0.036 160);
+	--sidebar-border: oklch(0.91 0.01 95);
+	--sidebar-ring: oklch(0.57 0.046 156);
+	--success: oklch(0.55 0.09 152);
+	--warning: oklch(0.72 0.12 78);
+	--clay: oklch(0.62 0.09 47);
+}
+
+.dark {
+	--background: oklch(0.205 0.016 156);
+	--foreground: oklch(0.93 0.012 140);
+	--card: oklch(0.245 0.018 156);
+	--card-foreground: oklch(0.93 0.012 140);
+	--popover: oklch(0.245 0.018 156);
+	--popover-foreground: oklch(0.93 0.012 140);
+	--primary: oklch(0.79 0.062 156);
+	--primary-foreground: oklch(0.22 0.03 157);
+	--secondary: oklch(0.31 0.022 156);
+	--secondary-foreground: oklch(0.93 0.012 140);
+	--muted: oklch(0.29 0.018 156);
+	--muted-foreground: oklch(0.72 0.02 145);
+	--accent: oklch(0.33 0.026 156);
+	--accent-foreground: oklch(0.93 0.012 140);
+	--destructive: oklch(0.71 0.15 28);
+	--border: oklch(1 0 0 / 12%);
+	--input: oklch(1 0 0 / 16%);
+	--ring: oklch(0.7 0.05 156);
+	--chart-1: oklch(0.78 0.08 156);
+	--chart-2: oklch(0.7 0.07 145);
+	--chart-3: oklch(0.79 0.12 80);
+	--chart-4: oklch(0.72 0.09 48);
+	--chart-5: oklch(0.7 0.06 235);
+	--sidebar: oklch(0.225 0.016 156);
+	--sidebar-foreground: oklch(0.93 0.012 140);
+	--sidebar-primary: oklch(0.79 0.062 156);
+	--sidebar-primary-foreground: oklch(0.22 0.03 157);
+	--sidebar-accent: oklch(0.31 0.022 156);
+	--sidebar-accent-foreground: oklch(0.93 0.012 140);
+	--sidebar-border: oklch(1 0 0 / 12%);
+	--sidebar-ring: oklch(0.7 0.05 156);
+	--success: oklch(0.74 0.09 152);
+	--warning: oklch(0.8 0.12 82);
+	--clay: oklch(0.72 0.09 48);
+}
+
+@theme inline {
+	--font-sans: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif;
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-foreground: var(--foreground);
+	--color-background: var(--background);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-clay: var(--clay);
+	--radius-sm: calc(var(--radius) * 0.6);
+	--radius-md: calc(var(--radius) * 0.8);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) * 1.35);
+	--radius-2xl: calc(var(--radius) * 1.75);
+	--radius-3xl: calc(var(--radius) * 2.15);
+	--radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	html {
+		@apply font-sans antialiased;
+		scroll-behavior: smooth;
+		scroll-padding-top: 6rem;
+	}
+	body {
+		@apply bg-background text-foreground;
+		font-size: 16px;
+		line-height: 1.6;
+	}
+	h1,
+	h2,
+	h3,
+	h4 {
+		@apply font-display text-balance;
+		letter-spacing: -0.025em;
+	}
+	p {
+		text-wrap: pretty;
+	}
+	::selection {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
+	.num {
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+@layer components {
+	.skip-link {
+		@apply bg-primary text-primary-foreground fixed top-3 left-3 z-100 -translate-y-24 rounded-md px-4 py-2 text-sm font-bold transition-transform;
+	}
+	.skip-link:focus {
+		@apply translate-y-0;
+	}
+	.page-container {
+		@apply mx-auto w-full max-w-7xl px-5 sm:px-6 lg:px-8;
+	}
+	.eyebrow {
+		@apply text-primary text-[0.72rem] font-bold tracking-[0.16em] uppercase;
+	}
+	.paper-grid {
+		background-image:
+			linear-gradient(to right, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px),
+			linear-gradient(to bottom, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px);
+		background-size: 48px 48px;
+		mask-image: linear-gradient(to bottom, black, transparent 78%);
+	}
+	.stat-value {
+		@apply text-3xl font-bold tracking-tight tabular-nums sm:text-4xl;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}

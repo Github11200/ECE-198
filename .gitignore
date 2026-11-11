@@ -15,3 +15,12 @@ alphapose-results*.json
 *.mp4
 *.mov
 .convex/
+
+# Arduino tooling (regenerate with clangd DB script)
+.arduino-build/
+compile_commands.json
+
+# Next.js build output of the retired old-frontend
+old-frontend/.next/
+old-frontend/out/
+*.tsbuildinfo

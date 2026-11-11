@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0.."
-if not exist "frontend\node_modules\next\package.json" (
+if not exist "frontend\node_modules\@sveltejs\kit\package.json" (
   call npm.cmd --prefix frontend ci
   if errorlevel 1 exit /b 1
 )

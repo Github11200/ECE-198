@@ -10,7 +10,7 @@ Open the project directory in VS Code and run this in its terminal. On Windows, 
 python -m backend.tracker.server
 ```
 
-After building the new frontend with `scripts/start-frontend.cmd` (or `npm.cmd --prefix frontend ci` followed by `npm.cmd --prefix frontend run build`), open [http://127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin login**, enter any demo values, and use **Prepare a session**. Select the exercise, pose input, participant count, IDs, and per-lane targets. The Admin Panel uses the current real backend. The login is demo navigation only; participant programme pages retain illustrative records.
+After building the new frontend with `scripts/start-frontend.cmd` (or `npm.cmd --prefix frontend ci` followed by `npm.cmd --prefix frontend run build`), open [http://127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin** on the start page (no sign-in), then use **Prepare a session**. Select the exercise, pose input, participant count, IDs, and per-lane targets. The Admin Panel uses the current real backend. The login is demo navigation only; participant programme pages retain illustrative records.
 
 The original walkthrough below is available at [http://127.0.0.1:8000/tracker](http://127.0.0.1:8000/tracker), or at the homepage if no frontend build exists. The demo uses Python 3.10 or later. The core app requires no package installation or internet access; building the React frontend requires Node and its locked dependencies. Keep the terminal running. Use `python -m backend.tracker.server --port 8001` if port 8000 is busy and pass `--port 8001` to bridge commands before the subcommand.
 
