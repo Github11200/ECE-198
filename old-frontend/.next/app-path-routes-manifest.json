@@ -1,0 +1,15 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/admin/page": "/admin",
+  "/admin/participants/page": "/admin/participants",
+  "/admin/sessions/page": "/admin/sessions",
+  "/cancer-exercise-program/page": "/cancer-exercise-program",
+  "/icon.svg/route": "/icon.svg",
+  "/login/admin/page": "/login/admin",
+  "/login/participant/page": "/login/participant",
+  "/page": "/",
+  "/participant/page": "/participant",
+  "/participant/progress/page": "/participant/progress",
+  "/rehabilitation-programme/page": "/rehabilitation-programme"
+}

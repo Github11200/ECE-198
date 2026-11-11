@@ -1,0 +1,157 @@
+globalThis.__BUILD_MANIFEST = {
+  "pages": {
+    "/_app": []
+  },
+  "devFiles": [],
+  "polyfillFiles": [
+    "static/chunks/0cz1d0mv5g_q7.js"
+  ],
+  "lowPriorityFiles": [
+    "static/iio5pce7VRZSqLa8eCD7q/_buildManifest.js",
+    "static/iio5pce7VRZSqLa8eCD7q/_ssgManifest.js",
+    "static/iio5pce7VRZSqLa8eCD7q/_clientMiddlewareManifest.js"
+  ],
+  "rootMainFiles": [
+    "static/chunks/310vm2bl3xxpt.js",
+    "static/chunks/1wnov70f88xjy.js",
+    "static/chunks/23e6jep2anmtk.js",
+    "static/chunks/0c98xzjfks9hq.js",
+    "static/chunks/turbopack-2u1d16houkiyo.js"
+  ],
+  "rootMainFilesTree": {},
+  "pagesChunkGroupBootstrapParams": {
+    "/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/_not-found/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/_global-error/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/admin/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/admin/participants/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/admin/sessions/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/cancer-exercise-program/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/login/admin/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/login/participant/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/participant/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/participant/progress/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    },
+    "/rehabilitation-programme/page": {
+      "otherChunks": [
+        "static/chunks/310vm2bl3xxpt.js",
+        "static/chunks/1wnov70f88xjy.js",
+        "static/chunks/23e6jep2anmtk.js",
+        "static/chunks/0c98xzjfks9hq.js"
+      ],
+      "runtimeModuleIds": [
+        94553
+      ]
+    }
+  },
+  "chunkLoadingGlobal": "TURBOPACK"
+};

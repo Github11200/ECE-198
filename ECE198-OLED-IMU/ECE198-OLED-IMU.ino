@@ -2,6 +2,7 @@
 #include <Adafruit_SSD1306.h>
 #include <DFRobot_BMX160.h>
 #include <Wire.h>
+#include <WiFi.h>
 
 #define I2C_SDA 13
 #define I2C_SCL 14

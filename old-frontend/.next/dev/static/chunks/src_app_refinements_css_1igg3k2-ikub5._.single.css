@@ -1,0 +1,436 @@
+/* [project]/src/app/refinements.css [app-client] (css) */
+:root {
+  --ink: #25362d;
+  --text: #526157;
+  --muted: #66736b;
+  --wash: #f1f4f2;
+  --portal: #f4f6f5;
+  --line: #dce3de;
+  background: #fff;
+}
+
+h1, h2, h3 {
+  letter-spacing: -.025em;
+}
+
+.section-kicker {
+  letter-spacing: .07em;
+}
+
+.button {
+  border-radius: 4px;
+  gap: 9px;
+  padding: 12px 17px;
+}
+
+.button-outline, .surface, .portal-sidebar {
+  background: #fff;
+}
+
+.surface {
+  box-shadow: none;
+  border-radius: 4px;
+}
+
+.clinic-header {
+  background: #fff;
+  height: 78px;
+}
+
+.clinic-nav > a, .admin-login {
+  font-size: 13px;
+}
+
+.workspace-home {
+  background: #fff;
+}
+
+.tracker-home-intro {
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: 68px;
+  padding-top: 54px;
+  padding-bottom: 54px;
+  display: grid;
+}
+
+.tracker-home-copy .section-kicker {
+  margin-bottom: 15px;
+}
+
+.tracker-home-copy h1 {
+  max-width: 550px;
+  font-size: clamp(32px, 3.2vw, 46px);
+  line-height: 1.15;
+}
+
+.tracker-home-lead {
+  max-width: 500px;
+  margin-top: 22px;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.tracker-home-actions {
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  display: flex;
+}
+
+.tracker-home-caption {
+  max-width: 480px;
+  color: var(--muted);
+  margin-top: 18px;
+  font-size: 12px;
+}
+
+.tracker-home-photo {
+  margin: 0;
+}
+
+.tracker-home-photo img {
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  border-radius: 3px;
+  width: 100%;
+}
+
+.tracker-home-photo figcaption {
+  color: var(--muted);
+  margin-top: 9px;
+  font-size: 11px;
+}
+
+.tracker-home-section {
+  border-top: 1px solid var(--line);
+  padding-top: 36px;
+  padding-bottom: 38px;
+}
+
+.tracker-home-section h2 {
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.tracker-home-section-heading {
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 30px;
+  display: flex;
+}
+
+.tracker-home-section-heading p {
+  font-size: 13px;
+}
+
+.tracker-workflow {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+
+.tracker-workflow li {
+  align-items: flex-start;
+  gap: 15px;
+  display: flex;
+}
+
+.tracker-step-number {
+  width: 26px;
+  height: 26px;
+  color: var(--primary);
+  border: 1px solid #bccbc0;
+  border-radius: 3px;
+  flex-shrink: 0;
+  place-items: center;
+  font-size: 12px;
+  display: grid;
+}
+
+.tracker-workflow h3 {
+  margin: 1px 0 10px;
+  font-size: 16px;
+}
+
+.tracker-workflow p {
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.tracker-home-details {
+  grid-template-columns: 1fr 1.8fr;
+  gap: 65px;
+  display: grid;
+}
+
+.tracker-home-details > div > p, .tracker-home-about p {
+  max-width: 700px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+.tracker-exercise-list {
+  margin: 0;
+}
+
+.tracker-exercise-list > div {
+  border-bottom: 1px solid var(--line);
+  grid-template-columns: 150px 1fr;
+  gap: 20px;
+  padding: 14px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  display: grid;
+}
+
+.tracker-exercise-list > div:first-child {
+  padding-top: 0;
+}
+
+.tracker-exercise-list > div:last-child {
+  border: 0;
+}
+
+.tracker-exercise-list dt {
+  font-weight: 600;
+}
+
+.tracker-exercise-list dd {
+  color: var(--text);
+  margin: 0;
+}
+
+.tracker-home-about {
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+  display: flex;
+}
+
+.tracker-home-about .text-link {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tracker-home-footer {
+  border-top: 1px solid var(--line);
+  background: #f5f7f5;
+  padding: 25px 0;
+}
+
+.tracker-home-footer > div {
+  justify-content: space-between;
+  align-items: center;
+  gap: 28px;
+  display: flex;
+}
+
+.tracker-home-footer span, .tracker-home-footer nav {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.tracker-home-footer nav {
+  gap: 22px;
+  display: flex;
+}
+
+.portal-page-heading h1 {
+  font-size: 29px;
+}
+
+.portal-page-heading p:not(.section-kicker) {
+  font-size: 13px;
+}
+
+.portal-page-heading .section-kicker {
+  letter-spacing: .06em;
+  font-size: 10px;
+}
+
+.portal-stats article {
+  box-shadow: none;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.admin-stats {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 4px;
+  gap: 0;
+}
+
+.admin-stats article {
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 20px 24px;
+}
+
+.admin-stats article:last-child {
+  border-right: 0;
+}
+
+.admin-stats article .stat-label > svg {
+  display: none;
+}
+
+.admin-stats strong {
+  margin-top: 12px;
+  font-size: 27px;
+}
+
+.admin-stats p {
+  color: #607065;
+}
+
+.portal-content table th {
+  color: #536459;
+  font-size: 12px;
+}
+
+.portal-content table td {
+  font-size: 13px;
+}
+
+.portal-content table td small {
+  color: #617268;
+}
+
+.card-heading p, .section-title-row p {
+  color: #617268;
+  font-size: 12px;
+}
+
+.table-footer {
+  color: #617268;
+}
+
+.workspace-note {
+  color: #647269;
+  line-height: 1.7;
+  display: block;
+}
+
+.pill, .sample-badge {
+  border-radius: 4px;
+}
+
+.sidebar-help {
+  border-top: 1px solid var(--line);
+  background: none;
+  border-radius: 0;
+  padding: 18px 0 8px;
+}
+
+.sidebar-help > svg {
+  display: none;
+}
+
+.sidebar-help p {
+  color: #647269;
+  font-size: 12px;
+}
+
+.tracker-error {
+  border-radius: 4px;
+}
+
+.modal {
+  border-radius: 5px;
+  box-shadow: 0 12px 40px #19312426;
+}
+
+.modal::backdrop {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: #192a2359;
+}
+
+@media (max-width: 1000px) {
+  .tracker-home-intro {
+    gap: 32px;
+  }
+
+  .tracker-home-details {
+    grid-template-columns: 1fr 1.5fr;
+    gap: 30px;
+  }
+
+  .tracker-workflow {
+    gap: 22px;
+  }
+
+  .admin-stats article {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 760px) {
+  .tracker-home-intro {
+    grid-template-columns: 1fr;
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+
+  .tracker-home-copy h1 {
+    max-width: none;
+    font-size: 34px;
+  }
+
+  .tracker-home-photo img {
+    aspect-ratio: 16 / 9;
+    max-height: 290px;
+  }
+
+  .tracker-home-section-heading, .tracker-home-about {
+    display: block;
+  }
+
+  .tracker-home-section-heading p {
+    margin-top: 10px;
+  }
+
+  .tracker-workflow, .tracker-home-details {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .tracker-home-about > .text-link {
+    margin-top: 18px;
+  }
+
+  .tracker-home-footer > div {
+    flex-wrap: wrap;
+    gap: 22px;
+  }
+
+  .tracker-exercise-list > div {
+    grid-template-columns: 125px 1fr;
+    gap: 14px;
+  }
+
+  .admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-stats article {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .admin-stats article:last-child {
+    border-bottom: 0;
+  }
+
+  .portal-page-heading h1 {
+    font-size: 25px;
+  }
+}
+
+/*# sourceMappingURL=src_app_refinements_css_1igg3k2-ikub5._.single.css.map*/
