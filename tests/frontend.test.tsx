@@ -7,6 +7,7 @@ import { useCloudHistory } from "../frontend/src/lib/use-cloud-history";
 import { useTracker } from "../frontend/src/lib/use-tracker";
 import sample from "./workout.json";
 import ParticipantPortal from "../frontend/src/components/participant-portal";
+import AdminPortal from "../frontend/src/components/admin-portal";
 
 const fake = vi.hoisted(() => ({ clients: [] as any[], subscriptions: [] as any[], request: vi.fn() }));
 vi.mock("convex/browser", () => ({ ConvexClient: class {
@@ -20,6 +21,9 @@ vi.mock("convex/browser", () => ({ ConvexClient: class {
 } }));
 vi.mock("../frontend/src/lib/tracker-api", async importOriginal => ({ ...await importOriginal(), trackerRequest: fake.request }));
 vi.mock("../frontend/src/components/portal-shell", () => ({default: ({children}: any) => <main>{children}</main>}));
+vi.mock("../frontend/src/components/modal", () => ({
+  default: ({ title, children }: any) => <section aria-label={title}>{children}</section>,
+}));
 function latest(name: string, index?: number) {
   return fake.subscriptions.filter(s => !s.stopped && getFunctionName(s.query) === name &&
     (index === undefined || s.args.paginationOpts?.cursor === (index ? `cursor-${index}` : null))).at(-1);
@@ -109,25 +113,55 @@ describe("reactive archive history", () => {
 
 function TrackerProbe() {
   const tracker = useTracker();
-  return <><output data-testid="tracker">{JSON.stringify({active: tracker.active?.id ?? null, ids: tracker.history.map(s=>s.id), busy: tracker.busy})}</output>
-    <button onClick={() => void tracker.start({source:"camera", exercise:"squat", station:"Station 1", participant_ids:["P01"], targets:[8]})}>Start</button>
-    <button onClick={() => void tracker.finish(sample.id)}>Finish</button></>;
+  return <output data-testid="tracker">{JSON.stringify({ active: tracker.active?.id ?? null, ids: tracker.history.map(s => s.id) })}</output>;
 }
-it("keeps local commands but reads live state and history exclusively from Convex", async () => {
-  fake.request.mockResolvedValue({exercises: []});
-  render(<LiveFeedbackProvider><TrackerProbe /></LiveFeedbackProvider>); connect();
-  await act(async () => { await Promise.resolve(); });
-  liveUpdate({updatedAt: Date.now(), dashboard: sample});
-  act(() => latest("archive:history").update({page: [sample], isDone: true, continueCursor: ""}));
-  expect(value("tracker").active).toBe(sample.id); expect(value("tracker").ids).toEqual([sample.id]);
-  fake.request.mockResolvedValue(sample);
-  await act(async () => fireEvent.click(screen.getByRole("button", {name: "Start"})));
-  await act(async () => fireEvent.click(screen.getByRole("button", {name: "Finish"})));
-  await act(async () => { vi.advanceTimersByTime(6000); await Promise.resolve(); });
-  const paths = fake.request.mock.calls.map(call => call[0]);
-  expect(paths).toContain("/api/session/start"); expect(paths).toContain("/api/session/finish");
-  expect(paths).not.toContain("/api/session"); expect(paths).not.toContain("/api/history");
-  expect(value("tracker").busy).toBe(false);
+
+it("starts, retries, and saves a camera session from the Admin Panel without Convex", async () => {
+  vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "");
+  const failed = { ...sample, camera: { state: "failed", message: "AlphaPose stopped." } };
+  const starting = { ...sample, camera: { state: "starting", message: "Starting AlphaPose." } };
+  const finished = { ...sample, finished_at: "2026-11-08T17:01:00+00:00" };
+  fake.request.mockImplementation(async (path) => {
+    switch (path) {
+      case "/api/exercises": return { exercises: [{ id: "squat", label: "Squats" }] };
+      case "/api/session": return { session: null };
+      case "/api/history": return { sessions: [] };
+      case "/api/session/start": return failed;
+      case "/api/camera/retry": return starting;
+      case "/api/session/finish": return finished;
+      default: throw new Error(`Unexpected request: ${path}`);
+    }
+  });
+  await act(async () => { render(<LiveFeedbackProvider><AdminPortal /></LiveFeedbackProvider>); });
+  fireEvent.click(screen.getByRole("button", { name: "Prepare a session" }));
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Start session" })));
+  expect(fake.request).toHaveBeenCalledWith("/api/session/start", {
+    source: "camera", exercise: "squat", station: "Station 1",
+    participant_ids: ["P01", "P02", "P03"], targets: [10, 10, 10],
+  });
+  expect(screen.getByText("AlphaPose stopped.")).toBeTruthy();
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "Retry camera" })));
+  expect(fake.request).toHaveBeenCalledWith("/api/camera/retry", { session_id: sample.id });
+  expect(screen.getByText("Starting AlphaPose.")).toBeTruthy();
+  await act(async () => fireEvent.click(screen.getByRole("button", { name: "End & save session" })));
+  expect(fake.request).toHaveBeenCalledWith("/api/session/finish", { session_id: sample.id });
+  expect(screen.getByRole("region", { name: "Session summary" })).toBeTruthy();
+  expect(screen.getByText("Session saved. The report is available in Session history.")).toBeTruthy();
+});
+
+it("prefers the local active state and merges local reports with the Convex archive", async () => {
+  const local = { ...sample, finished_at: "2026-11-09T10:00:00+00:00" };
+  const archived = { ...sample, id: "archived", finished_at: "2026-11-08T18:00:00+00:00" };
+  fake.request.mockImplementation(async (path) => ({
+    "/api/exercises": { exercises: [] },
+    "/api/session": { session: null },
+    "/api/history": { sessions: [local] },
+  })[path]);
+  await act(async () => { render(<LiveFeedbackProvider><TrackerProbe /></LiveFeedbackProvider>); });
+  connect();
+  liveUpdate({ updatedAt: Date.now(), dashboard: sample });
+  act(() => latest("archive:history").update({ page: [sample, archived], isDone: true, continueCursor: "" }));
+  expect(value("tracker")).toEqual({ active: null, ids: [sample.id, archived.id] });
 });
 
 it("renders real individual metrics and rep details instead of illustrative participant records", () => {

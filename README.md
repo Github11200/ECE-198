@@ -8,20 +8,20 @@ CCCARE instructors may supervise 10–12 participants at once, or up to 30 in a 
 
 The dashboard now has a fixed exercise catalog: seated right-arm curls, pushups, squats, seated knee extensions, seated shoulder raises, seated marches, and sit-to-stand. Choose a station name and assign a numbered participant ID to each camera lane. End-of-session reports separate rep targets, range scores, tracking coverage, and review notes. See [exercise criteria](docs/EXERCISES.md) and the [frontend/API handoff](docs/FRONTEND_API.md). The original curl path has been tried live; the added exercises have synthetic/API checks and still need volunteer validation. There is no custom-angle editor.
 
-Run `scripts/start-frontend.cmd` to install missing frontend dependencies, build the website, and start the Python app at [127.0.0.1:8000](http://127.0.0.1:8000). Open **Admin login**, enter any demo values, and choose **Prepare a session**. The Alder frontend now controls the real tracker API: exercise/station setup, one to five lane assignments, targets, live cues, SQLite history, and printable reports. Demo login is navigation only. The participant programme pages still contain clearly labeled illustrative records.
+Run `scripts/start-frontend.cmd` to install missing frontend dependencies, build the website, and start the Python app at [127.0.0.1:8000](http://127.0.0.1:8000). Open **Admin login**, enter any demo values, and choose **Prepare a session**. The Admin Panel reads live cues and saved reports directly from the tracker on the laptop. When configured, Convex supplies shared history and participant feedback. Demo login is navigation only.
 
 Once built, `python -m backend.tracker.server` or `scripts/start-dashboard.cmd` serves the same integrated site without a Node server. The original dashboard remains at [/tracker](http://127.0.0.1:8000/tracker), and remains the homepage fallback if the frontend has not been built. For a camera-free trial, select **Synthetic demo replay**, then **End & save session** after five seconds. See the [frontend guide](frontend/README.md), [demo runbook](docs/RUNBOOK.md), and [wearable handoff](docs/WEARABLE.md).
 
-For a real session on Leo's installed Intel laptop, start a Live AlphaPose camera session in the Admin Panel, then run `scripts/start-camera-intel.cmd`. The [Leo acceptance checklist](docs/LEO_ACCEPTANCE.md) maps the backend requirement to the existing database and separates the laptop handoff from wearable implementation.
+For a live session on a laptop with [AlphaPose installed](docs/WINDOWS_ALPHAPOSE.md), select **Live AlphaPose camera** and click **Start session**. The backend launches the bridge and opens its preview. Wait for the monitor to show a connected camera. **End & save session** saves the report and closes the managed camera. See the [actual-session checklist](docs/LEO_ACCEPTANCE.md).
 
-On Linux or macOS, each launcher has a bash equivalent: `./scripts/start-frontend.sh`, `./scripts/start-dashboard.sh`, and `./scripts/start-camera-intel.sh`. They accept the same arguments. For the usual laptop flow, `./scripts/start-local.sh` installs and builds the frontend if needed, starts the backend that serves the website, and opens the browser. Add `--camera` to have it wait for a Live AlphaPose camera session and then start the bridge automatically. The camera launcher looks for `../.venv-alphapose/bin/python` and `../AlphaPose` by default; override them with `ALPHAPOSE_PYTHON`, `ALPHAPOSE_REPO`, or `OPENVINO_DEVICE`.
+On Linux or macOS, `./scripts/start-local.sh` builds the frontend if needed, starts the backend, and opens the browser. On all platforms the backend looks for a sibling `.venv-alphapose` and `AlphaPose` checkout. Override them with `ALPHAPOSE_PYTHON` and `ALPHAPOSE_REPO`. Set `OPENVINO_DEVICE` to `GPU`, `CPU`, or `native` to select the inference path.
 
 ## Project layout
 
 ```
 backend/
   tracker/     server.py (HTTP API + session), pose.py, exercises.py, database.py, reports.py
-  camera/      bridge.py (AlphaPose → /api/pose), acceleration.py, export_models.py (OpenVINO)
+  camera/      process.py (launch/stop), bridge.py (AlphaPose → /api/pose), OpenVINO tools
   wearable/    publish_feedback.py (optional Convex relay)
   tests/       unit tests: python -m unittest
 frontend/      Next.js site, built to frontend/out and served by the backend

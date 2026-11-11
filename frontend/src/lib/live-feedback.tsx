@@ -42,7 +42,7 @@ export function LiveFeedbackProvider({ children }: { children: ReactNode }) {
     loading: Boolean(url && token && snapshot === undefined && !error),
     connected: fresh, error: message,
   }}>
-    {message && <div className="inline-notice" role="status">{message}
+    {message && url && <div className="inline-notice" role="status">Cloud feedback (optional for the local Admin Panel): {message}
       {url && <form onSubmit={(event) => {
         event.preventDefault();
         const value = new FormData(event.currentTarget).get("token");

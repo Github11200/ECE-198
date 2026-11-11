@@ -120,8 +120,15 @@ export default function AdminPortal({ view = "overview" }: { view?: "overview" |
       const result = await tracker.finish(active.id);
       setMonitorOpen(false);
       setSaved(result);
-      setNotice("Session stopped and queued for upload. It will appear in history when Convex confirms the save.");
+      setNotice("Session saved. The report is available in Session history.");
     } catch (cause) { setActionError(cause instanceof Error ? cause.message : "Could not save the session. Retry End & save."); }
+  }
+
+  async function retryCamera() {
+    if (!active || busy || !connected) return;
+    setActionError("");
+    try { await tracker.retryCamera(active.id); }
+    catch (cause) { setActionError(cause instanceof Error ? cause.message : "Could not restart the camera."); }
   }
 
   return <PortalShell role="admin">
@@ -201,7 +208,7 @@ export default function AdminPortal({ view = "overview" }: { view?: "overview" |
           <label>Participants<select value={lanes.length} onChange={e => setLaneCount(Number(e.target.value))}>{[1,2,3,4,5].map(n => <option key={n}>{n}</option>)}</select></label>
         </fieldset>
         <p className="tracker-hint">{exercise?.help}</p><p className="tracker-hint">Fixed demo angles: {exercise?.criteria}</p>
-        <p className="tracker-hint">{source === "camera" ? "Start the session, then run the AlphaPose camera bridge on this laptop. Its preview opens in a separate window." : source === "replay" ? "Generated joint coordinates run through the backend scorer for five seconds. No camera required." : "Start the session, then send your saved AlphaPose COCO JSON using the recording bridge."}</p>
+        <p className="tracker-hint">{source === "camera" ? "Start session opens AlphaPose automatically on this laptop. Wait for the camera preview before exercising; End & save closes the camera." : source === "replay" ? "Generated joint coordinates run through the backend scorer for five seconds. No camera required." : "Start the session, then send your saved AlphaPose COCO JSON using the recording bridge."}</p>
         <div className="tracker-lane-grid">{lanes.map((lane, i) => <fieldset className="tracker-lane" key={i} disabled={busy || !connected || Boolean(active)}>
           <legend>Camera lane {i + 1}</legend>
           <label>Participant ID<input aria-label={`Lane ${i+1} participant ID`} value={lane.id} pattern="P(?:0[1-9]|[1-9][0-9])" maxLength={3} required onChange={e => setLanes(current => current.map((p,j) => j === i ? { ...p, id: e.target.value.toUpperCase() } : p))} /></label>
@@ -214,6 +221,10 @@ export default function AdminPortal({ view = "overview" }: { view?: "overview" |
 
     {active && monitorOpen && <Modal title={`${active.exercise_label} · ${active.station}`} onClose={() => setMonitorOpen(false)} wide>
       {error && <p className="tracker-error" role="alert">{error}</p>}
+      {active.camera && <div className={active.camera.state === "failed" ? "tracker-error" : "inline-notice"} role="status">
+        {active.camera.message}
+        {["failed", "paused", "stopped"].includes(active.camera.state) && <button className="button button-outline" disabled={busy || !connected} onClick={() => void retryCamera()}>Retry camera</button>}
+      </div>}
       <p className="modal-intro">{active.criteria.description}<br /><span>{sourceNames[active.source]} · {active.participants.filter(p => p.angle != null).length} of {active.participants.length} lanes have a usable pose.</span></p>
       {active.replay_done && <p className="inline-notice">Replay complete. End & save to generate the report.</p>}
       <div className="demo-session-layout">

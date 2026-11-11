@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-# Start the website and API, and optionally connect the AlphaPose camera bridge.
-#
-# The Python backend serves the built Next.js export and the API on one origin,
-# so this is the only server needed for normal use. With --camera, the script
-# waits for a "Live AlphaPose camera" session to be prepared in the dashboard,
-# then starts the bridge automatically.
+# Start the website, API, and optional Convex publisher.
+# The backend launches AlphaPose when an instructor starts a camera session.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,8 +16,6 @@ fi
 PYTHON="${PYTHON:-python3}"
 PORT=8000
 BUILD_MODE=auto   # auto | always | never
-START_CAMERA=0
-CAMERA_WAIT=300
 OPEN_BROWSER=1
 SERVER_ARGS=()
 
@@ -36,10 +30,6 @@ Options:
   --port PORT          Serve on PORT (default 8000)
   --build              Rebuild the website before starting
   --no-build           Skip the build; serve the existing export if present
-  --camera             Also start the AlphaPose bridge once a camera
-                       session is prepared in the dashboard
-  --camera-wait SECS   How long to wait for that session (default 300,
-                       0 waits indefinitely)
   --no-open            Do not open the browser automatically
   -h, --help           Show this help
 
@@ -47,13 +37,11 @@ AlphaPose environment variables:
   ALPHAPOSE_PYTHON     Python in the AlphaPose venv
                        (default ../.venv-alphapose/bin/python)
   ALPHAPOSE_REPO       AlphaPose checkout (default ../AlphaPose)
-  OPENVINO_DEVICE      Set to GPU or CPU to use the OpenVINO path
-                       (default: native PyTorch, no OpenVINO flag)
+  OPENVINO_DEVICE      GPU, CPU, or native (default: GPU if models exist)
 
 Examples:
   ./scripts/start-local.sh
-  ./scripts/start-local.sh --camera
-  OPENVINO_DEVICE=GPU ./scripts/start-local.sh --camera
+  OPENVINO_DEVICE=GPU ./scripts/start-local.sh
   ./scripts/start-local.sh --port 8001 --no-open
 EOF
 }
@@ -67,10 +55,11 @@ while [ "$#" -gt 0 ]; do
       PORT="${1#*=}"; SERVER_ARGS+=(--port "$PORT"); shift ;;
     --build) BUILD_MODE=always; shift ;;
     --no-build) BUILD_MODE=never; shift ;;
-    --camera) START_CAMERA=1; shift ;;
+    # Accept older launcher commands. Camera startup now belongs to the server.
+    --camera) shift ;;
     --camera-wait)
       [ "$#" -ge 2 ] || { echo "--camera-wait needs a value" >&2; exit 2; }
-      CAMERA_WAIT="$2"; shift 2 ;;
+      shift 2 ;;
     --no-open) OPEN_BROWSER=0; shift ;;
     -h|--help) usage; exit 0 ;;
     --) shift; SERVER_ARGS+=("$@"); break ;;
@@ -85,22 +74,6 @@ fi
 if ! "$PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then
   echo "Python 3.10 or newer is required (found $("$PYTHON" --version 2>&1))." >&2
   exit 1
-fi
-
-ALPHAPOSE_PYTHON="${ALPHAPOSE_PYTHON:-$ROOT/../.venv-alphapose/bin/python}"
-ALPHAPOSE_REPO="${ALPHAPOSE_REPO:-$ROOT/../AlphaPose}"
-
-if [ "$START_CAMERA" -eq 1 ]; then
-  if [ ! -x "$ALPHAPOSE_PYTHON" ]; then
-    echo "AlphaPose Python was not found at $ALPHAPOSE_PYTHON." >&2
-    echo "Set up the environment as described in SESSION.md, or set ALPHAPOSE_PYTHON." >&2
-    exit 1
-  fi
-  if [ ! -f "$ALPHAPOSE_REPO/scripts/demo_inference.py" ]; then
-    echo "The AlphaPose checkout was not found at $ALPHAPOSE_REPO." >&2
-    echo "Place AlphaPose beside ECE-198, or set ALPHAPOSE_REPO." >&2
-    exit 1
-  fi
 fi
 
 if [ "$BUILD_MODE" != never ]; then
@@ -120,7 +93,6 @@ fi
 
 URL="http://127.0.0.1:$PORT"
 SERVER_PID=""
-CAMERA_PID=""
 PUBLISHER_PID=""
 
 cleanup() {
@@ -128,10 +100,6 @@ cleanup() {
   if [ -n "$PUBLISHER_PID" ] && kill -0 "$PUBLISHER_PID" 2>/dev/null; then
     kill "$PUBLISHER_PID" 2>/dev/null || true
     wait "$PUBLISHER_PID" 2>/dev/null || true
-  fi
-  if [ -n "$CAMERA_PID" ] && kill -0 "$CAMERA_PID" 2>/dev/null; then
-    kill "$CAMERA_PID" 2>/dev/null || true
-    wait "$CAMERA_PID" 2>/dev/null || true
   fi
   if [ -n "$SERVER_PID" ] && kill -0 "$SERVER_PID" 2>/dev/null; then
     kill "$SERVER_PID" 2>/dev/null || true
@@ -194,68 +162,6 @@ if [ "$OPEN_BROWSER" -eq 1 ]; then
   fi
 fi
 
-wait_for_camera_session() {
-  "$PYTHON" - "$PORT" "$CAMERA_WAIT" <<'PY'
-import json
-import sys
-import time
-import urllib.request
-
-port = int(sys.argv[1])
-wait = float(sys.argv[2])
-url = f"http://127.0.0.1:{port}/api/session"
-deadline = None if wait <= 0 else time.monotonic() + wait
-
-while deadline is None or time.monotonic() < deadline:
-    try:
-        with urllib.request.urlopen(url, timeout=2) as response:
-            session = json.load(response).get("session")
-        if session and session.get("source") == "camera":
-            print(session["id"])
-            raise SystemExit(0)
-    except SystemExit:
-        raise
-    except Exception:
-        pass
-    time.sleep(1)
-raise SystemExit(1)
-PY
-}
-
-if [ "$START_CAMERA" -eq 1 ]; then
-  echo
-  echo "Prepare a session in the Admin Panel:"
-  echo "  1. Choose 'Live AlphaPose camera' as the input source."
-  echo "  2. Assign participants and targets, then start the session."
-  if [ "$CAMERA_WAIT" = 0 ]; then
-    echo "Waiting for the camera session (Ctrl+C to cancel)..."
-  else
-    echo "Waiting up to ${CAMERA_WAIT}s for the camera session (Ctrl+C to cancel)..."
-  fi
-  if SESSION_ID="$(wait_for_camera_session)"; then
-    echo "Camera session $SESSION_ID detected. Starting the AlphaPose bridge..."
-    CAMERA_ARGS=(--port "$PORT" camera --repo "$ALPHAPOSE_REPO" --show-camera
-                 --diagnostics data/tracking-diagnostics.json)
-    if [ -n "${OPENVINO_DEVICE:-}" ]; then
-      CAMERA_ARGS+=(--openvino-device "$OPENVINO_DEVICE"
-                    --cpu-threads "${ALPHAPOSE_CPU_THREADS:-4}")
-    fi
-    PYTHONUTF8=1 \
-    TORCH_HOME="${TORCH_HOME:-$ROOT/../.torch}" \
-    MPLCONFIGDIR="${MPLCONFIGDIR:-$ROOT/../.matplotlib}" \
-    OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}" \
-      "$ALPHAPOSE_PYTHON" -u -m backend.camera.bridge \
-      ${CAMERA_ARGS[@]+"${CAMERA_ARGS[@]}"} &
-    CAMERA_PID=$!
-    echo "AlphaPose bridge running (PID $CAMERA_PID). Press Ctrl+C to stop everything."
-  else
-    echo "No camera session appeared within ${CAMERA_WAIT}s; continuing with the website only." >&2
-    echo "Run '$0 --camera' again when you are ready." >&2
-  fi
-else
-  echo
-  echo "To connect AlphaPose, restart with: $0 --camera"
-fi
-
+echo "Start a Live AlphaPose camera session from the Admin Panel to open the webcam."
 echo "Press Ctrl+C to stop."
 wait "$SERVER_PID"

@@ -10,7 +10,7 @@ Open the project directory in VS Code and run this in its terminal. On Windows, 
 python -m backend.tracker.server
 ```
 
-After building the new frontend with `scripts/start-frontend.cmd` (or `npm.cmd --prefix frontend ci` followed by `npm.cmd --prefix frontend run build`), open [http://127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin login**, enter any demo values, and use **Prepare a session**. Select the exercise, pose input, participant count, IDs, and per-lane targets. The Admin Panel uses the current real backend. The login is demo navigation only; participant programme pages retain illustrative records.
+On Windows, run `scripts/start-frontend.cmd` for the first build. For the demo, run `scripts/start-dashboard.cmd` to serve the existing build, then open [http://127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin login**, enter any demo values, and use **Prepare a session**. Select the exercise, pose input, participant count, IDs, and per-lane targets. The Admin Panel uses the local tracker and SQLite reports even without Convex.
 
 The original walkthrough below is available at [http://127.0.0.1:8000/tracker](http://127.0.0.1:8000/tracker), or at the homepage if no frontend build exists. The demo uses Python 3.10 or later. The core app requires no package installation or internet access; building the React frontend requires Node and its locked dependencies. Keep the terminal running. Use `python -m backend.tracker.server --port 8001` if port 8000 is busy and pass `--port 8001` to bridge commands before the subcommand.
 
@@ -23,15 +23,13 @@ A five-minute presentation can give 45 seconds to the CCCARE problem, 90 seconds
 
 ## Three participants: ten squats each
 
-On Leo's installed Intel laptop, start a **Live AlphaPose camera** session in the Admin Panel, then run `scripts/start-camera-intel.cmd` from the project folder. It supplies the already verified environment and GPU arguments. Start it again for each new camera session; keep its terminal open while tracking. It does not start a session by itself.
-
-1. Select **Squats**, **Live AlphaPose camera**, and **3** participants. Assign P01, P02, P03 to lanes 1, 2, 3 and set each target to **10**. Start the session, then run the installed Intel GPU camera bridge from [WINDOWS_ALPHAPOSE.md](WINDOWS_ALPHAPOSE.md#intel-gpu-mode) with `--show-camera`.
+1. Select **Squats**, **Live AlphaPose camera**, and **3** participants. Assign P01, P02, P03 to lanes 1, 2, 3 and set each target to **10**. Click **Start session**. Wait for the AlphaPose preview and the monitor's camera-connected message.
 2. Use the labeled left, middle, and right thirds of the preview. Each person stays in their lane. Move the camera back to include all three full bodies, with a side view of each person's right hip, knee, and ankle. Start standing.
 3. Each person completes ten squat attempts, returning to standing between attempts. Current demo criteria: stand/return at knee angle >=160 degrees, attempt begins at <=130 degrees, range reached at <=100 degrees. A completed short attempt still counts and is marked short. Compare against a manual count; these squat criteria have not yet been validated on real volunteers.
 4. When everyone finishes, click **End & save session**. Targets do not automatically end the session. In the expanded History entry, click **Open workout report / print**. The generated report contains actual per-person dose, full/short counts, range score, tracking coverage, review notes, and per-rep angles. Use **Print / save as PDF** to export it.
-5. Stop the camera bridge with Ctrl+C. Completed results and printable reports remain available after restarting the server.
+5. Confirm that the preview closes. Completed results and printable reports remain available after restarting the server.
 
-In the new Admin Panel, **View live session** / **Open monitor** shows per-lane reps and cues. Closing that dialog keeps tracking active. **End & save session** opens the report summary; **Session history** retains it across reloads/restarts. Starting a new camera session still requires restarting the bridge for its new session ID.
+In the Admin Panel, **View live session** / **Open monitor** shows per-lane reps and cues. Closing that dialog keeps tracking active. If the camera stops delivering frames, check the preview or `data/camera.log`, then use **Retry camera** to reconnect within the same session. **Synthetic demo replay** is available when the camera is unavailable.
 
 ## Try a real AlphaPose input
 
@@ -52,13 +50,9 @@ python scripts/demo_inference.py --cfg configs/coco/resnet/256x192_res50_lr1e-3_
 
 ### Connect the webcam to the dashboard
 
-Use a fixed camera, good lighting and one consenting teammate. Sit in frame with the right shoulder, elbow and wrist visible. Close any app using the webcam. Start the dashboard in one terminal. In the dashboard select **Live AlphaPose camera**, choose **1** participant, and start the session. Open a second terminal from this project directory and activate the AlphaPose environment.
+Use a fixed camera, good lighting and one consenting teammate. Sit in frame with the right shoulder, elbow and wrist visible. Close apps using the webcam. Select **Seated right-arm curl**, **Live AlphaPose camera**, and **1** participant, then start the session. Begin with a lowered arm. Try a full curl, a shortened curl, and an obstructed wrist. Finish and save from the dashboard.
 
-```sh
-python -m backend.camera.bridge camera --repo ../AlphaPose
-```
-
-Append `--gpus -1` for a CPU trial or `--index 1` to select a second camera. Use `--show-camera` to also open AlphaPose's native view. Begin with a lowered arm. Try a full curl, a shortened curl and an obstructed wrist. Finish the session on the dashboard, then press Ctrl+C in the camera terminal.
+For manual bridge diagnostics, start the server with `--no-auto-camera`, start a camera session, then run the [separate AlphaPose command](WINDOWS_ALPHAPOSE.md) and stop it with Ctrl+C after saving. For managed mode, use server option `--camera-index 1` for a second camera.
 
 For five volunteers, seat them left to right in five equal image-width lanes. Keep each person's detected box center inside their lane. A lane with two detections or no detection reports no clear view. Use the same participants in their assigned seats throughout a session.
 

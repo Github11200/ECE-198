@@ -6,6 +6,7 @@ import json
 import mimetypes
 import re
 from pathlib import Path
+import signal
 from threading import Lock
 from time import monotonic
 from uuid import uuid4
@@ -15,6 +16,7 @@ from . import database
 from .pose import MIN_CONFIDENCE, REPLAY_FPS, REPLAY_FRAMES, replay_frame
 from .exercises import DEFAULT_EXERCISE, EXERCISES, catalog, counter, criteria, measure, report
 from .reports import workout_report
+from ..camera.process import CameraController, CameraError
 
 ROOT = Path(__file__).resolve().parents[2]  # repository root
 ASSETS = {"/": ("index.html", "text/html"), "/style.css": ("style.css", "text/css"),
@@ -114,11 +116,17 @@ class Session:
 
 
 class SessionService:
-    def __init__(self, db_path):
+    def __init__(self, db_path, camera=None):
         self.db_path = db_path
         database.initialize(db_path)
         self.active = None
         self.lock = Lock()
+        self.camera = camera
+
+    def with_camera_status(self, snapshot):
+        if self.camera and self.active and self.active.source == 'camera':
+            snapshot['camera'] = self.camera.status(self.active.id, self.active.last_input)
+        return snapshot
 
     def current(self):
         with self.lock:
@@ -128,7 +136,7 @@ class SessionService:
             if self.active.source == "replay" and self.active.last_frame > self.active.last_archived_frame:
                 database.enqueue(self.db_path, "update", snapshot)
                 self.active.last_archived_frame = self.active.last_frame
-            return snapshot
+            return self.with_camera_status(snapshot)
 
     def start(self, data):
         source, targets = data.get("source"), data.get("targets")
@@ -154,10 +162,34 @@ class SessionService:
                 raise RequestError(409, "Finish the active session first.")
             candidate = Session(source, targets, exercise, station.strip(), ids)
             snapshot = candidate.snapshot()
-            database.enqueue(self.db_path, "start", snapshot)
+            # The child reads /api/session and waits for this lock. Publish the
+            # session only after its durable start event succeeds.
+            if source == 'camera' and self.camera:
+                try:
+                    self.camera.start(candidate.id)
+                except CameraError as error:
+                    raise RequestError(503, str(error)) from error
+            try:
+                database.enqueue(self.db_path, "start", snapshot)
+            except Exception:
+                if source == 'camera' and self.camera:
+                    self.camera.stop(candidate.id)
+                raise
             candidate.last_archived_frame = candidate.last_frame
             self.active = candidate
-            return snapshot
+            return self.with_camera_status(snapshot)
+
+    def restart_camera(self, data):
+        with self.lock:
+            if not self.active or self.active.id != data.get('session_id') or self.active.source != 'camera':
+                raise RequestError(409, 'Choose the active camera session before retrying its camera.')
+            if self.camera is None:
+                raise RequestError(503, 'Automatic camera control is disabled on this server.')
+            try:
+                self.camera.start(self.active.id, restart=True)
+            except CameraError as error:
+                raise RequestError(503, str(error)) from error
+            return self.with_camera_status(self.active.snapshot())
 
     def ingest(self, data):
         with self.lock:
@@ -200,6 +232,13 @@ class SessionService:
                 result = self.active.snapshot(finished=True)
                 database.save(self.db_path, result)
                 self.active = None
+                if self.camera:
+                    try:
+                        self.camera.stop(session_id)
+                    except CameraError as error:
+                        # The completed result is already safe; a close error
+                        # must not make a successful save appear to have failed.
+                        print(f'Camera close: {error}', flush=True)
                 return result
             saved = database.find(self.db_path, session_id)
             if saved:
@@ -217,8 +256,12 @@ def handler_for(service, port):
             self.send_header("Content-Length", str(len(content)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
-            self.end_headers()
-            self.wfile.write(content)
+            try:
+                self.end_headers()
+                self.wfile.write(content)
+            except ConnectionError:
+                # A stopped camera bridge can disconnect during its last request.
+                pass
 
         def send_json(self, status, result):
             self.send(status, json.dumps(result).encode(), "application/json")
@@ -268,6 +311,7 @@ def handler_for(service, port):
                 else:
                     routes = {"/api/session/start": (201, service.start),
                               "/api/session/finish": (200, service.finish),
+                              "/api/camera/retry": (200, service.restart_camera),
                               "/api/pose": (200, service.ingest),
                               "/api/convex/ack": (200, lambda data: (
                                   database.acknowledge(service.db_path, data.get("eventId", "")) or {"ok": True}))}
@@ -303,20 +347,38 @@ def handler_for(service, port):
     return Handler
 
 
+def handle_termination(_signum, _frame):
+    raise KeyboardInterrupt
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--db", type=Path, default=ROOT / "data" / "sessions.sqlite3")
+    parser.add_argument('--no-auto-camera', action='store_true', help='Disable camera subprocesses for headless/API tests.')
+    parser.add_argument('--camera-python', type=Path, help='Python executable in the installed AlphaPose environment.')
+    parser.add_argument('--alphapose-repo', type=Path, help='Separate AlphaPose checkout (defaults to ../AlphaPose).')
+    parser.add_argument('--camera-device', choices=('auto', 'GPU', 'CPU', 'native'), default=None)
+    parser.add_argument('--camera-index', type=int, default=0)
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("--port must be between 1 and 65535")
-    service = SessionService(args.db)
+    camera = None if args.no_auto_camera else CameraController(
+        ROOT, args.port, args.camera_python, args.alphapose_repo, args.camera_device, args.camera_index)
+    service = SessionService(args.db, camera=camera)
+    signal.signal(signal.SIGTERM, handle_termination)
     with ThreadingHTTPServer(("127.0.0.1", args.port), handler_for(service, args.port)) as server:
         print(f"CCCARE Exercise Tracker · http://localhost:{args.port}", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:
             pass
+        finally:
+            if camera:
+                try:
+                    camera.stop()
+                except CameraError as error:
+                    print(f'Camera close: {error}', flush=True)
 
 
 if __name__ == "__main__":

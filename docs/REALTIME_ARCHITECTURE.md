@@ -1,6 +1,6 @@
 # Session archive and live feedback
 
-Convex is the persistent session archive used by the frontend. Sessions start and stop using buttons; the laptop scores AlphaPose input. Each session has multiple people, and each person's attendance links to that session's complete performance metrics. Live wearable cues remain a separate, replaceable latest-state mailbox.
+Convex provides shared session history and participant feedback. The laptop starts AlphaPose and scores input when the instructor starts a camera session. The Admin Panel reads the laptop's active session and completed SQLite reports locally, and merges in shared archive history when Convex is connected. Each person's attendance links to their performance metrics.
 
 ```mermaid
 flowchart LR
@@ -18,7 +18,7 @@ flowchart LR
     History --> Frontend[Next.js frontend]
     Personal --> Frontend
     Feedback -->|WebSocket subscription| Frontend
-    Frontend -->|Local HTTP start / stop| Tracker
+    Frontend <-->|Local HTTP session and reports| Tracker
     Feedback -.-> Transport[Future C++ compatible\nsubscription transport]
     Transport -.-> Wearable[C++ wearable\nPaired ID → display / haptics]
 ```
@@ -43,7 +43,7 @@ The tracker archives every accepted AlphaPose input frame, not just the 250 ms p
 
 Start, accepted pose updates and stop write durable upload events. Session IDs and event IDs survive retries. The publisher drains `/api/convex/pending`, sends each event to Convex `/archive`, and acknowledges locally only after Convex commits. A failed upload or lost acknowledgement leaves the event available for retry. Convex deduplicates frames and rejects older state overwriting newer/final metrics. Session, people and attendance changes commit in one Convex transaction.
 
-SQLite now provides an upload queue and recovery copy; the frontend's session history comes from Convex. Completed local reports and their pending upload events commit together. Existing SQLite reports are automatically queued for one-time import on server startup, including records older than the legacy local history endpoint's 30-row limit. Older reports preserve the data originally recorded; missing old raw frames cannot be reconstructed. Keep the same `--db` file while syncing so pending uploads are retained.
+SQLite provides local reports and a durable upload queue. Completed local reports and their pending upload events commit together. Existing SQLite reports are automatically queued for one-time import on server startup, including records older than the local history endpoint's 30-row limit. Older reports preserve the data originally recorded; missing old raw frames cannot be reconstructed. Keep the same `--db` file while syncing so pending uploads are retained.
 
 A quick session that starts and stops between publisher polls is still archived. If the network is down, it remains queued; it appears in Convex history after upload succeeds. `/api/convex/status` reports pending event count. Start/stop actions and exercise metadata stay local because the camera/scorer runs on the laptop. The legacy local history/report routes remain for compatibility/recovery. No existing local data is deleted. To roll back, stop the publisher and restore the previous frontend/backend; the original SQLite summaries remain readable.
 

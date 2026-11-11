@@ -48,6 +48,10 @@ export type Workout = {
   participants: ParticipantResult[];
   replay_done?: boolean;
   last_frame?: number;
+  camera?: {
+    state: "starting" | "running" | "failed" | "paused" | "stopped";
+    message: string;
+  };
 };
 
 export type SessionSetup = {
