@@ -2,7 +2,6 @@
 #include <Adafruit_SSD1306.h>
 #include <DFRobot_BMX160.h>
 #include <Wire.h>
-#include <WiFi.h>
 
 #define I2C_SDA 13
 #define I2C_SCL 14
@@ -14,12 +13,14 @@ const float GX_OFF = 0.72, GY_OFF = 0.49, GZ_OFF = 0.45;
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 DFRobot_BMX160 bmx160;
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   Wire.setPins(I2C_SDA, I2C_SCL);
   Wire.begin(I2C_SDA, I2C_SCL);
 
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C) || !bmx160.begin()) {
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C) || !bmx160.begin())
+  {
     Serial.println("OLED or BMX160 not found - check wiring");
     for (;;)
       ;
@@ -27,7 +28,8 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
 }
 
-void loop() {
+void loop()
+{
   sBmx160SensorData_t gyro, accel; // mag is read but not used
   bmx160.getAllData(nullptr, &gyro, &accel);
 
