@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start the website and API, and optionally connect the AlphaPose camera bridge.
 #
-# The Python backend serves the built Next.js export and the API on one origin,
+# The Python backend serves the built SvelteKit site and the API on one origin,
 # so this is the only server needed for normal use. With --camera, the script
 # waits for a "Live AlphaPose camera" session to be prepared in the dashboard,
 # then starts the bridge automatically.
@@ -30,7 +30,7 @@ usage() {
 Usage: ./scripts/start-local.sh [options] [-- <server options>]
 
 Starts the CCCARE website and backend at http://127.0.0.1:8000.
-The website is a static Next.js export served by the Python backend.
+The website is a static SvelteKit build (frontend/out) served by the Python backend.
 
 Options:
   --port PORT          Serve on PORT (default 8000)
@@ -104,7 +104,7 @@ if [ "$START_CAMERA" -eq 1 ]; then
 fi
 
 if [ "$BUILD_MODE" != never ]; then
-  if [ ! -f frontend/node_modules/next/package.json ]; then
+  if [ ! -f frontend/node_modules/@sveltejs/kit/package.json ]; then
     echo "Installing frontend dependencies (first run only)..."
     npm --prefix frontend ci
   fi

@@ -1,6 +1,6 @@
 > Current architecture: Convex now archives sessions, people, attendance metrics and accepted AlphaPose frames. Frontend history and live feedback subscribe to Convex. SQLite is retained for recovery and durable upload retries. See [setup, data model and tests](REALTIME_ARCHITECTURE.md); older local-history descriptions below describe the compatibility path.
 
-> Update: live frontend session state now subscribes to Convex rather than polling `/api/session`. Local controls/history remain HTTP. See [current architecture and setup](REALTIME_ARCHITECTURE.md).
+> Update: the SvelteKit frontend polls the tracker's `/api/session` for the live monitor and uses `/api/history` for local history; Convex (`feedback:live`, `archive:history`, `archive:personHistory`) is used when a read token is entered, and as the live source when the tracker is unreachable. See [current architecture and setup](REALTIME_ARCHITECTURE.md).
 
 # Frontend handoff: stations, sessions, and reports
 

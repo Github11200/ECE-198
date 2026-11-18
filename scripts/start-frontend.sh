@@ -2,6 +2,9 @@
 # Install missing frontend dependencies, build the static export, then start the Python app.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+for arg in "$@"; do
+  case "$arg" in -h|--help) exec "${PYTHON:-python3}" -m backend.tracker.server --help ;; esac
+done
 if [ ! -f frontend/node_modules/@sveltejs/kit/package.json ]; then
   npm --prefix frontend ci
 fi

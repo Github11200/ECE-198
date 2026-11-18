@@ -10,7 +10,7 @@ The dashboard now has a fixed exercise catalog: seated right-arm curls, pushups,
 
 Run `scripts/start-frontend.cmd` to install missing frontend dependencies, build the website, and start the Python app at [127.0.0.1:8000](http://127.0.0.1:8000). Choose **Admin** on the start page (no sign-in), then choose **Prepare a session**. The Alder frontend now controls the real tracker API: exercise/station setup, one to five lane assignments, targets, live cues, SQLite history, and printable reports. Demo login is navigation only. The participant programme pages still contain clearly labeled illustrative records.
 
-Once built, `python -m backend.tracker.server` or `scripts/start-dashboard.cmd` serves the same integrated site without a Node server. The original dashboard remains at [/tracker](http://127.0.0.1:8000/tracker), and remains the homepage fallback if the frontend has not been built. For a camera-free trial, select **Synthetic demo replay**, then **End & save session** after five seconds. See the [frontend guide](frontend/README.md), [demo runbook](docs/RUNBOOK.md), and [wearable handoff](docs/WEARABLE.md).
+Once built, `python -m backend.tracker.server` or `scripts/start-dashboard.cmd` serves the same integrated site without a Node server. The original dashboard remains at [/tracker](http://127.0.0.1:8000/tracker), and remains the homepage fallback if the frontend has not been built. For a camera-free trial, select **Replay**, then **End & save session** after five seconds. See the [frontend guide](frontend/README.md), [demo runbook](docs/RUNBOOK.md), and [wearable handoff](docs/WEARABLE.md).
 
 For a real session on Leo's installed Intel laptop, start a Live AlphaPose camera session in the Admin Panel, then run `scripts/start-camera-intel.cmd`. The [Leo acceptance checklist](docs/LEO_ACCEPTANCE.md) maps the backend requirement to the existing database and separates the laptop handoff from wearable implementation.
 
@@ -22,11 +22,12 @@ On Linux or macOS, each launcher has a bash equivalent: `./scripts/start-fronten
 backend/
   tracker/     server.py (HTTP API + session), pose.py, exercises.py, database.py, reports.py
   camera/      bridge.py (AlphaPose → /api/pose), acceleration.py, export_models.py (OpenVINO)
-  wearable/    publish_feedback.py (optional Convex relay)
+  wearable/    publish_feedback.py (Convex relay: live feedback + session archive upload)
   tests/       unit tests: python -m unittest
-frontend/      Next.js site, built to frontend/out and served by the backend
+frontend/      SvelteKit site, built to frontend/out and served by the backend
 legacy-dashboard/  original HTML dashboard at /tracker
-convex/        Convex HTTP functions for the wearable
+convex/        Convex schema, archive/history queries, live feedback, HTTP routes
+ECE198-OLED-IMU/  ESP32 wearable firmware (OLED + IMU, Convex C++ client), PlatformIO
 scripts/       start-*.sh (Linux/macOS) and start-*.cmd (Windows) launchers
 docs/          runbook, API, exercises, hardware notes
 data/          local SQLite database and diagnostics (ignored)
@@ -42,19 +43,19 @@ The Nov. 11 checkpoint is a five-minute progress presentation. A five-person syn
 
 ## Stack and ownership
 
-For the current Next.js/Python architecture and proposed participant-ID and timed-round approaches, see [identity and measurements](docs/IDENTITY_AND_MEASUREMENT.md). Marker recognition and automatic timed rounds are proposals, not implemented features.
+For the current SvelteKit/Python architecture and proposed participant-ID and timed-round approaches, see [identity and measurements](docs/IDENTITY_AND_MEASUREMENT.md). Marker recognition and automatic timed rounds are proposals, not implemented features.
 
 | Part | Stack and role | Owner |
 | --- | --- | --- |
 | Pose input | AlphaPose FastPose, 17 COCO keypoints, Python adapter | Leo with Eric D |
 | Rep and range logic | Python, dot product and an angle-based state machine, one state per participant | Leo's integration baseline, Eric D owns exercise scoring refinement |
-| Dashboard | Next.js/React static export, served by the local Python app; original HTML dashboard retained | Leo and frontend teammate |
+| Dashboard | SvelteKit static build, served by the local Python app; original HTML dashboard retained | Leo and frontend teammate |
 | Session API and database | Python standard library HTTP and SQLite, same laptop | Leo |
 | Wearable and binding | Arduino or verified Wi-Fi hardware, OLED, optional pulse sensor, manual device-to-participant pairing for the demo | Erik Zhu |
 | Wearable feedback | Convex HTTPS contract for latest summaries and optional end-of-session sensor data | Jinay Patel, with Leo providing the laptop interface |
 | End-to-end test | Ground-truth rep labels, one wearable when available | Eric D and team |
 
-The laptop is the authority for one active session. The camera adapter assigns detections by fixed left-to-right camera lanes, and the instructor maps participant IDs to those lanes before starting. Participants stay in their assigned lanes for that session; IDs can be reused at later stations. The server computes counts and range cues. The browser reads current state, and SQLite saves completed results. The optional Convex handoff sends compact participant updates to the wearable over HTTPS; it does not currently store session history. The camera and scoring path stays on the laptop.
+The laptop is the authority for one active session. The camera adapter assigns detections by fixed left-to-right camera lanes, and the instructor maps participant IDs to those lanes before starting. Participants stay in their assigned lanes for that session; IDs can be reused at later stations. The server computes counts and range cues. The browser reads current state, and SQLite saves completed results. The Convex relay archives sessions, attendance and pose frames for cloud history, and publishes live feedback that the ESP32 wearable receives over a Convex WebSocket subscription. The camera and scoring path stays on the laptop.
 
 ```mermaid
 flowchart TD
@@ -63,8 +64,9 @@ flowchart TD
     B --> D["Python rep and range logic"]
     D --> E["Instructor dashboard"]
     D --> F["SQLite session history"]
-    D -.-> G["Convex wearable handoff"]
-    G -.-> H["Paired wearable and OLED"]
+    D --> G["Convex: archive + live feedback"]
+    G --> H["Paired ESP32 wearable and OLED"]
+    G --> E
 ```
 
 ## Constraints and acceptance
