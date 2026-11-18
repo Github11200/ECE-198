@@ -2,6 +2,12 @@ import tailwindcss from '@tailwindcss/vite';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
+import type { ProxyOptions } from 'vite';
+
+type ProxyServer = Parameters<NonNullable<ProxyOptions['configure']>>[0];
+
+// Override with TRACKER_URL=http://127.0.0.1:8802 npm run dev to use another tracker port.
+const TRACKER = process.env.TRACKER_URL ?? 'http://127.0.0.1:8000';
 
 export default defineConfig({
 	// Svelte components resolve their browser build under Vitest (jsdom).
@@ -26,9 +32,21 @@ export default defineConfig({
 		env: { TZ: 'America/Toronto', PUBLIC_CONVEX_URL: 'https://example.convex.cloud' }
 	},
 	server: {
-		proxy: {
-			'/api': 'http://127.0.0.1:8000',
-			'/reports': 'http://127.0.0.1:8000'
-		}
+		// The tracker only accepts Host 127.0.0.1:<port>/localhost:<port> and rejects
+		// POSTs whose Origin is not itself, so present each request as same-origin.
+		proxy: Object.fromEntries(
+			['/api', '/reports'].map((path) => [
+				path,
+				{
+					target: TRACKER,
+					changeOrigin: true,
+					configure: (proxy: ProxyServer) => {
+						proxy.on('proxyReq', (proxyReq) => {
+							if (proxyReq.getHeader('origin')) proxyReq.setHeader('origin', TRACKER);
+						});
+					}
+				}
+			])
+		)
 	}
 });

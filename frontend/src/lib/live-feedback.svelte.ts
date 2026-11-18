@@ -4,6 +4,16 @@ import type { Workout } from './tracker-api';
 
 type Snapshot = { updatedAt: number; dashboard: Workout | null } | null;
 
+/** Turns a raw Convex server error ("[CONVEX Q(...)] [Request ID] Server Error Uncaught Error: ...") into readable text. */
+export function convexErrorMessage(cause: unknown) {
+	const raw = cause instanceof Error ? cause.message : String(cause);
+	if (/Invalid feedback read token/i.test(raw)) {
+		return 'Convex rejected the feedback read token. Check the token and connect again.';
+	}
+	const detail = raw.match(/Uncaught Error:\s*([^\n]*?)(?:\s+at\s|$)/)?.[1] ?? raw;
+	return `Convex request failed: ${detail}`;
+}
+
 const liveQuery = makeFunctionReference<'query', { token: string }, Snapshot>('feedback:live');
 const convexUrl: string = import.meta.env.PUBLIC_CONVEX_URL ?? '';
 
@@ -20,6 +30,7 @@ class LiveFeedbackStore {
 	error = $state('');
 
 	#unsubscribe: (() => void) | null = null;
+	#attempt = 0;
 	#timer: ReturnType<typeof setInterval> | undefined;
 
 	get configured() {
@@ -39,30 +50,31 @@ class LiveFeedbackStore {
 	}
 
 	get message() {
-		if (!convexUrl) return 'Live feedback requires PUBLIC_CONVEX_URL and a rebuilt frontend.';
-		if (!this.token) return "Enter the team's feedback read token to connect to live Convex feedback.";
-		return (
-			this.error ||
-			(this.snapshot === undefined
-				? 'Connecting to Convex…'
-				: !this.fresh
-					? 'Waiting for the laptop feedback publisher.'
-					: '')
-		);
+		if (!convexUrl)
+			return "Convex is not configured (set PUBLIC_CONVEX_URL and rebuild). Showing data from this laptop's tracker only.";
+		if (!this.token)
+			return "Showing data from this laptop's tracker. Enter the team's feedback read token to connect to live Convex feedback and cloud history.";
+		if (this.error) return this.error;
+		if (this.snapshot === undefined) return 'Connecting to Convex…';
+		// The publisher only heartbeats during a session, so an idle "no session"
+		// snapshot is expected to be old; it is not a missing publisher.
+		if (this.snapshot && !this.snapshot.dashboard) return 'Connected to Convex. No live session is running.';
+		return this.fresh ? '' : 'Waiting for the laptop feedback publisher.';
 	}
 
 	connect(token: string) {
 		this.disconnect();
+		this.#attempt++;
 		if (!convexUrl || !token) {
 			this.token = token;
 			return;
 		}
 		this.token = token;
 		this.error = '';
-		void this.#open(token);
+		void this.#open(token, this.#attempt);
 	}
 
-	async #open(token: string) {
+	async #open(token: string, attempt: number) {
 		let client: ConvexClient;
 		try {
 			const { ConvexClient: Client } = await import('convex/browser');
@@ -71,7 +83,8 @@ class LiveFeedbackStore {
 			this.error = cause instanceof Error ? cause.message : 'Invalid Convex URL';
 			return;
 		}
-		if (token !== this.token) {
+		// A newer connect/disconnect happened while the client module loaded.
+		if (attempt !== this.#attempt) {
 			void client.close();
 			return;
 		}
@@ -85,7 +98,7 @@ class LiveFeedbackStore {
 				this.error = '';
 			},
 			(cause) => {
-				this.error = cause.message;
+				this.error = convexErrorMessage(cause);
 				this.snapshot = undefined;
 			}
 		);
@@ -94,6 +107,7 @@ class LiveFeedbackStore {
 	}
 
 	disconnect() {
+		this.#attempt++;
 		this.#unsubscribe?.();
 		if (this.#timer) clearInterval(this.#timer);
 		if (this.client) void this.client.close();

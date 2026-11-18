@@ -107,8 +107,8 @@ describe('admin dashboard: live connection', () => {
 	it('asks for the feedback token before any archive or live data is shown', async () => {
 		installTrackerApi();
 		render(AdminPage);
-		expect(await screen.findByText("Enter the team's feedback read token to connect to live Convex feedback.")).toBeInTheDocument();
-		expect(stat('Saved sessions')).toBe('0');
+		expect(await screen.findByText(/Enter the team's feedback read token to connect to live Convex feedback/)).toBeInTheDocument();
+		await waitFor(() => expect(stat('Saved sessions')).toBe('0'));
 	});
 
 	it('reports a rejected token', async () => {
@@ -118,7 +118,10 @@ describe('admin dashboard: live connection', () => {
 		await user.type(await screen.findByLabelText('Feedback read token'), 'wrong');
 		await user.click(screen.getByRole('button', { name: 'Connect' }));
 		// The original page showed the live error in both the connection notice and the page alert.
-		expect((await screen.findAllByText('Invalid feedback read token.')).length).toBeGreaterThan(0);
+		expect(
+			(await screen.findAllByText('Convex rejected the feedback read token. Check the token and connect again.')).length
+		).toBeGreaterThan(0);
+		expect(screen.getByRole('alert')).toHaveTextContent('Convex unavailable');
 	});
 });
 

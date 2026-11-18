@@ -222,4 +222,9 @@ export function resetTracker() {
 	tracker.error = '';
 	tracker.busy = false;
 	tracker.maxLanes = 5;
+	tracker.localSession = null;
+	tracker.localReachable = false;
+	tracker.localHistory = [];
+	tracker.localHistoryLoaded = false;
+	tracker.localHistoryChecked = false;
 }

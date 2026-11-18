@@ -10,11 +10,14 @@
 		open = $bindable(false),
 		session,
 		busy,
+		error = '',
 		onEnd
 	}: {
 		open?: boolean;
 		session: Workout | null;
 		busy: boolean;
+		/** Shown inside the dialog, since the page alert is hidden behind it. */
+		error?: string;
 		onEnd: () => void;
 	} = $props();
 
@@ -37,6 +40,12 @@
 					</span>
 				</Dialog.Description>
 			</Dialog.Header>
+
+			{#if error}
+				<p class="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3.5 py-2.5 text-sm font-medium" role="alert">
+					{error}
+				</p>
+			{/if}
 
 			{#if session.replay_done}
 				<p class="border-success/30 bg-success/10 text-foreground rounded-lg border px-3.5 py-2.5 text-sm" role="status">
@@ -110,6 +119,18 @@
 					<HugeiconsIcon icon={Tick02Icon} size={16} strokeWidth={2.2} data-icon="inline-start" />
 					{busy ? 'Saving…' : 'End & save session'}
 				</Button>
+			</Dialog.Footer>
+		{:else}
+			<Dialog.Header class="gap-1">
+				<Dialog.Title class="text-xl">Live session</Dialog.Title>
+				<Dialog.Description>No session is running on the tracker right now.</Dialog.Description>
+			</Dialog.Header>
+			<p class="text-muted-foreground text-sm leading-relaxed" role="status">
+				If you just started one, live counts appear here as soon as the tracker reports them. A session ended from another
+				window is listed under Session history.
+			</p>
+			<Dialog.Footer>
+				<Button variant="outline" size="lg" onclick={() => (open = false)}>Close monitor</Button>
 			</Dialog.Footer>
 		{/if}
 	</Dialog.Content>

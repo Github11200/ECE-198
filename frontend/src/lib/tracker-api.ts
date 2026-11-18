@@ -70,7 +70,15 @@ export type ExerciseCatalog = {
 	identity_mode: string;
 };
 
-export class TrackerError extends Error {}
+export class TrackerError extends Error {
+	/** HTTP status, or 0 when the tracker could not be reached at all. */
+	readonly status: number;
+
+	constructor(message: string, status = 0) {
+		super(message);
+		this.status = status;
+	}
+}
 
 export async function trackerRequest<T>(path: string, body?: unknown): Promise<T> {
 	let response: Response;
@@ -88,17 +96,29 @@ export async function trackerRequest<T>(path: string, body?: unknown): Promise<T
 		);
 	}
 	const data = await response.json().catch(() => {
-		throw new TrackerError('The tracker returned an unreadable response.');
+		throw new TrackerError('The tracker returned an unreadable response.', response.status);
 	});
-	if (!response.ok) throw new TrackerError(data.error || 'The tracker request failed.');
+	if (!response.ok) throw new TrackerError(data?.error || 'The tracker request failed.', response.status);
 	return data as T;
 }
 
 export const fetchExercises = () => trackerRequest<ExerciseCatalog>('/api/exercises');
+/** The laptop tracker's in-memory session, or null when none is running. */
+export const fetchSession = () => trackerRequest<{ session: Workout | null }>('/api/session');
+/** The 30 most recent sessions saved in the laptop's SQLite copy, newest first. */
+export const fetchLocalHistory = () => trackerRequest<{ sessions: Workout[] }>('/api/history');
 export const startSession = (setup: SessionSetup) =>
 	trackerRequest<Workout>('/api/session/start', setup);
 export const finishSession = (sessionId: string) =>
 	trackerRequest<Workout>('/api/session/finish', { session_id: sessionId });
+
+/**
+ * The Python tracker renders a printable report for sessions saved on this
+ * laptop (`GET /reports/<32 hex id>`). Other IDs have no report page.
+ */
+export function reportUrl(workout: Pick<Workout, 'id' | 'finished_at'>) {
+	return workout.finished_at && /^[0-9a-f]{32}$/.test(workout.id) ? `/reports/${workout.id}` : null;
+}
 
 export function workoutDate(stamp: string) {
 	return new Intl.DateTimeFormat('en-CA', {

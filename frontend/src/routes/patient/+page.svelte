@@ -18,7 +18,6 @@
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
 	import { patientSessions, patientSummary } from '#lib/dashboard.js';
 	import { cloudHistory } from '#lib/cloud-history.svelte.js';
-	import { liveFeedback } from '#lib/live-feedback.svelte.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { tracker } from '#lib/tracker.svelte.js';
 	import { percent, sourceNames, workoutDate } from '#lib/tracker-api.js';
@@ -36,7 +35,8 @@
 	const rows = $derived(patientSessions(tracker.history, participantId));
 	const summary = $derived(patientSummary(rows));
 	const loading = $derived(tracker.historyLoading && !tracker.history.length);
-	const connected = $derived(Boolean(liveFeedback.client));
+	// Convex archive once connected, otherwise the laptop tracker's saved sessions.
+	const connected = $derived(tracker.historyAvailable);
 	const latestLabel = $derived(
 		summary.latestReps === null ? '—' : `${summary.latestReps} / ${summary.latestTarget}`
 	);
@@ -116,7 +116,9 @@
 		{:else if !connected}
 			<Card class="items-center gap-3 px-6 py-12 text-center">
 				<h3 class="font-semibold">Connect to view saved sessions.</h3>
-				<p class="text-muted-foreground max-w-sm text-sm leading-relaxed">Enter the team’s feedback read token above to load results.</p>
+				<p class="text-muted-foreground max-w-sm text-sm leading-relaxed">
+					Open this page through the laptop tracker, or enter the team’s feedback read token above to load results.
+				</p>
 			</Card>
 		{:else if rows.length === 0}
 			<Card class="items-center gap-3 px-6 py-12 text-center">

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { Dumbbell01Icon, PrinterIcon, Target01Icon } from '@hugeicons/core-free-icons';
+	import { Dumbbell01Icon, File01Icon, PrinterIcon, Target01Icon } from '@hugeicons/core-free-icons';
 	import ResultNotes from './result-notes.svelte';
 	import StatCard from './stat-card.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -12,6 +12,7 @@
 		totalReps,
 		totalTarget,
 		workoutDate,
+		reportUrl,
 		type Workout
 	} from '#lib/tracker-api.js';
 
@@ -19,6 +20,7 @@
 	const reps = $derived(totalReps(workout));
 	const target = $derived(totalTarget(workout));
 	const rangeScore = $derived(totalRangeScore(workout));
+	const report = $derived(reportUrl(workout));
 </script>
 
 <div class="flex flex-col gap-6">
@@ -87,7 +89,14 @@
 		Range score measures completed attempts reaching the fixed angle target. Dose completion and tracking coverage are separate measurements.
 	</p>
 
-	<div class="flex justify-end">
+	<div class="flex flex-wrap justify-end gap-2">
+		{#if report}
+			<!-- Served by the Python tracker, not a SvelteKit route, so skip client routing. -->
+			<Button variant="outline" href={report} target="_blank" rel="noopener" data-sveltekit-reload>
+				<HugeiconsIcon icon={File01Icon} size={16} strokeWidth={2} data-icon="inline-start" />
+				Open printable report
+			</Button>
+		{/if}
 		<Button variant="outline" onclick={() => window.print()}>
 			<HugeiconsIcon icon={PrinterIcon} size={16} strokeWidth={2} data-icon="inline-start" />
 			Print session report

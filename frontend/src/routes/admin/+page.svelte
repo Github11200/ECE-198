@@ -53,7 +53,7 @@
 			(session) => !historyParticipant || session.participants.some((p) => p.id === historyParticipant)
 		)
 	);
-	const pageError = $derived(endError || tracker.combinedError);
+	const pageError = $derived(tracker.combinedError);
 
 	// Follow the Convex archive while this dashboard is open.
 	$effect(() => {
@@ -79,6 +79,7 @@
 
 	async function startSession(setup: SessionSetup) {
 		notice = '';
+		endError = '';
 		const workout = await tracker.start(setup);
 		notice = `${workout.exercise_label} session started for ${workout.participants.length} participants.`;
 		monitorOpen = true;
@@ -91,7 +92,9 @@
 			const saved = await tracker.finish(tracker.session.id);
 			monitorOpen = false;
 			summary = saved;
-			notice = 'Session stopped and queued for upload. It will appear in history when Convex confirms the save.';
+			notice = tracker.cloudHistory
+				? 'Session stopped and queued for upload. It will appear in history when Convex confirms the save.'
+				: 'Session saved on this laptop and queued for Convex upload. It is listed under Session history.';
 		} catch (cause) {
 			endError = cause instanceof Error ? cause.message : 'Could not save the session. Try End & save again.';
 		}
@@ -128,7 +131,7 @@
 	{#if pageError}
 		<Alert variant="destructive" role="alert">
 			<HugeiconsIcon icon={Alert02Icon} size={18} strokeWidth={2} />
-			<AlertTitle>Tracker unavailable</AlertTitle>
+			<AlertTitle>{tracker.error ? 'Tracker unavailable' : 'Convex unavailable'}</AlertTitle>
 			<AlertDescription>{pageError}</AlertDescription>
 		</Alert>
 	{/if}
@@ -315,6 +318,7 @@
 	bind:open={monitorOpen}
 	session={tracker.session}
 	busy={tracker.busy}
+	error={endError}
 	onEnd={endSession}
 />
 

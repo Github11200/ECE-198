@@ -1,7 +1,7 @@
 import { untrack } from 'svelte';
 import { makeFunctionReference } from 'convex/server';
 import type { ConvexClient } from 'convex/browser';
-import { liveFeedback } from './live-feedback.svelte';
+import { convexErrorMessage, liveFeedback } from './live-feedback.svelte';
 import type { Workout } from './tracker-api';
 
 type Page = { page: Workout[]; isDone: boolean; continueCursor: string };
@@ -105,7 +105,7 @@ class CloudHistoryStore {
 				this.version++;
 			};
 			const fail = (cause: Error) => {
-				this.error = cause.message;
+				this.error = convexErrorMessage(cause);
 			};
 			return participantId
 				? client.onUpdate(personQuery, { token, participantId, paginationOpts }, update, fail)
