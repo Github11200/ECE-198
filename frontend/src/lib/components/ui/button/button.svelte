@@ -8,7 +8,7 @@
 		variants: {
 			variant: {
 				default: "btn-primary",
-				hero: "btn-hero",
+				hero: "btn-primary", // alias: every primary action uses the same gel button
 				outline: "btn-outline",
 				secondary: "btn-secondary",
 				ghost: "btn-ghost",

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LiveDot from '#lib/components/live-dot.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Progress } from '#lib/components/ui/progress/index.js';
 	const people = [
@@ -12,7 +13,7 @@
 
 <div aria-hidden="true" inert class="absolute inset-0 flex overflow-hidden bg-card text-foreground">
 	<aside class="hidden w-[15%] min-w-[116px] flex-col border-r border-border bg-muted/35 px-3 py-4 sm:flex">
-		<p class="mb-7 text-[13px] font-semibold tracking-tight">Alder<span class="ml-1 text-primary">●</span></p>
+		<span class="mb-7 grid size-6 place-items-center rounded-[7px] bg-primary text-[11px] font-bold text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/_0.35),0_2px_6px_-2px_var(--primary)]">A</span>
 		<div class="space-y-1 text-[10px]">
 			<p class="rounded-md border border-border bg-card px-2 py-2 font-medium text-foreground shadow-[var(--shadow-xs)]">Live session</p>
 			<p class="px-2 py-2 text-muted-foreground">Sessions</p>
@@ -28,14 +29,14 @@
 				<p class="hidden font-mono text-[9px] text-muted-foreground sm:block">5 camera lanes · target range ≥ 155°</p>
 			</div>
 			<div class="flex shrink-0 items-center gap-2">
-				<Badge variant="success" class="h-5 px-2 text-[9px]"><span class="mr-1 size-1.5 rounded-full bg-current motion-safe:animate-pulse"></span>Live</Badge>
+				<Badge variant="success" class="h-5 px-2 text-[9px]"><LiveDot class="mr-1 size-1.5" />Live</Badge>
 				<span class="hidden font-mono text-[10px] tabular-nums text-muted-foreground sm:inline">12:48</span>
 				<span class="hidden rounded-full border border-border bg-card px-2.5 py-1 text-[10px] shadow-[var(--shadow-xs)] sm:inline">End session</span>
 			</div>
 		</div>
 		<div class="flex min-h-0 flex-1 flex-col gap-2 p-2 sm:grid sm:grid-cols-[minmax(0,1.55fr)_minmax(180px,1fr)] sm:gap-3 sm:p-4">
 			<div class="dark relative isolate flex h-[45%] min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground sm:h-full">
-				<div class="absolute inset-0 opacity-30" style="background-image: linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px); background-size: 24px 24px;"></div>
+				<div class="absolute inset-0" style="background: radial-gradient(70% 60% at 30% 15%, color-mix(in oklab, var(--leaf-2) 28%, transparent), transparent 70%), radial-gradient(60% 60% at 80% 95%, color-mix(in oklab, var(--clay) 18%, transparent), transparent 70%);"></div>
 				<div class="relative flex shrink-0 items-center justify-between px-2.5 pt-2 font-mono text-[8px] uppercase tracking-wider text-muted-foreground sm:px-4 sm:pt-3 sm:text-[9px]"><span class="truncate">Camera · lane view</span><span class="shrink-0 whitespace-nowrap">5 tracked</span></div>
 				<div class="relative grid min-h-0 flex-1 grid-cols-5 gap-1 px-2 pb-1 sm:gap-2 sm:px-4">
 					{#each people as person}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { revealOnScroll } from '#lib/motion.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Container } from '#lib/components/ui/container/index.js';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
@@ -15,15 +16,14 @@
 
 <section aria-labelledby="programme-principles-title" class="relative isolate border-y border-border/70 bg-muted/30 py-20 md:py-28">
 	<Container>
-		<p class="eyebrow mb-4">Programme principles</p>
-		<h2 id="programme-principles-title" class="text-display text-balance">
+		<h2 use:revealOnScroll id="programme-principles-title" class="text-display text-balance">
 			{#if variant === 'cancer'}
 				Built for every <span class="font-serif-accent">participant</span>.
 			{:else}
 				Built for the <span class="font-serif-accent">room</span>.
 			{/if}
 		</h2>
-		<div class="mt-10 grid gap-4 md:grid-cols-3">
+		<div use:revealOnScroll={'children'} class="mt-10 grid gap-4 md:grid-cols-3">
 			{#each principles as principle}
 				<Card.Root variant="feature" size="sm" class="min-w-0">
 					<Card.Content>

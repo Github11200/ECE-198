@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LiveDot from '#lib/components/live-dot.svelte';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		Add01Icon,
@@ -33,9 +34,8 @@
 	import {
 		AppFrame,
 		Backdrop,
+		Scenery,
 		Glow,
-		GridPattern,
-		Horizon,
 		MeshGradient,
 		Noise
 	} from '#lib/components/graphics/index.js';
@@ -161,7 +161,7 @@
 		<div class="mb-6"><p class="eyebrow">04 / Status</p><h2 class="text-title">Badges</h2></div>
 		<div class="flex flex-wrap items-center gap-3">
 			{#each badgeVariants as variant}<Badge {variant}>{variant}</Badge>{/each}
-			<Badge variant="success"><span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60"></span><span class="relative inline-flex size-2 rounded-full bg-current"></span></span>Live</Badge>
+			<Badge variant="success"><LiveDot />Live</Badge>
 		</div>
 	</Section>
 
@@ -222,12 +222,10 @@
 	<Section size="sm" class="border-b border-border/70">
 		<div class="mb-6"><p class="eyebrow">11 / Atmosphere</p><h2 class="text-title">Graphics</h2></div>
 		<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-			<div class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card"><GridPattern variant="lines" fade="none" /><span class="absolute bottom-4 left-4 font-mono text-xs">Grid / lines</span></div>
-			<div class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card"><GridPattern variant="dots" fade="none" /><span class="absolute bottom-4 left-4 font-mono text-xs">Grid / dots</span></div>
+			<div class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card"><Scenery preset="card" /><span class="absolute bottom-4 left-4 font-mono text-xs">Scenery / card</span></div>
 			<div class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card"><Glow color="mint" size="18rem" /><span class="absolute bottom-4 left-4 font-mono text-xs">Glow / mint</span></div>
 			{#each ['hero', 'soft', 'aurora'] as preset}<div class:dark={preset === 'aurora'} class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card text-foreground"><MeshGradient preset={preset as 'hero' | 'soft' | 'aurora'} /><span class="absolute bottom-4 left-4 font-mono text-xs">Mesh / {preset}</span></div>{/each}
 			<div class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card"><Noise /><span class="absolute bottom-4 left-4 font-mono text-xs">Noise</span></div>
-			<div class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card"><Horizon /><span class="absolute bottom-4 left-4 font-mono text-xs">Horizon</span></div>
 			{#each ['hero', 'section', 'dashboard'] as preset}<div class="relative isolate h-56 overflow-hidden rounded-2xl border border-border bg-card"><Backdrop preset={preset as 'hero' | 'section' | 'dashboard'} /><span class="absolute bottom-4 left-4 font-mono text-xs">Backdrop / {preset}</span></div>{/each}
 		</div>
 		<div class="mt-6 max-w-2xl"><AppFrame title="alder.app/admin"><div class="grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center"><div><Badge variant="success">Live</Badge><h3 class="mt-3 text-title">Seated extension</h3><p class="text-sm text-muted-foreground">P02 · Session 03</p></div><div class="text-left sm:text-right"><span class="stat-value">08 <span class="text-lg text-muted-foreground">/ 12</span></span><p class="eyebrow">Reps complete</p></div><Progress value={67} class="sm:col-span-2" /></div></AppFrame></div>

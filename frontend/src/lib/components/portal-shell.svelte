@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LiveDot from '#lib/components/live-dot.svelte';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
@@ -24,6 +25,7 @@
 				: { label: 'Reconnecting', tone: 'text-warning-foreground', dot: 'bg-warning', icon: WifiDisconnected01Icon }
 	);
 	const year = new Date().getFullYear();
+	let scrolled = $state(false);
 
 	onMount(() => {
 		void tracker.init();
@@ -31,9 +33,11 @@
 	});
 </script>
 
+<svelte:window onscroll={() => (scrolled = window.scrollY > 12)} />
+
 <div class="flex min-h-svh flex-col bg-background text-foreground">
-	<header class="sticky top-0 z-30 h-14 border-b border-border bg-background/75 backdrop-blur-md">
-		<div class="page-container flex h-full items-center justify-between gap-2">
+	<header class="fixed inset-x-0 top-0 z-30 px-3 pt-3 sm:px-4">
+		<div class="nav-shell mx-auto flex h-12 max-w-[75rem] items-center justify-between gap-2 pr-1.5 pl-2.5" data-scrolled={scrolled}>
 			<div class="flex min-w-0 items-center gap-2 sm:gap-3">
 				<Brand compact href="/" />
 				<span class="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden="true"></span>
@@ -46,7 +50,7 @@
 				<Tooltip.Provider><Tooltip.Root>
 					<Tooltip.Trigger class="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={connection.label}>
 						<Badge variant={tracker.connected ? 'success' : tracker.loading ? 'info' : 'warning'} role="status" aria-live="polite" class="gap-1.5">
-							{#if tracker.connected}<span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60"></span><span class="relative inline-flex size-2 rounded-full bg-current"></span></span>{:else}<HugeiconsIcon icon={connection.icon} size={14} strokeWidth={2} />{/if}
+							{#if tracker.connected}<LiveDot />{:else}<HugeiconsIcon icon={connection.icon} size={14} strokeWidth={2} />{/if}
 							<span class="hidden sm:inline">{tracker.connected ? 'Live' : tracker.loading ? 'Connecting' : 'Offline'}</span>
 							<span class="sr-only">{connection.label}</span>
 						</Badge>
@@ -62,7 +66,7 @@
 		</div>
 	</header>
 
-	<main id="main" class="relative isolate flex-1 overflow-hidden">
+	<main id="main" class="relative isolate flex-1 overflow-hidden pt-16">
 		<Backdrop preset="dashboard" />
 		<div class="page-container relative flex max-w-[75rem] flex-col gap-6 py-8 sm:py-10">
 			{#if liveFeedback.message}

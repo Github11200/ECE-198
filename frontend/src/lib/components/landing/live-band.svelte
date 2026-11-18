@@ -1,31 +1,29 @@
 <script lang="ts">
-	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { revealOnScroll } from '#lib/motion.js';
 	import { Container } from '#lib/components/ui/container/index.js';
-	import { Glow, GridPattern } from '#lib/components/graphics/index.js';
+	import { Scenery } from '#lib/components/graphics/index.js';
 	import SectionHeading from './section-heading.svelte';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Camera01Icon, Target02Icon, SmartWatch01Icon } from '@hugeicons/core-free-icons';
 </script>
 
 {#snippet heading()}From camera to <span class="font-serif-accent">wrist</span> in real time.{/snippet}
-<section id="live" aria-labelledby="live-title" class="dark relative isolate scroll-mt-14 overflow-hidden bg-background py-20 text-foreground md:py-28">
-	<GridPattern variant="lines" fade="top" />
-	<Glow color="mint" size="30rem" opacity={0.3} class="right-0 -bottom-32" />
+<section id="live" aria-labelledby="live-title" class="dark relative isolate scroll-mt-20 overflow-hidden bg-background py-20 text-foreground md:py-28">
+	<Scenery preset="section" />
 	<Container class="relative grid min-w-0 items-center gap-12 lg:grid-cols-2 lg:gap-16">
 		<div>
-			<SectionHeading id="live-title" eyebrow="Live" title={heading} description="See reps and range as they happen, with each person’s count on their wrist." />
-			<ul class="mt-8 space-y-4 text-sm">
-				<li class="flex items-center gap-3"><span class="grid size-7 shrink-0 place-items-center rounded-lg border border-border bg-card text-primary"><HugeiconsIcon icon={Camera01Icon} size={15} strokeWidth={1.8} /></span>One camera, up to five people</li>
-				<li class="flex items-center gap-3"><span class="grid size-7 shrink-0 place-items-center rounded-lg border border-border bg-card text-primary"><HugeiconsIcon icon={Target02Icon} size={15} strokeWidth={1.8} /></span>Range checked on every rep</li>
-				<li class="flex items-center gap-3"><span class="grid size-7 shrink-0 place-items-center rounded-lg border border-border bg-card text-primary"><HugeiconsIcon icon={SmartWatch01Icon} size={15} strokeWidth={1.8} /></span>Count shown on each band</li>
+			<SectionHeading id="live-title" title={heading} description="See reps and range as they happen, with each person’s count on their wrist." />
+			<ul use:revealOnScroll={'children'} class="mt-8 space-y-4 text-sm">
+				<li class="flex items-center gap-3"><span class="shrink-0 text-primary"><HugeiconsIcon icon={Camera01Icon} size={15} strokeWidth={1.8} /></span>One camera, up to five people</li>
+				<li class="flex items-center gap-3"><span class="shrink-0 text-primary"><HugeiconsIcon icon={Target02Icon} size={15} strokeWidth={1.8} /></span>Range checked on every rep</li>
+				<li class="flex items-center gap-3"><span class="shrink-0 text-primary"><HugeiconsIcon icon={SmartWatch01Icon} size={15} strokeWidth={1.8} /></span>Count shown on each band</li>
 			</ul>
 		</div>
-		<div class="relative isolate min-w-0 overflow-hidden rounded-[28px] border border-border bg-card/70 p-5 shadow-[var(--shadow-lg)] sm:p-8">
-			<GridPattern variant="dots" fade="none" />
+		<div use:revealOnScroll class="relative min-w-0">
 			<div class="relative grid gap-6 sm:grid-cols-[1fr_1fr] sm:items-center">
 				<div class="relative isolate h-64 overflow-hidden rounded-2xl border border-border bg-background p-4">
-					<div class="absolute inset-0 opacity-40" style="background-image: linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px); background-size: 28px 28px;"></div>
-					<div class="relative flex items-center justify-between font-mono text-[10px] text-muted-foreground"><span>CAMERA / P03</span><Badge variant="success" class="h-5 text-[9px]">Tracking</Badge></div>
+					<div class="absolute inset-0" style="background: radial-gradient(70% 60% at 30% 15%, color-mix(in oklab, var(--leaf-2) 28%, transparent), transparent 70%), radial-gradient(60% 60% at 80% 95%, color-mix(in oklab, var(--clay) 18%, transparent), transparent 70%);"></div>
+					<div class="relative flex items-center justify-between font-mono text-[10px] text-muted-foreground"><span>CAMERA / P03</span></div>
 					<svg viewBox="0 0 160 180" class="relative mx-auto mt-2 h-40 w-36 text-primary" fill="none" aria-hidden="true">
 						<circle cx="80" cy="18" r="10" stroke="currentColor" stroke-width="3" /><path d="M80 29 L80 88 M80 45 L45 70 L36 105 M80 45 L115 70 L123 105 M80 88 L48 128 L38 170 M80 88 L110 128 L121 170" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /><circle cx="110" cy="128" r="5" fill="currentColor" /><circle cx="80" cy="88" r="5" fill="currentColor" />
 					</svg>

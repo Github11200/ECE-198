@@ -130,25 +130,24 @@
 
 			<form class="flex min-w-0 flex-col gap-5" onsubmit={submit} novalidate>
 				<fieldset class="grid min-w-0 gap-4 sm:grid-cols-2" {disabled}>
-					<div class="grid min-w-0 gap-2">
-						<Label for="setup-station">Station</Label>
+					<div class="grid min-w-0 content-start gap-2">
+						<div class="flex h-5 items-center"><Label for="setup-station">Station</Label></div>
 						<Input id="setup-station" maxlength={60} required bind:value={station} />
 					</div>
-					<div class="grid min-w-0 gap-2">
-						<div class="flex items-center gap-1.5">
+					<div class="grid min-w-0 content-start gap-2">
+						<div class="flex h-5 items-center gap-1.5">
 							<Label for="setup-exercise">Exercise</Label>
 							{#if exercise}
-								<Tooltip.Root><Tooltip.Trigger aria-label="Exercise criteria" class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 inline-flex rounded-full outline-none focus-visible:ring-[3px]"><HugeiconsIcon icon={InformationCircleIcon} size={14} strokeWidth={2} /></Tooltip.Trigger><Tooltip.Content>{exercise.criteria}</Tooltip.Content></Tooltip.Root>
+								<Tooltip.Root><Tooltip.Trigger aria-label="Exercise criteria" class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 inline-flex rounded-full outline-none focus-visible:ring-[3px]"><HugeiconsIcon icon={InformationCircleIcon} size={14} strokeWidth={2} /></Tooltip.Trigger><Tooltip.Content class="max-w-72">{exercise.criteria} {exercise.help}</Tooltip.Content></Tooltip.Root>
 							{/if}
 						</div>
 						<Select.Root type="single" value={exercise?.id ?? ''} onValueChange={(value) => (exerciseId = value)}>
 							<Select.Trigger id="setup-exercise" aria-label="Exercise" class="w-full"><span class="truncate">{exercise?.label ?? 'Choose exercise'}</span></Select.Trigger>
 							<Select.Content>{#each exercises as item (item.id)}<Select.Item value={item.id} label={item.label} />{/each}</Select.Content>
 						</Select.Root>
-						{#if exercise}<p class="text-muted-foreground truncate text-xs" title={exercise.help}>{exercise.help}</p>{/if}
 					</div>
-					<div class="grid min-w-0 gap-2">
-						<div class="flex items-center gap-1.5">
+					<div class="grid min-w-0 content-start gap-2">
+						<div class="flex h-5 items-center gap-1.5">
 							<Label>Pose input</Label>
 							<Tooltip.Root><Tooltip.Trigger aria-label="About pose input" class="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 inline-flex rounded-full outline-none focus-visible:ring-[3px]"><HugeiconsIcon icon={InformationCircleIcon} size={14} strokeWidth={2} /></Tooltip.Trigger><Tooltip.Content>{sourceHelp[source]}</Tooltip.Content></Tooltip.Root>
 						</div>
@@ -159,8 +158,8 @@
 							</Tabs.Root>
 						</div>
 					</div>
-					<div class="grid min-w-0 gap-2">
-						<Label>Participants</Label>
+					<div class="grid min-w-0 content-start gap-2">
+						<div class="flex h-5 items-center"><Label>Participants</Label></div>
 						<div class="max-w-full overflow-x-auto">
 							<Tabs.Root value={String(lanes.length)} onValueChange={(value) => setLaneCount(Number(value))}>
 								<Tabs.List aria-label="Participants">{#each Array.from({ length: maxLanes }, (_, i) => i + 1) as count (count)}<Tabs.Trigger value={String(count)} class="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[var(--shadow-sm),var(--highlight)] dark:data-[state=active]:bg-white/8">{count}</Tabs.Trigger>{/each}</Tabs.List>

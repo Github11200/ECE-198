@@ -35,7 +35,7 @@
 		<div
 			class="text-muted-foreground mt-10 flex flex-col gap-2 border-t pt-5 text-xs sm:flex-row sm:items-center sm:justify-between"
 		>
-			<p>© {year} Alder Rehabilitation · CCCARE Exercise Tracker</p>
+			<p>© {year} Alder Rehabilitation</p>
 		</div>
 	</div>
 </footer>

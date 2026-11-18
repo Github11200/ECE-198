@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LiveDot from '#lib/components/live-dot.svelte';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import {
 		Alert02Icon,
@@ -161,7 +162,7 @@
 	{#if tracker.session}
 		<Card variant="feature" class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6">
 			<div class="flex min-w-0 flex-1 flex-col gap-1">
-				<div class="flex items-center gap-2"><p class="eyebrow">Active session</p><Badge variant="success"><span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60"></span><span class="relative inline-flex size-2 rounded-full bg-current"></span></span>Live</Badge></div>
+				<div class="flex items-center gap-2"><p class="eyebrow">Active session</p><Badge variant="success"><LiveDot />Live</Badge></div>
 				<h2 class="truncate text-lg font-semibold tracking-tight">
 					{tracker.session.exercise_label} · {tracker.session.station}
 				</h2>
@@ -186,7 +187,6 @@
 			label="Saved sessions"
 			value={tracker.history.length}
 			hint="Completed reports"
-			badge={tracker.historyAvailable && tracker.history.length > 0 ? 'Synced' : undefined}
 			icon={ClipboardCheckIcon}
 			tone="accent"
 			loading={tracker.historyLoading && !tracker.history.length}
@@ -195,8 +195,6 @@
 			label="Review needed"
 			value={reviewCount}
 			hint="Needs attention"
-			badge={reviewCount > 0 ? 'Review' : 'Clear'}
-			badgeVariant={reviewCount > 0 ? 'warning' : 'success'}
 			icon={Alert02Icon}
 			tone="clay"
 			loading={tracker.loading}

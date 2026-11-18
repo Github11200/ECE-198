@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LiveDot from '#lib/components/live-dot.svelte';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { Alert02Icon, Camera01Icon, InformationCircleIcon, Tick02Icon } from '@hugeicons/core-free-icons';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -65,7 +66,7 @@
 							<Badge variant="info">Replay complete</Badge>
 						{:else}
 							<Badge variant="success" class="gap-1.5">
-								<span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60"></span><span class="relative inline-flex size-2 rounded-full bg-current"></span></span>
+								<LiveDot />
 								Live
 							</Badge>
 						{/if}

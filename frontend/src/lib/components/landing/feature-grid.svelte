@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { revealOnScroll } from '#lib/motion.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Container } from '#lib/components/ui/container/index.js';
@@ -6,10 +7,10 @@
 </script>
 
 {#snippet heading()}Built for every <span class="font-serif-accent">rep</span>.{/snippet}
-<section id="features" aria-labelledby="features-title" class="relative isolate scroll-mt-14 overflow-hidden py-20 md:py-28">
+<section id="features" aria-labelledby="features-title" class="relative isolate scroll-mt-20 overflow-hidden py-20 md:py-28">
 	<Container>
-		<SectionHeading id="features-title" eyebrow="Features" title={heading} description="Set individual targets, follow movement live, and keep a record of every session." />
-		<div class="mt-10 grid gap-4 md:grid-cols-3">
+		<SectionHeading id="features-title" title={heading} description="Set individual targets, follow movement live, and keep a record of every session." />
+		<div use:revealOnScroll={'children'} class="mt-10 grid gap-4 md:grid-cols-3">
 			<Card.Root variant="feature" class="min-w-0 transition-transform motion-safe:hover:-translate-y-0.5">
 				<Card.Content class="space-y-5">
 					<div class="surface-inset flex h-36 flex-col justify-center gap-2 rounded-xl p-3">

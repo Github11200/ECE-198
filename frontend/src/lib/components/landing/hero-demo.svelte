@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { demoFade } from '#lib/motion.js';
 	import { onMount, tick } from 'svelte';
 	import { AppFrame } from '#lib/components/graphics/index.js';
 	import ProductPreview from './product-preview.svelte';
 
-	let { still = false }: { still?: boolean } = $props();
+	let { still = false, intro = false }: { still?: boolean; intro?: boolean } = $props();
 	let mounted = $state(false);
 	let reduced = $state(false);
 	let videoReady = $state(false);
@@ -31,7 +32,7 @@
 	});
 </script>
 
-<figure class="min-w-0">
+<figure data-hero-intro={intro ? '' : undefined} class="min-w-0">
 	<AppFrame title="alder · live session">
 		<div class="relative aspect-[16/10] w-full overflow-hidden bg-background">
 			<ProductPreview />
@@ -39,7 +40,7 @@
 				{#if reduced}
 					<img bind:this={posterEl} src="/media/alder-demo-poster.webp" alt="" class={posterReady ? 'absolute inset-0 size-full object-cover opacity-100' : 'absolute inset-0 size-full object-cover opacity-0'} onload={() => (posterReady = true)} onerror={() => (posterReady = false)} />
 				{:else}
-					<video bind:this={videoEl} autoplay muted loop playsinline preload="metadata" poster="/media/alder-demo-poster.webp" class={videoReady ? 'absolute inset-0 size-full object-cover opacity-100 motion-safe:transition-opacity motion-safe:duration-500' : 'absolute inset-0 size-full object-cover opacity-0 motion-safe:transition-opacity motion-safe:duration-500'} onloadeddata={() => (videoReady = true)} onerror={() => (videoReady = false)} aria-hidden="true">
+					<video use:demoFade={videoReady} bind:this={videoEl} autoplay muted loop playsinline preload="metadata" poster="/media/alder-demo-poster.webp" class="absolute inset-0 size-full object-cover" class:invisible={!videoReady} onloadeddata={() => (videoReady = true)} onerror={() => (videoReady = false)} aria-hidden="true">
 						<source src="/media/alder-demo.webm" type="video/webm" />
 						<source src="/media/alder-demo.mp4" type="video/mp4" onerror={() => (videoReady = false)} />
 					</video>

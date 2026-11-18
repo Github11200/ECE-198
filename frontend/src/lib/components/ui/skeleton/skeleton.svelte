@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { skeletonShimmer } from '#lib/motion.js';
 	import { cn, type WithElementRef, type WithoutChildren } from "#lib/utils.js";
 	import type { HTMLAttributes } from "svelte/elements";
 
@@ -10,8 +11,9 @@
 </script>
 
 <div
+	use:skeletonShimmer
 	bind:this={ref}
 	data-slot="skeleton"
-	class={cn("skeleton-shimmer rounded-md", className)}
+	class={cn("skeleton-surface rounded-md", className)}
 	{...restProps}
 ></div>

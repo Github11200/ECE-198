@@ -12,7 +12,7 @@
 	];
 </script>
 
-<footer class="border-t border-border bg-muted/30">
+<footer class="border-t border-border">
 	<Container>
 		<div class="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
 			<div><Brand size="sm" /><p class="mt-3 text-sm text-muted-foreground">Every rep in clear view.</p></div>
