@@ -5,17 +5,21 @@
 		Calendar03Icon,
 		ChartColumnIcon,
 		Dumbbell01Icon,
+		Plug01Icon,
 		Target01Icon
 	} from '@hugeicons/core-free-icons';
 	import PortalShell from '#lib/components/portal-shell.svelte';
 	import PageHeading from '#lib/components/page-heading.svelte';
 	import StatCard from '#lib/components/stat-card.svelte';
 	import ResultNotes from '#lib/components/result-notes.svelte';
-	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '#lib/components/ui/card/index.js';
+	import { Card } from '#lib/components/ui/card/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Progress } from '#lib/components/ui/progress/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import * as Empty from '#lib/components/ui/empty/index.js';
+	import * as Select from '#lib/components/ui/select/index.js';
 	import { patientSessions, patientSummary } from '#lib/dashboard.js';
 	import { cloudHistory } from '#lib/cloud-history.svelte.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -35,7 +39,7 @@
 	const rows = $derived(patientSessions(tracker.history, participantId));
 	const summary = $derived(patientSummary(rows));
 	const loading = $derived(tracker.historyLoading && !tracker.history.length);
-	// Convex archive once connected, otherwise the laptop tracker's saved sessions.
+	// Convex archive once connected, otherwise the tracker's saved sessions.
 	const connected = $derived(tracker.historyAvailable);
 	const latestLabel = $derived(
 		summary.latestReps === null ? '—' : `${summary.latestReps} / ${summary.latestTarget}`
@@ -43,29 +47,24 @@
 </script>
 
 <svelte:head>
-	<title>Patient view · Alder Rehabilitation</title>
+	<title>My sessions · Alder Rehabilitation</title>
 </svelte:head>
 
 <PortalShell role="patient">
-	<PageHeading
-		eyebrow="Patient view"
-		title="My sessions"
-		description="Attendance and individual results from saved group sessions, with your instructor’s review notes."
-	>
+	<PageHeading title="My sessions" description="Your saved sessions and results.">
 		{#snippet actions()}
-			<div class="flex flex-col gap-1.5">
-				<Label for="patient-id" class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-					Viewing as
-				</Label>
-				<select
-					id="patient-id"
-					class="border-input bg-background focus-visible:ring-ring/50 h-11 min-w-44 rounded-lg border px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
-					bind:value={participantId}
-				>
-					{#each ids as id (id)}
-						<option value={id}>{id} · Participant {id.slice(1)}</option>
-					{/each}
-				</select>
+			<div class="flex items-center gap-2">
+				<Label for="patient-id" class="text-muted-foreground text-xs">Viewing as</Label>
+				<Select.Root type="single" bind:value={participantId}>
+					<Select.Trigger id="patient-id" aria-label="Viewing as" class="w-48">
+						<span class="truncate">{participantId} · Participant {participantId.slice(1)}</span>
+					</Select.Trigger>
+					<Select.Content class="max-h-72">
+						{#each ids as id (id)}
+							<Select.Item value={id} label={`${id} · Participant ${id.slice(1)}`} />
+						{/each}
+					</Select.Content>
+				</Select.Root>
 			</div>
 		{/snippet}
 	</PageHeading>
@@ -78,18 +77,18 @@
 		</Alert>
 	{/if}
 
-	<section class="grid gap-4 sm:grid-cols-3" aria-label="Summary">
+	<section class="grid gap-3 sm:grid-cols-3" aria-label="Summary">
 		<StatCard
 			label="Sessions attended"
 			value={summary.attended}
-			hint="Saved group sessions"
+			hint="Saved sessions"
 			icon={Calendar03Icon}
 			{loading}
 		/>
 		<StatCard
 			label="Latest reps"
 			value={latestLabel}
-			hint="Most recent session"
+			hint="Most recent"
 			icon={Dumbbell01Icon}
 			tone="accent"
 			{loading}
@@ -105,7 +104,7 @@
 	</section>
 
 	<section aria-labelledby="sessions-heading" class="flex flex-col gap-4">
-		<h2 id="sessions-heading" class="text-lg font-bold tracking-tight">Session history</h2>
+		<h2 id="sessions-heading" class="text-base font-semibold">Session history</h2>
 
 		{#if loading}
 			<div class="flex flex-col gap-4" role="status" aria-label="Loading sessions">
@@ -114,78 +113,84 @@
 				{/each}
 			</div>
 		{:else if !connected}
-			<Card class="items-center gap-3 px-6 py-12 text-center">
-				<h3 class="font-semibold">Connect to view saved sessions.</h3>
-				<p class="text-muted-foreground max-w-sm text-sm leading-relaxed">
-					Open this page through the laptop tracker, or enter the team’s feedback read token above to load results.
-				</p>
-			</Card>
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<HugeiconsIcon icon={Plug01Icon} strokeWidth={2} />
+					</Empty.Media>
+					<Empty.Title><h3>Connect to view saved sessions.</h3></Empty.Title>
+					<Empty.Description>Enter the read token above to load your results.</Empty.Description>
+				</Empty.Header>
+			</Empty.Root>
 		{:else if rows.length === 0}
-			<Card class="items-center gap-3 px-6 py-12 text-center">
-				<span class="bg-muted text-muted-foreground grid size-12 place-items-center rounded-full">
-					<HugeiconsIcon icon={ChartColumnIcon} size={22} strokeWidth={1.8} />
-				</span>
-				<h3 class="font-semibold">No sessions recorded for {participantId} yet.</h3>
-				<p class="text-muted-foreground max-w-sm text-sm leading-relaxed">
-					Results appear here after your instructor saves a group session.
-				</p>
-			</Card>
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<HugeiconsIcon icon={ChartColumnIcon} strokeWidth={2} />
+					</Empty.Media>
+					<Empty.Title><h3>No sessions recorded for {participantId} yet.</h3></Empty.Title>
+					<Empty.Description>Results appear after your instructor saves a session.</Empty.Description>
+				</Empty.Header>
+			</Empty.Root>
 		{:else}
 			<ol class="flex flex-col gap-4" aria-label="Saved sessions">
 				{#each rows as { session, person } (session.id)}
 					<li>
-						<Card class="gap-0 py-0">
-							<CardHeader class="px-5 pt-5 sm:px-6">
-								<CardTitle class="text-base">{session.exercise_label} · {session.station}</CardTitle>
-								<CardDescription>
-									{workoutDate(session.started_at)} · {sourceNames[session.source]}
-								</CardDescription>
-							</CardHeader>
-
-							<CardContent class="flex flex-col gap-6 px-5 py-5 sm:px-6">
-								<p class="text-muted-foreground text-sm leading-relaxed">{session.criteria.description}</p>
-
-								<div class="flex flex-col gap-2">
-									<div class="flex items-baseline justify-between gap-3 text-sm">
-										<span class="text-muted-foreground font-medium">Reps completed</span>
-										<span class="font-semibold tabular-nums">{person.reps} / {person.target}</span>
+						<Card class="gap-0 p-0 py-0">
+							<div class="flex flex-wrap items-start justify-between gap-4 px-5 pt-5">
+								<div class="min-w-0">
+									<h3 class="font-semibold">{session.exercise_label} · {session.station}</h3>
+									<div class="mt-1.5 flex flex-wrap items-center gap-2">
+										<span class="text-muted-foreground font-mono text-xs">
+											{workoutDate(session.started_at)}
+										</span>
+										<Badge variant="secondary">{sourceNames[session.source]}</Badge>
 									</div>
-									<Progress
-										class="h-2"
-										value={person.reps}
-										max={Math.max(person.target, 1)}
-										aria-label={`Reps completed for ${session.exercise_label}`}
-									/>
 								</div>
+								<div class="text-right">
+									<p class="eyebrow">Reps</p>
+									<p class="mt-1 text-2xl font-semibold tabular-nums">{person.reps} / {person.target}</p>
+								</div>
+							</div>
 
-								<dl class="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+							<div class="px-5 pt-4">
+								<Progress
+									class="h-1.5"
+									value={person.reps}
+									max={Math.max(person.target, 1)}
+									aria-label={`Reps completed for ${session.exercise_label}`}
+								/>
+							</div>
+
+							<div class="px-5 pt-4">
+								<dl class="bg-muted/50 grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl p-3 sm:grid-cols-5">
 									<div>
-										<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Full / short</dt>
-										<dd class="mt-1 font-semibold tabular-nums">{person.full} / {person.short}</dd>
+										<dt class="eyebrow">Full / short</dt>
+										<dd class="mt-1 font-mono text-sm tabular-nums">{person.full} / {person.short}</dd>
 									</div>
 									<div>
-										<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Range score</dt>
-										<dd class="mt-1 font-semibold tabular-nums">{percent(person.range_score)}</dd>
+										<dt class="eyebrow">Range score</dt>
+										<dd class="mt-1 font-mono text-sm tabular-nums">{percent(person.range_score)}</dd>
 									</div>
 									<div>
-										<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Tracking coverage</dt>
-										<dd class="mt-1 font-semibold tabular-nums">{percent(person.tracking_coverage)}</dd>
+										<dt class="eyebrow">Tracking coverage</dt>
+										<dd class="mt-1 font-mono text-sm tabular-nums">{percent(person.tracking_coverage)}</dd>
 									</div>
 									<div>
-										<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Tracking losses</dt>
-										<dd class="mt-1 font-semibold tabular-nums">{person.tracking_losses ?? 'Not recorded'}</dd>
+										<dt class="eyebrow">Tracking losses</dt>
+										<dd class="mt-1 font-mono text-sm tabular-nums">{person.tracking_losses ?? 'Not recorded'}</dd>
 									</div>
 									<div>
-										<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Discarded attempts</dt>
-										<dd class="mt-1 font-semibold tabular-nums">{person.discarded_attempts ?? 'Not recorded'}</dd>
+										<dt class="eyebrow">Discarded attempts</dt>
+										<dd class="mt-1 font-mono text-sm tabular-nums">{person.discarded_attempts ?? 'Not recorded'}</dd>
 									</div>
 								</dl>
+							</div>
 
-								<div class="flex flex-col gap-3">
-									<h3 class="text-sm font-semibold">Review notes</h3>
-									<ResultNotes {person} />
-								</div>
-							</CardContent>
+							<div class="flex flex-col gap-2 px-5 pt-5 pb-5">
+								<h3 class="text-sm font-medium">Review notes</h3>
+								<ResultNotes {person} />
+							</div>
 						</Card>
 					</li>
 				{/each}

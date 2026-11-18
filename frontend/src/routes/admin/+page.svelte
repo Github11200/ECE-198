@@ -25,11 +25,15 @@
 	import { Card } from '#lib/components/ui/card/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Progress } from '#lib/components/ui/progress/index.js';
+	import * as Select from '#lib/components/ui/select/index.js';
+	import * as Empty from '#lib/components/ui/empty/index.js';
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
 	import { buildRoster, filterRoster, type RosterFilter } from '#lib/dashboard.js';
 	import { tracker } from '#lib/tracker.svelte.js';
 	import { cloudHistory } from '#lib/cloud-history.svelte.js';
-	import { sourceNames, type SessionSetup, type Workout } from '#lib/tracker-api.js';
+	import { sourceNames, totalReps, totalTarget, type SessionSetup, type Workout } from '#lib/tracker-api.js';
 
 	let search = $state('');
 	let filter = $state<RosterFilter>('all');
@@ -40,6 +44,8 @@
 	let setupOpen = $state(false);
 	let monitorOpen = $state(false);
 	let summary = $state<Workout | null>(null);
+	// Focus the dialog itself on open so the info tooltips don't pop open.
+	let summaryContent = $state<HTMLElement | null>(null);
 	let notice = $state('');
 	let endError = $state('');
 	let nextTargets = $state<Record<string, number>>({});
@@ -92,7 +98,7 @@
 			const saved = await tracker.finish(tracker.session.id);
 			monitorOpen = false;
 			summary = saved;
-			notice = 'Session saved on this laptop. It is listed under Session history and uploads to Convex in the background.';
+			notice = 'Session saved to history. Cloud upload runs in the background.';
 		} catch (cause) {
 			endError = cause instanceof Error ? cause.message : 'Could not save the session. Try End & save again.';
 		}
@@ -115,18 +121,18 @@
 </script>
 
 <svelte:head>
-	<title>Admin dashboard · Alder Rehabilitation</title>
+	<title>Sessions · Alder</title>
 </svelte:head>
 
 <PortalShell role="admin">
 	<PageHeading
-		eyebrow="Instructor workspace"
-		title="Session overview"
-		description="Set individual targets and follow each participant’s progress across group sessions."
+		title="Sessions"
+		description="Run group sessions and review every participant’s progress."
 	>
 		{#snippet actions()}
+			<Button variant="outline" size="sm" onclick={() => (tab = 'sessions')}>History</Button>
 			<Button
-				size="lg"
+				size="sm"
 				onclick={prepare}
 				disabled={tracker.loading || tracker.busy || !tracker.connected || !tracker.exercises.length}
 			>
@@ -145,48 +151,42 @@
 	{/if}
 
 	{#if notice}
-		<div
-			class="border-success/30 bg-success/10 flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm"
-			role="status"
-		>
-			<span class="flex items-start gap-2.5">
-				<HugeiconsIcon icon={CheckmarkCircle02Icon} size={18} strokeWidth={2} class="text-success mt-0.5 shrink-0" />
-				{notice}
-			</span>
-			<Button variant="ghost" size="sm" onclick={() => (notice = '')}>Dismiss</Button>
-		</div>
+		<Alert variant="success" role="status" class="pr-24">
+			<HugeiconsIcon icon={CheckmarkCircle02Icon} size={18} strokeWidth={2} />
+			<AlertDescription>{notice}</AlertDescription>
+			<Button variant="ghost" size="xs" class="absolute top-1/2 right-3 -translate-y-1/2" onclick={() => (notice = '')}>Dismiss</Button>
+		</Alert>
 	{/if}
 
 	{#if tracker.session}
-		<Card class="flex-row items-center gap-4 p-5 sm:p-6">
-			<span class="bg-primary/10 text-primary grid size-12 shrink-0 place-items-center rounded-xl">
-				<HugeiconsIcon icon={PlayIcon} size={22} strokeWidth={2} />
-			</span>
-			<div class="flex min-w-0 flex-1 flex-col gap-0.5">
-				<p class="eyebrow">Active session</p>
-				<h2 class="truncate text-lg font-bold tracking-tight">
+		<Card variant="feature" class="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6">
+			<div class="flex min-w-0 flex-1 flex-col gap-1">
+				<div class="flex items-center gap-2"><p class="eyebrow">Active session</p><Badge variant="success"><span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60"></span><span class="relative inline-flex size-2 rounded-full bg-current"></span></span>Live</Badge></div>
+				<h2 class="truncate text-lg font-semibold tracking-tight">
 					{tracker.session.exercise_label} · {tracker.session.station}
 				</h2>
 				<p class="text-muted-foreground text-sm">
 					{tracker.session.participants.length} participants · {sourceNames[tracker.session.source]}
 				</p>
 			</div>
-			<Button variant="outline" onclick={() => (monitorOpen = true)}>Open monitor</Button>
+			<div class="w-full sm:w-44"><p class="mb-1 text-xs text-muted-foreground"><span class="font-mono text-foreground">{totalReps(tracker.session)} / {totalTarget(tracker.session)}</span> reps</p><Progress value={totalReps(tracker.session)} max={Math.max(totalTarget(tracker.session), 1)} class="h-1.5" /></div>
+			<Button variant="outline" size="sm" onclick={() => (monitorOpen = true)}>Open monitor</Button>
 		</Card>
 	{/if}
 
-	<section class="grid gap-4 sm:grid-cols-3" aria-label="Summary">
+	<section class="grid gap-3 sm:grid-cols-3" aria-label="Summary">
 		<StatCard
 			label="Participant IDs"
 			value={roster.length}
-			hint="Assign IDs to camera lanes before starting"
+			hint="Across all sessions"
 			icon={UserMultipleIcon}
 			loading={tracker.loading}
 		/>
 		<StatCard
 			label="Saved sessions"
 			value={tracker.history.length}
-			hint="Completed workout reports"
+			hint="Completed reports"
+			badge={tracker.historyAvailable && tracker.history.length > 0 ? 'Synced' : undefined}
 			icon={ClipboardCheckIcon}
 			tone="accent"
 			loading={tracker.historyLoading && !tracker.history.length}
@@ -194,7 +194,9 @@
 		<StatCard
 			label="Review needed"
 			value={reviewCount}
-			hint="Range, target or tracking notes"
+			hint="Needs attention"
+			badge={reviewCount > 0 ? 'Review' : 'Clear'}
+			badgeVariant={reviewCount > 0 ? 'warning' : 'success'}
 			icon={Alert02Icon}
 			tone="clay"
 			loading={tracker.loading}
@@ -202,18 +204,13 @@
 	</section>
 
 	<Tabs.Root bind:value={tab} class="gap-0">
-		<Tabs.List variant="line" class="border-border w-full justify-start gap-6 rounded-none border-b" aria-label="Dashboard sections">
-			<Tabs.Trigger value="participants" class="h-10 flex-none px-0 text-sm font-semibold">Participants</Tabs.Trigger>
-			<Tabs.Trigger value="sessions" class="h-10 flex-none px-0 text-sm font-semibold">Session history</Tabs.Trigger>
+		<Tabs.List aria-label="Dashboard sections" class="w-fit max-w-full">
+			<Tabs.Trigger value="participants" class="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[var(--shadow-sm),var(--highlight)] dark:data-[state=active]:bg-white/8">Participants</Tabs.Trigger>
+			<Tabs.Trigger value="sessions" class="data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-[var(--shadow-sm),var(--highlight)] dark:data-[state=active]:bg-white/8">Session history</Tabs.Trigger>
 		</Tabs.List>
 
-		<Tabs.Content value="participants" class="flex flex-col gap-5 pt-6">
-			<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-				<div>
-					<h2 class="text-lg font-bold tracking-tight">Participants</h2>
-					<p class="text-muted-foreground text-sm">Current session or most recent saved results</p>
-				</div>
-				<div class="flex flex-col gap-2 sm:flex-row">
+		<Tabs.Content value="participants" class="flex flex-col gap-4 pt-4">
+			<div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
 					<div class="relative">
 						<HugeiconsIcon
 							icon={Search01Icon}
@@ -224,21 +221,16 @@
 						<Input
 							type="search"
 							class="h-10 w-full pl-9 sm:w-56"
-							placeholder="Search participant ID"
+							placeholder="Search ID"
 							aria-label="Search participants"
 							bind:value={search}
 						/>
 					</div>
-					<select
-						class="border-input bg-background focus-visible:ring-ring/50 h-10 rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px] sm:w-44"
-						aria-label="Filter participants"
-						bind:value={filter}
-					>
-						<option value="all">All participants</option>
-						<option value="review">Needs review</option>
-					</select>
+					<Select.Root type="single" value={filter} onValueChange={(value) => (filter = value as RosterFilter)}>
+						<Select.Trigger aria-label="Filter participants" class="w-full sm:w-44"><span class="truncate">{filter === 'review' ? 'Needs review' : 'All participants'}</span></Select.Trigger>
+						<Select.Content><Select.Item value="all" label="All participants" /><Select.Item value="review" label="Needs review" /></Select.Content>
+					</Select.Root>
 				</div>
-			</div>
 
 			{#if tracker.loading && !tracker.history.length}
 				<div class="flex flex-col gap-3" aria-label="Loading participants" role="status">
@@ -247,59 +239,31 @@
 					{/each}
 				</div>
 			{:else if visibleRoster.length}
-				<RosterTable entries={visibleRoster} onSelect={openParticipant} />
+				<Card class="gap-0 p-0 py-0"><RosterTable entries={visibleRoster} onSelect={openParticipant} /></Card>
 			{:else}
-				<div class="flex flex-col items-center gap-3 py-16 text-center">
-					<span class="bg-muted text-muted-foreground grid size-12 place-items-center rounded-full">
-						<HugeiconsIcon icon={Search01Icon} size={22} strokeWidth={1.8} />
-					</span>
-					<h3 class="font-semibold">No participants match this search.</h3>
-					{#if filtersActive}
-						<Button variant="link" onclick={clearFilters}>Clear filters</Button>
-					{/if}
-				</div>
+				<Empty.Root><Empty.Header><Empty.Media variant="icon"><HugeiconsIcon icon={Search01Icon} size={20} strokeWidth={2} /></Empty.Media><h3 class="font-semibold">No participants match this search.</h3></Empty.Header>{#if filtersActive}<Empty.Content><Button variant="outline" size="sm" onclick={clearFilters}>Clear filters</Button></Empty.Content>{/if}</Empty.Root>
 			{/if}
 
 			<p class="text-muted-foreground text-xs">
-				Showing {visibleRoster.length} of {roster.length} IDs · IDs stay with participants across sessions
+				Showing {visibleRoster.length} of {roster.length} IDs
 			</p>
 		</Tabs.Content>
 
-		<Tabs.Content value="sessions" class="flex flex-col gap-5 pt-6">
-			<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-				<div>
-					<h2 class="text-lg font-bold tracking-tight">Completed group sessions</h2>
-					<p class="text-muted-foreground text-sm">Saved results for every group session, with each input source.</p>
-				</div>
-				<select
-					class="border-input bg-background focus-visible:ring-ring/50 h-10 min-w-44 rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
-					aria-label="Filter sessions by participant"
-					bind:value={historyParticipant}
-				>
-					<option value="">All participants</option>
-					{#each roster as entry (entry.id)}
-						<option value={entry.id}>{entry.id}</option>
-					{/each}
-				</select>
+		<Tabs.Content value="sessions" class="flex flex-col gap-4 pt-4">
+			<div class="flex justify-start sm:justify-end">
+				<Select.Root type="single" value={historyParticipant || 'all'} onValueChange={(value) => (historyParticipant = value === 'all' ? '' : value)}>
+					<Select.Trigger aria-label="Filter sessions by participant" class="w-full sm:w-48"><span class="truncate">{historyParticipant || 'All participants'}</span></Select.Trigger>
+					<Select.Content><Select.Item value="all" label="All participants" />{#each roster as entry (entry.id)}<Select.Item value={entry.id} label={entry.id} />{/each}</Select.Content>
+				</Select.Root>
 			</div>
 
 			{#if historyRows.length}
-				<HistoryTable sessions={historyRows} onView={(session) => (summary = session)} />
+				<Card class="gap-0 p-0 py-0"><HistoryTable sessions={historyRows} onView={(session) => (summary = session)} /></Card>
 				{#if tracker.historyHasMore}
 					<Button variant="outline" class="self-center" onclick={() => tracker.loadMoreHistory()}>Load more sessions</Button>
 				{/if}
 			{:else}
-				<div class="flex flex-col items-center gap-3 py-16 text-center">
-					<span class="bg-muted text-muted-foreground grid size-12 place-items-center rounded-full">
-						<HugeiconsIcon icon={Calendar03Icon} size={22} strokeWidth={1.8} />
-					</span>
-					<h3 class="font-semibold">
-						{tracker.historyLoading ? 'Loading saved sessions…' : 'No completed sessions yet.'}
-					</h3>
-					{#if !tracker.historyLoading}
-						<p class="text-muted-foreground max-w-sm text-sm">End and save a workout to generate its report.</p>
-					{/if}
-				</div>
+				<Empty.Root><Empty.Header><Empty.Media variant="icon"><HugeiconsIcon icon={Calendar03Icon} size={20} strokeWidth={2} /></Empty.Media><h3 class="font-semibold">{tracker.historyLoading ? 'Loading saved sessions…' : 'No completed sessions yet.'}</h3>{#if !tracker.historyLoading}<Empty.Description>End and save a session to see its report here.</Empty.Description>{/if}</Empty.Header></Empty.Root>
 			{/if}
 		</Tabs.Content>
 	</Tabs.Root>
@@ -337,10 +301,10 @@
 		if (!open) summary = null;
 	}}
 >
-	<Dialog.Content class="max-h-[90svh] overflow-y-auto sm:max-w-3xl">
+	<Dialog.Content class="max-h-[90svh] overflow-y-auto sm:max-w-3xl" bind:ref={summaryContent} onOpenAutoFocus={(event) => { event.preventDefault(); summaryContent?.focus(); }}>
 		<Dialog.Header class="gap-1">
 			<Dialog.Title class="text-xl">Session summary</Dialog.Title>
-			<Dialog.Description>Review each participant’s results before printing the report.</Dialog.Description>
+			<Dialog.Description>Results for each participant.</Dialog.Description>
 		</Dialog.Header>
 		{#if summary}
 			<WorkoutSummary workout={summary} />

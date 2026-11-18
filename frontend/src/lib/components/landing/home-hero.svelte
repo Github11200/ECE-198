@@ -1,51 +1,23 @@
 <script lang="ts">
-	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Container } from '#lib/components/ui/container/index.js';
+	import { Backdrop } from '#lib/components/graphics/index.js';
+	import HeroDemo from './hero-demo.svelte';
 </script>
 
-<section class="page-container py-10 sm:py-14 lg:py-16" aria-labelledby="home-title">
-	<div class="grid items-center gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-		<div class="max-w-xl">
-			<p class="eyebrow">CCCARE · ECE 198 PROJECT</p>
-			<h1
-				id="home-title"
-				class="mt-4 text-4xl leading-[1.08] font-bold tracking-[-0.035em] sm:text-5xl"
-			>
-				Exercise session tracker
-			</h1>
-			<p class="text-muted-foreground mt-5 text-lg leading-relaxed">
-				Set participant targets, monitor exercise activity, and review the results of a supervised
-				group session.
-			</p>
-			<div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-				<Button href="/admin/" size="lg">
-					Open admin dashboard
-					<HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2} data-icon="inline-end" />
-				</Button>
-				<Button href="/patient/" size="lg" variant="outline">Patient view</Button>
-			</div>
-			<p class="text-muted-foreground mt-5 max-w-md text-sm leading-relaxed">
-				The admin dashboard connects to the local tracker on the session laptop. The patient view
-				shows saved results for a numbered participant ID.
-			</p>
+<section class="relative isolate overflow-hidden pt-20 pb-16 md:pt-28 md:pb-24" aria-labelledby="home-title">
+	<Backdrop preset="hero" />
+	<Container class="relative text-center">
+		<p class="reveal inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-card/70 px-3.5 py-1.5 font-mono text-[10px] tracking-wide text-foreground shadow-[var(--shadow-xs)] backdrop-blur sm:text-xs">
+			<span class="relative flex size-1.5 shrink-0"><span class="absolute inset-0 rounded-full bg-primary motion-safe:animate-ping"></span><span class="relative size-1.5 rounded-full bg-primary"></span></span>
+			Live rep tracking for group sessions
+		</p>
+		<h1 id="home-title" class="reveal text-display-xl mx-auto mt-6 max-w-4xl text-balance" style="--reveal-delay: 80ms">Every rep, <span class="font-serif-accent">counted</span> live.</h1>
+		<p class="reveal text-lead mx-auto mt-6 max-w-xl" style="--reveal-delay: 160ms">One camera counts every rep for up to five people, with live range cues and printable reports.</p>
+		<div class="reveal mt-8 flex flex-wrap items-center justify-center gap-3" style="--reveal-delay: 240ms">
+			<Button variant="hero" size="xl" href="/admin/">Start a session</Button>
+			<Button variant="outline" size="xl" href="/patient/">View my sessions</Button>
 		</div>
-
-		<figure class="w-full">
-			<div class="bg-muted overflow-hidden rounded-2xl border shadow-sm">
-				<img
-					src="/images/rehabilitation-session.jpg"
-					alt="A physiotherapist supporting a participant during an exercise"
-					class="aspect-[16/10] max-h-96 w-full object-cover lg:aspect-[5/4] lg:max-h-none"
-					width="1400"
-					height="933"
-					fetchpriority="high"
-					decoding="async"
-				/>
-			</div>
-			<figcaption class="text-muted-foreground mt-2.5 text-xs">
-				Supervised exercise · stock photograph
-			</figcaption>
-		</figure>
-	</div>
+		<div class="reveal relative mx-auto mt-14 max-w-5xl text-left md:mt-16" style="--reveal-delay: 320ms"><HeroDemo /></div>
+	</Container>
 </section>

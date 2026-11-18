@@ -61,6 +61,7 @@
 </script>
 
 <svelte:head>
+	<meta name="robots" content="noindex, nofollow" />
 	<title>Design system · Alder</title>
 	<meta name="description" content="Alder's component and pattern showcase." />
 </svelte:head>

@@ -3,11 +3,11 @@
 </script>
 
 <svelte:head>
-	<title>Rehabilitation programme · Alder Rehabilitation</title>
+	<title>Rehabilitation programme · Alder</title>
 	<meta
 		name="description"
-		content="A supervised rehabilitation exercise programme overview from Alder Rehabilitation, for the CCCARE exercise programme."
+		content="Supervised group rehabilitation with live rep counts, range cues and per-person targets."
 	/>
 </svelte:head>
 
-<LandingPage />
+<LandingPage variant="rehabilitation" />

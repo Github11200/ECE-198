@@ -2,6 +2,7 @@
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 	import StatusBadge from '../status-badge.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import { Progress } from '#lib/components/ui/progress/index.js';
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#lib/components/ui/table/index.js';
 	import { participantLabel, type RosterEntry } from '#lib/dashboard.js';
@@ -16,7 +17,7 @@
 <div class="overflow-x-auto">
 	<Table aria-label="Participants">
 		<TableHeader>
-			<TableRow class="hover:bg-transparent">
+			<TableRow class="bg-muted/50 hover:bg-muted/50">
 				<TableHead>Participant</TableHead>
 				<TableHead>Exercise</TableHead>
 				<TableHead class="min-w-40">Reps / target</TableHead>
@@ -27,7 +28,7 @@
 		</TableHeader>
 		<TableBody>
 			{#each entries as entry (entry.id)}
-				<TableRow>
+				<TableRow class="h-12">
 					<TableCell>
 						<button
 							type="button"
@@ -35,7 +36,7 @@
 							onclick={() => onSelect(entry.id)}
 						>
 							<span
-								class="bg-accent text-accent-foreground grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold tabular-nums"
+								class="bg-accent text-accent-foreground grid size-9 shrink-0 place-items-center rounded-full font-mono text-xs tabular-nums"
 								aria-hidden="true">{entry.id.slice(1)}</span
 							>
 							<span class="flex flex-col">
@@ -58,7 +59,7 @@
 					<TableCell>
 						{#if entry.result}
 							<div class="flex items-center gap-3">
-								<span class="w-14 text-sm tabular-nums">
+								<span class="w-14 font-mono text-sm tabular-nums">
 									<strong>{entry.result.reps}</strong> / {entry.result.target}
 								</span>
 								<Progress
@@ -72,17 +73,17 @@
 							<span class="text-muted-foreground">—</span>
 						{/if}
 					</TableCell>
-					<TableCell class="text-right tabular-nums">{percent(entry.result?.range_score)}</TableCell>
+					<TableCell class="text-right font-mono tabular-nums">{#if entry.result?.range_score == null}<span class="text-muted-foreground">—</span>{:else}{percent(entry.result.range_score)}{/if}</TableCell>
 					<TableCell><StatusBadge label={entry.status.label} tone={entry.status.tone} /></TableCell>
 					<TableCell>
-						<button
-							type="button"
-							class="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring/50 grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-[3px]"
+						<Button
+							variant="ghost"
+							size="icon-sm"
 							aria-label={`View ${entry.id}`}
 							onclick={() => onSelect(entry.id)}
 						>
 							<HugeiconsIcon icon={ArrowRight01Icon} size={18} strokeWidth={2} />
-						</button>
+						</Button>
 					</TableCell>
 				</TableRow>
 			{/each}

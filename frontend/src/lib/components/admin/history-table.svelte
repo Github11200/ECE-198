@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#lib/components/ui/table/index.js';
 	import {
 		percent,
@@ -17,7 +18,7 @@
 <div class="overflow-x-auto">
 	<Table aria-label="Completed sessions">
 		<TableHeader>
-			<TableRow class="hover:bg-transparent">
+			<TableRow class="bg-muted/50 hover:bg-muted/50">
 				<TableHead>Exercise / station</TableHead>
 				<TableHead>Finished</TableHead>
 				<TableHead class="text-right">Participants</TableHead>
@@ -28,15 +29,15 @@
 		</TableHeader>
 		<TableBody>
 			{#each sessions as session (session.id)}
-				<TableRow>
+				<TableRow class="h-12">
 					<TableCell>
 						<span class="block font-semibold">{session.exercise_label}</span>
-						<span class="text-muted-foreground text-xs">{session.station} · {sourceNames[session.source]}</span>
+						<div class="mt-1 flex flex-wrap items-center gap-2"><span class="text-xs text-muted-foreground">{session.station}</span><Badge variant="secondary">{sourceNames[session.source]}</Badge></div>
 					</TableCell>
 					<TableCell class="whitespace-normal">{workoutDate(session.finished_at ?? session.started_at)}</TableCell>
-					<TableCell class="text-right tabular-nums">{session.participants.length}</TableCell>
-					<TableCell class="text-right tabular-nums">{totalReps(session)} / {totalTarget(session)}</TableCell>
-					<TableCell class="text-right tabular-nums">{percent(totalRangeScore(session))}</TableCell>
+					<TableCell class="text-right font-mono tabular-nums">{session.participants.length}</TableCell>
+					<TableCell class="text-right font-mono tabular-nums">{totalReps(session)} / {totalTarget(session)}</TableCell>
+					<TableCell class="text-right font-mono tabular-nums">{percent(totalRangeScore(session))}</TableCell>
 					<TableCell class="text-right">
 						<Button variant="ghost" size="sm" onclick={() => onView(session)} aria-label={`View summary for ${session.exercise_label} on ${workoutDate(session.finished_at ?? session.started_at)}`}>
 							View summary

@@ -42,6 +42,14 @@ class FrontendTests(unittest.TestCase):
                     self.assertEqual(get('/admin'), 'Connected admin')
                     self.assertEqual(get('/admin/index.txt?_rsc=demo'), 'Next navigation data')
                     self.assertEqual(get('/tracker'), 'Original tracker')
+                    # Binary media must not carry a text charset (breaks some video players).
+                    (export / 'media').mkdir()
+                    (export / 'media' / 'demo.webm').write_bytes(b'\x1aE\xdf\xa3')
+                    (export / 'media' / 'poster.webp').write_bytes(b'RIFF0000WEBP')
+                    for path, expected in (('/media/demo.webm', 'video/webm'), ('/media/poster.webp', 'image/webp'),
+                                           ('/', 'text/html; charset=utf-8')):
+                        with urlopen(base + path, timeout=3) as response:
+                            self.assertEqual(response.headers['Content-Type'], expected)
                     for path in ('/../private.txt', '/%2e%2e/private.txt', '/%5c..%5cprivate.txt', '/unknown-page/'):
                         with self.assertRaises(HTTPError) as error:
                             get(path)

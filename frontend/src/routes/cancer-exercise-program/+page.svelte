@@ -3,11 +3,11 @@
 </script>
 
 <svelte:head>
-	<title>Cancer exercise programme · Alder Rehabilitation</title>
+	<title>Cancer exercise programme · Alder</title>
 	<meta
 		name="description"
-		content="Supervised exercise tracking for the CCCARE cancer exercise programme, for the CCCARE cancer exercise programme."
+		content="Supervised exercise for people living with and beyond cancer, with live rep tracking and printable reports."
 	/>
 </svelte:head>
 
-<LandingPage />
+<LandingPage variant="cancer" />

@@ -51,15 +51,15 @@ class LiveFeedbackStore {
 
 	get message() {
 		if (!convexUrl)
-			return "Convex is not configured (set PUBLIC_CONVEX_URL and rebuild). Showing data from this laptop's tracker only.";
+			return "Cloud sync isn't configured. Showing this laptop's sessions.";
 		if (!this.token)
-			return "Showing data from this laptop's tracker. Enter the team's feedback read token to connect to live Convex feedback and cloud history.";
+			return "Enter the read token to sync cloud history.";
 		if (this.error) return this.error;
 		if (this.snapshot === undefined) return 'Connecting to Convex…';
 		// The publisher only heartbeats during a session, so an idle "no session"
 		// snapshot is expected to be old; it is not a missing publisher.
-		if (this.snapshot && !this.snapshot.dashboard) return 'Connected to Convex. No live session is running.';
-		return this.fresh ? '' : 'Waiting for the laptop feedback publisher.';
+		if (this.snapshot && !this.snapshot.dashboard) return 'Cloud connected. No live session.';
+		return this.fresh ? '' : 'Waiting for the session laptop to sync.';
 	}
 
 	connect(token: string) {

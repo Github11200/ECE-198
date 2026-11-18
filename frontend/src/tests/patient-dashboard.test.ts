@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import PatientPage from '../routes/patient/+page.svelte';
-import { connectFeedback, installTrackerApi, resetTracker } from './fixtures';
+import { chooseOption, connectFeedback, installTrackerApi, resetTracker, selectOptions } from './fixtures';
 
 vi.mock('convex/browser', async () => ({ ConvexClient: (await import('./convex-mock')).FakeConvexClient }));
 
@@ -39,16 +39,17 @@ describe('patient dashboard', () => {
 		await waitFor(() => expect(stat('Sessions attended')).toBe('2'));
 		expect(stat('Latest reps')).toBe('8 / 10');
 		expect(stat('Average range score')).toBe('88%');
-		expect(screen.getByLabelText('Viewing as')).toHaveValue('P01');
+		expect(screen.getByLabelText('Viewing as')).toHaveTextContent('P01');
 	});
 
 	it('offers every participant ID from P01 to P99, as the original portal did', async () => {
 		installTrackerApi();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(PatientPage);
-		const options = within(screen.getByLabelText('Viewing as')).getAllByRole('option');
+		const options = await selectOptions(user, 'Viewing as');
 		expect(options).toHaveLength(99);
-		expect(options[0]).toHaveValue('P01');
-		expect(options[98]).toHaveValue('P99');
+		expect(options[0]).toContain('P01');
+		expect(options[98]).toContain('P99');
 	});
 
 	it('lists each saved session with reps, metrics and instructor notes, newest first', async () => {
@@ -71,12 +72,12 @@ describe('patient dashboard', () => {
 
 	it('switches to another participant and updates every figure', async () => {
 		installTrackerApi();
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(PatientPage);
 		await connectFeedback(user);
 		await loadedSessions();
 
-		await user.selectOptions(screen.getByLabelText('Viewing as'), 'P02');
+		await chooseOption(user, 'Viewing as', 'P02 · Participant 02');
 
 		await waitFor(() => expect(stat('Sessions attended')).toBe('1'));
 		expect(stat('Latest reps')).toBe('6 / 8');
@@ -87,12 +88,12 @@ describe('patient dashboard', () => {
 
 	it('explains the empty state for a participant with no saved sessions', async () => {
 		installTrackerApi();
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(PatientPage);
 		await connectFeedback(user);
 		await loadedSessions();
 
-		await user.selectOptions(screen.getByLabelText('Viewing as'), 'P04');
+		await chooseOption(user, 'Viewing as', 'P04 · Participant 04');
 
 		expect(await screen.findByRole('heading', { name: 'No sessions recorded for P04 yet.' })).toBeInTheDocument();
 		expect(stat('Sessions attended')).toBe('0');

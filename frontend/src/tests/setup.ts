@@ -17,6 +17,13 @@ if (!window.matchMedia) {
 		}) as MediaQueryList;
 }
 
+// bits-ui Select (shadcn Select) uses pointer capture and scrollIntoView, which jsdom lacks.
+const elementProto = Element.prototype as unknown as Record<string, unknown>;
+elementProto.hasPointerCapture ??= () => false;
+elementProto.setPointerCapture ??= () => {};
+elementProto.releasePointerCapture ??= () => {};
+elementProto.scrollIntoView ??= () => {};
+
 afterEach(() => {
 	cleanup();
 	vi.unstubAllGlobals();

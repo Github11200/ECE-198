@@ -1,9 +1,9 @@
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { tracker } from '#lib/tracker.svelte.js';
 import { liveFeedback } from '#lib/live-feedback.svelte.js';
 import { cloudHistory } from '#lib/cloud-history.svelte.js';
 import { convexServer, pushLive } from './convex-mock';
-import { screen } from '@testing-library/svelte';
+import { screen, waitFor, within } from '@testing-library/svelte';
 import type { UserEvent } from '@testing-library/user-event';
 import type { Exercise, ParticipantResult, SessionSetup, Workout } from '#lib/tracker-api.js';
 
@@ -208,6 +208,31 @@ export function installTrackerApi(options: ApiOptions = {}) {
 export async function connectFeedback(user: UserEvent) {
 	await user.type(await screen.findByLabelText('Feedback read token'), 'read');
 	await user.click(screen.getByRole('button', { name: 'Connect' }));
+}
+
+/**
+ * Picks an option in a shadcn (bits-ui) Select, found by the trigger's accessible label.
+ * Use a user created with `userEvent.setup({ pointerEventsCheck: 0 })`, because open
+ * menus and dialogs set `pointer-events: none` on the body.
+ */
+export async function chooseOption(user: UserEvent, label: string, option: string, container: HTMLElement = document.body) {
+	await user.click(within(container).getByLabelText(label));
+	await waitFor(() => expect(document.querySelector('[role=listbox]')).not.toBeNull());
+	const item = within(document.querySelector('[role=listbox]') as HTMLElement)
+		.getByText(option, { exact: true })
+		.closest('[role=option]') as HTMLElement;
+	await user.click(item);
+	await waitFor(() => expect(document.querySelector('[role=listbox]')).toBeNull());
+}
+
+/** Lists the option labels of a shadcn Select by opening it and closing it again. */
+export async function selectOptions(user: UserEvent, label: string) {
+	await user.click(screen.getByLabelText(label));
+	await waitFor(() => expect(document.querySelector('[role=listbox]')).not.toBeNull());
+	const options = Array.from(document.querySelectorAll('[role=option]')).map((el) => el.textContent?.trim() ?? '');
+	await user.keyboard('{Escape}');
+	await waitFor(() => expect(document.querySelector('[role=listbox]')).toBeNull());
+	return options;
 }
 
 /** Clears the singleton stores between tests so earlier data cannot leak in. */

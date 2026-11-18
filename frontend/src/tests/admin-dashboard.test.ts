@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminPage from '../routes/admin/+page.svelte';
-import { connectFeedback, installTrackerApi, liveWorkout, resetTracker, type ApiCall } from './fixtures';
+import { chooseOption, connectFeedback, installTrackerApi, liveWorkout, resetTracker, type ApiCall } from './fixtures';
 
 vi.mock('convex/browser', async () => ({ ConvexClient: (await import('./convex-mock')).FakeConvexClient }));
 
@@ -18,7 +18,7 @@ async function loadedRoster() {
 
 /** Opens the admin dashboard and connects the Convex feedback, as a team member would. */
 async function openAdmin() {
-	const user = userEvent.setup();
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	render(AdminPage);
 	await connectFeedback(user);
 	await loadedRoster();
@@ -71,11 +71,11 @@ describe('admin dashboard: summary and roster', () => {
 		const user = await openAdmin();
 		const table = await loadedRoster();
 
-		await user.selectOptions(screen.getByLabelText('Filter participants'), 'review');
+		await chooseOption(user, 'Filter participants', 'Needs review');
 
 		expect(within(table).getByText('Participant 01')).toBeInTheDocument();
 		expect(within(table).queryByText('Participant 02')).not.toBeInTheDocument();
-		expect(screen.getByText('Showing 1 of 5 IDs · IDs stay with participants across sessions')).toBeInTheDocument();
+		expect(screen.getByText('Showing 1 of 5 IDs')).toBeInTheDocument();
 	});
 
 	it('searches by participant ID and offers a way back when nothing matches', async () => {
@@ -107,7 +107,7 @@ describe('admin dashboard: live connection', () => {
 	it('asks for the feedback token before any archive or live data is shown', async () => {
 		installTrackerApi();
 		render(AdminPage);
-		expect(await screen.findByText(/Enter the team's feedback read token to connect to live Convex feedback/)).toBeInTheDocument();
+		expect(await screen.findByText(/Enter the read token to sync cloud history/)).toBeInTheDocument();
 		await waitFor(() => expect(stat('Saved sessions')).toBe('0'));
 	});
 
@@ -198,7 +198,7 @@ describe('admin dashboard: starting a session', () => {
 
 		await user.click(screen.getByRole('button', { name: 'Prepare a session' }));
 		const setup = await screen.findByRole('dialog', { name: 'Prepare a group session' });
-		await user.selectOptions(within(setup).getByLabelText('Exercise'), 'stand');
+		await chooseOption(user, 'Exercise', 'Sit to stand', setup);
 		await user.clear(within(setup).getByLabelText('Station'));
 		await user.type(within(setup).getByLabelText('Station'), 'Room B');
 		await user.click(within(setup).getByRole('button', { name: 'Start session' }));
@@ -268,7 +268,7 @@ describe('admin dashboard: live monitor and saving', () => {
 		expect(await screen.findByRole('dialog', { name: 'Session summary' })).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				'Session saved on this laptop. It is listed under Session history and uploads to Convex in the background.'
+				'Session saved to history. Cloud upload runs in the background.'
 			)
 		).toBeInTheDocument();
 		await waitFor(() => expect(screen.queryByText('Active session')).not.toBeInTheDocument());
@@ -297,7 +297,7 @@ describe('admin dashboard: session history', () => {
 		const history = await screen.findByRole('table', { name: 'Completed sessions' });
 		expect(within(history).getAllByRole('row')).toHaveLength(3);
 
-		await user.selectOptions(screen.getByLabelText('Filter sessions by participant'), 'P02');
+		await chooseOption(user, 'Filter sessions by participant', 'P02');
 		expect(within(history).getAllByRole('row')).toHaveLength(2);
 		expect(within(history).getByText('Seated arm curl')).toBeInTheDocument();
 		expect(within(history).queryByText('Sit to stand')).not.toBeInTheDocument();

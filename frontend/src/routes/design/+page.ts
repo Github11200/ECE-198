@@ -1,10 +1,3 @@
-import { dev } from '$app/env';
-import { error } from '@sveltejs/kit';
-
-// The root layout is prerendered for the static tracker export.
-export const prerender = false;
-export const ssr = false;
-
-export const load = () => {
-	if (!dev) error(404, 'Not found');
-};
+// Design-system showcase. Built like every other static page but not linked
+// from the site and marked noindex (see +page.svelte).
+export const prerender = true;

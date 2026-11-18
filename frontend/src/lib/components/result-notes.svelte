@@ -2,6 +2,7 @@
 	import type { ParticipantResult } from '#lib/tracker-api.js';
 	import * as Collapsible from '#lib/components/ui/collapsible/index.js';
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '#lib/components/ui/table/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { HugeiconsIcon } from '@hugeicons/svelte';
 	import { ArrowRight01Icon, Tick02Icon, Alert02Icon } from '@hugeicons/core-free-icons';
 
@@ -9,12 +10,12 @@
 	let open = $state(false);
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-3">
 	{#if person.issues.length}
-		<ul class="flex flex-col gap-2" aria-label="Measurement notes">
+		<ul class="flex flex-col gap-1.5" aria-label="Measurement notes">
 			{#each person.issues as issue (issue)}
-				<li class="text-foreground flex items-start gap-2.5 text-sm leading-relaxed">
-					<HugeiconsIcon icon={Alert02Icon} size={16} strokeWidth={2} class="text-warning-foreground mt-0.5 shrink-0" />
+				<li class="text-foreground flex items-start gap-2 text-sm">
+					<HugeiconsIcon icon={Alert02Icon} size={16} strokeWidth={2} class="text-warning mt-0.5 shrink-0" />
 					<span>{issue}</span>
 				</li>
 			{/each}
@@ -28,7 +29,7 @@
 
 	<Collapsible.Root bind:open>
 		<Collapsible.Trigger
-			class="text-primary hover:text-primary/80 focus-visible:ring-ring/50 inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-semibold transition-colors outline-none focus-visible:ring-[3px]"
+			class="inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 		>
 			<HugeiconsIcon
 				icon={ArrowRight01Icon}
@@ -40,7 +41,7 @@
 		</Collapsible.Trigger>
 		<Collapsible.Content>
 			{#if person.rep_details.length}
-				<div class="mt-2 overflow-x-auto">
+				<div class="mt-2 overflow-x-auto rounded-xl border border-border bg-muted/50">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -52,9 +53,9 @@
 						<TableBody>
 							{#each person.rep_details as rep (rep.number)}
 								<TableRow>
-									<TableCell class="tabular-nums">{rep.number}</TableCell>
-									<TableCell class="text-right tabular-nums">{rep.peak_angle.toFixed(2)}°</TableCell>
-									<TableCell class="text-right">{rep.reached_range ? 'Reached' : 'Short'}</TableCell>
+									<TableCell class="font-mono tabular-nums">{rep.number}</TableCell>
+									<TableCell class="text-right font-mono tabular-nums">{rep.peak_angle.toFixed(2)}°</TableCell>
+									<TableCell class="text-right"><Badge variant={rep.reached_range ? 'success' : 'warning'}>{rep.reached_range ? 'Reached' : 'Short'}</Badge></TableCell>
 								</TableRow>
 							{/each}
 						</TableBody>

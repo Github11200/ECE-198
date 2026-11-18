@@ -1,5 +1,7 @@
 # CCCARE Exercise Tracker
 
+![Alder: live session walkthrough](frontend/static/media/alder-demo.gif)
+
 ECE 198 · Fall 2026 · Progress demonstration for Nov. 11
 
 CCCARE instructors may supervise 10–12 participants at once, or up to 30 in a graduated group. They need a practical way to see how much exercise each person completed and which participants could use a closer look. Participants need short, individualized cues. The project focuses on **Subproblem 2, exercise tracking and measurement**, with one piece of **Subproblem 1, scale personalized care**. The instructor sets a rep target per participant and can look up that participant's previous sessions.

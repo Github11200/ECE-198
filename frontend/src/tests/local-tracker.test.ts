@@ -82,8 +82,8 @@ describe('admin dashboard against the laptop tracker only (no Convex token)', ()
 		await waitFor(() => expect(prepare).toBeEnabled());
 		await user.click(prepare);
 		const setup = await screen.findByRole('dialog', { name: 'Prepare a group session' });
-		await user.selectOptions(within(setup).getByLabelText('Pose input'), 'replay');
-		await user.selectOptions(within(setup).getByLabelText('Participants'), '2');
+		await user.click(within(within(setup).getByRole('tablist', { name: 'Pose input' })).getByRole('tab', { name: 'Replay' }));
+		await user.click(within(within(setup).getByRole('tablist', { name: 'Participants' })).getByRole('tab', { name: '2' }));
 		await user.click(within(setup).getByRole('button', { name: 'Start replay' }));
 
 		const monitor = await screen.findByRole('dialog', { name: 'Seated arm curl · Station 1' });
@@ -99,7 +99,7 @@ describe('admin dashboard against the laptop tracker only (no Convex token)', ()
 			`/reports/${HEX_ID}`
 		);
 		expect(api.state.active).toBeNull();
-		expect(screen.getByText(/Session saved on this laptop/)).toBeInTheDocument();
+		expect(screen.getByText(/Session saved to history/)).toBeInTheDocument();
 
 		await user.keyboard('{Escape}');
 		await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -138,7 +138,7 @@ describe('live monitor dialog', () => {
 	it('explains an empty monitor instead of rendering a blank dialog', async () => {
 		render(LiveMonitorDialog, { open: true, session: null, busy: false, onEnd: () => {} });
 		expect(await screen.findByRole('dialog', { name: 'Live session' })).toBeInTheDocument();
-		expect(screen.getByText('No session is running on the tracker right now.')).toBeInTheDocument();
+		expect(screen.getByText('No session is running.')).toBeInTheDocument();
 	});
 
 	it('shows a save error inside the dialog', async () => {
@@ -190,10 +190,10 @@ describe('live feedback status message', () => {
 		liveFeedback.now = 60_000;
 		// The publisher stops heartbeating once a session ends, so the idle row is old.
 		liveFeedback.snapshot = { updatedAt: 1_000, dashboard: null };
-		expect(liveFeedback.message).toBe('Connected to Convex. No live session is running.');
+		expect(liveFeedback.message).toBe('Cloud connected. No live session.');
 		// A stale snapshot that still carries a session means the publisher stopped mid-session.
 		liveFeedback.snapshot = { updatedAt: 1_000, dashboard: workout({ id: 'S1', participants: [], finished_at: null }) };
-		expect(liveFeedback.message).toBe('Waiting for the laptop feedback publisher.');
+		expect(liveFeedback.message).toBe('Waiting for the session laptop to sync.');
 		liveFeedback.now = 2_000;
 		expect(liveFeedback.message).toBe('');
 		liveFeedback.disconnect();

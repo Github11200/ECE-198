@@ -4,6 +4,7 @@
 	import ResultNotes from '../result-notes.svelte';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { Card } from '#lib/components/ui/card/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { MAX_REP_TARGET, participantLabel, type RosterEntry } from '#lib/dashboard.js';
@@ -54,26 +55,26 @@
 				</Dialog.Description>
 			</Dialog.Header>
 
-			<dl class="grid grid-cols-2 gap-4 text-sm">
+			<Card variant="inset" size="sm"><dl class="grid grid-cols-2 gap-4 px-4 text-sm">
 				<div>
-					<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Saved sessions</dt>
-					<dd class="mt-1 text-base font-semibold tabular-nums">{entry.visits}</dd>
+					<dt class="eyebrow">Saved sessions</dt>
+					<dd class="mt-1 font-mono text-base font-semibold tabular-nums">{entry.visits}</dd>
 				</div>
 				<div>
-					<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Latest exercise</dt>
+					<dt class="eyebrow">Latest exercise</dt>
 					<dd class="mt-1 font-semibold">{entry.workout?.exercise_label ?? 'Not recorded'}</dd>
 				</div>
 				<div>
-					<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Reps / target</dt>
-					<dd class="mt-1 font-semibold tabular-nums">
+					<dt class="eyebrow">Reps / target</dt>
+					<dd class="mt-1 font-mono font-semibold tabular-nums">
 						{entry.result ? `${entry.result.reps} / ${entry.result.target}` : 'Not recorded'}
 					</dd>
 				</div>
 				<div>
-					<dt class="text-muted-foreground text-xs font-semibold tracking-wide uppercase">Range score</dt>
-					<dd class="mt-1 font-semibold tabular-nums">{percent(entry.result?.range_score)}</dd>
+					<dt class="eyebrow">Range score</dt>
+					<dd class="mt-1 font-mono font-semibold tabular-nums">{percent(entry.result?.range_score)}</dd>
 				</div>
-			</dl>
+			</dl></Card>
 
 			{#if entry.workout}
 				<p class="text-muted-foreground -mt-2 text-xs">Source: {sourceNames[entry.workout.source]}</p>
@@ -112,7 +113,7 @@
 						</Button>
 					</div>
 					<p id="next-target-help" class="text-muted-foreground text-xs leading-relaxed">
-						Applies to the next session setup. Starting a session saves its target snapshot.
+						Used for the next session setup.
 					</p>
 					{#if error}
 						<p class="text-destructive text-sm font-medium" role="alert">{error}</p>

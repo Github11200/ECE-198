@@ -271,7 +271,8 @@ def handler_for(service, port):
     class Handler(BaseHTTPRequestHandler):
         def send(self, status, content, mime):
             self.send_response(status)
-            self.send_header("Content-Type", mime + "; charset=utf-8")
+            textual = mime.startswith("text/") or mime in ("application/json", "application/javascript", "image/svg+xml")
+            self.send_header("Content-Type", mime + "; charset=utf-8" if textual else mime)
             self.send_header("Content-Length", str(len(content)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")

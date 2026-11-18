@@ -1,82 +1,29 @@
 <script lang="ts">
-	import { HugeiconsIcon } from '@hugeicons/svelte';
-	import { ChartLineData01Icon } from '@hugeicons/core-free-icons';
-	import { Badge } from '#lib/components/ui/badge/index.js';
-	import { exerciseGroups, savedResults } from './content.js';
+	import { Container } from '#lib/components/ui/container/index.js';
+	import SectionHeading from './section-heading.svelte';
+	import { exercises } from './content.js';
+	let { rehabilitationFirst = false }: { rehabilitationFirst?: boolean } = $props();
+	let groups = $derived(rehabilitationFirst ? ['Rehabilitation', 'Strength'] as const : ['Strength', 'Rehabilitation'] as const);
 </script>
 
-<div class="bg-muted/40 border-y">
-	<section
-		id="exercises"
-		class="page-container scroll-mt-20 py-12 sm:py-16"
-		aria-labelledby="exercise-title"
-	>
-		<div class="grid gap-8 lg:grid-cols-[1fr_1.8fr] lg:gap-16">
-			<div class="max-w-md">
-				<h2 id="exercise-title" class="text-2xl font-bold tracking-tight sm:text-3xl">
-					Exercise options
-				</h2>
-				<p class="text-muted-foreground mt-3 text-base leading-relaxed">
-					Select the movement and review its fixed demo criteria in the admin dashboard.
-				</p>
-				<p class="text-muted-foreground mt-4 text-sm leading-relaxed">
-					A rep counts toward the range target when the measured joint angle reaches the value shown.
-					These are the same demonstration criteria for everyone, not individual prescriptions.
-				</p>
-			</div>
-
-			<div class="bg-card overflow-hidden rounded-xl border shadow-xs">
-				<table class="w-full table-fixed border-b text-left text-sm">
-					<caption class="sr-only">Exercises and their fixed demo range targets</caption>
-					<colgroup>
-						<col class="w-[46%]" />
-						<col />
-						<col class="w-[5.5rem] sm:w-28" />
-					</colgroup>
-					<thead class="text-muted-foreground border-b text-xs tracking-wider uppercase">
-						<tr>
-							<th scope="col" class="py-3 pr-3 pl-4 font-bold sm:pl-5">Exercise</th>
-							<th scope="col" class="px-3 py-3 font-bold">Measured</th>
-							<th scope="col" class="py-3 pr-4 pl-3 text-right font-bold sm:pr-5">Target</th>
-						</tr>
-					</thead>
-					{#each exerciseGroups as group (group.title)}
-						<tbody class="divide-y border-b last:border-b-0">
-							<tr class="bg-muted/50">
-								<th scope="colgroup" colspan="3" class="px-4 py-2.5 text-left font-normal sm:px-5">
-									<span class="flex flex-wrap items-center gap-x-3 gap-y-1">
-										<span class="text-foreground font-bold">{group.title}</span>
-										<Badge variant="secondary" class="num">{group.items.length}</Badge>
-										<span class="text-muted-foreground text-xs sm:ml-auto">{group.note}</span>
-									</span>
-								</th>
-							</tr>
-							{#each group.items as item (item.name)}
-								<tr>
-									<th scope="row" class="py-3 pr-3 pl-4 font-semibold sm:pl-5">{item.name}</th>
-									<td class="text-muted-foreground px-3 py-3">{item.measure}</td>
-									<td
-										class="num text-primary py-3 pr-4 pl-3 text-right font-bold whitespace-nowrap sm:pr-5"
-										>{item.target}</td
-									>
-								</tr>
-							{/each}
-						</tbody>
-					{/each}
-				</table>
-				<div class="flex gap-3 px-4 py-4 sm:px-5">
-					<HugeiconsIcon
-						icon={ChartLineData01Icon}
-						size={18}
-						strokeWidth={1.8}
-						class="text-primary mt-0.5 shrink-0"
-					/>
-					<p class="text-sm leading-relaxed">
-						<strong class="font-bold">Saved results.</strong>
-						<span class="text-muted-foreground">{savedResults}</span>
-					</p>
+{#snippet heading()}Seven movements, one <span class="font-serif-accent">standard</span>.{/snippet}
+<section id="exercises" aria-labelledby="exercises-title" class="relative isolate scroll-mt-14 overflow-hidden py-20 md:py-28">
+	<Container>
+		<SectionHeading id="exercises-title" eyebrow="Exercise library" title={heading} description="Choose one movement per session and follow its measured range target." />
+		<div class="mt-12 space-y-9">
+			{#each groups as group}
+				<div>
+					<div class="mb-4 flex items-center gap-3"><h3 class="text-sm font-semibold">{group}</h3><span class="font-mono text-xs text-muted-foreground">{exercises.filter((item) => item.category === group).length.toString().padStart(2, '0')}</span><span class="h-px flex-1 bg-border"></span></div>
+					<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+						{#each exercises.filter((item) => item.category === group) as exercise}
+							<div class="flex min-h-28 min-w-0 flex-col justify-between rounded-2xl border border-border bg-card p-4 sm:min-h-32 sm:p-5 shadow-[var(--shadow-xs)]">
+								<h4 class="text-sm font-semibold leading-snug">{exercise.name}</h4>
+								<div class="mt-4 flex flex-wrap items-end justify-between gap-x-2 gap-y-1 font-mono text-[10px]"><span class="min-w-0 text-muted-foreground">{exercise.joint}</span><span class="shrink-0 text-sm font-semibold text-primary">{exercise.target}</span></div>
+							</div>
+						{/each}
+					</div>
 				</div>
-			</div>
+			{/each}
 		</div>
-	</section>
-</div>
+	</Container>
+</section>
