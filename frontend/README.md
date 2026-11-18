@@ -25,6 +25,8 @@ npm test         # vitest + Testing Library
 npm run build    # static site in out/
 ```
 
+pnpm works too. The repo root is a pnpm workspace that includes `frontend`, so `pnpm install` then `pnpm build` (or `pnpm check`, `pnpm test:frontend`) from the root installs and builds everything. Approved dependency install scripts are listed in `pnpm-workspace.yaml`.
+
 For normal use, run `./scripts/start-local.sh` from the repo root. It builds if needed, starts the tracker and the Convex publisher, and opens http://127.0.0.1:8000.
 
 ## Assets
