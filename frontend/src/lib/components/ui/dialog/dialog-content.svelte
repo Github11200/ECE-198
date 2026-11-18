@@ -29,7 +29,7 @@
 		bind:ref
 		data-slot="dialog-content"
 		class={cn(
-			"bg-popover text-popover-foreground data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/10 grid max-w-[calc(100%_-_2rem)] gap-5 rounded-2xl p-5 text-sm ring-1 duration-100 sm:max-w-lg sm:p-6 fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
+			"fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%_-_2rem)] -translate-x-1/2 -translate-y-1/2 gap-5 rounded-[20px] border border-border bg-popover p-6 text-sm text-popover-foreground shadow-[var(--shadow-xl)] outline-none sm:max-w-lg data-open:animate-in data-closed:animate-out data-open:fade-in-0 data-closed:fade-out-0 data-open:zoom-in-[0.97] data-closed:zoom-out-[0.97] duration-[160ms] ease-[var(--ease-out)]",
 			className
 		)}
 		{...restProps}
@@ -38,7 +38,7 @@
 		{#if showCloseButton}
 			<DialogPrimitive.Close data-slot="dialog-close">
 				{#snippet child({ props })}
-					<Button variant="ghost" class="absolute top-2 right-2" size="icon-sm" {...props}>
+					<Button variant="ghost" class="absolute top-3 right-3 rounded-full" size="icon-sm" {...props}>
 						<HugeiconsIcon icon={Cancel01Icon} strokeWidth={2}  />
 						<span class="sr-only">Close</span>
 					</Button>

@@ -38,3 +38,10 @@
 		<HugeiconsIcon icon={Alert02Icon} strokeWidth={2} class="size-4" />
 	{/snippet}
 </Sonner>
+
+<style>
+	:global([data-sonner-toast].cn-toast[data-styled='true']) {
+		border-radius: 0.75rem;
+		box-shadow: var(--shadow-lg);
+	}
+</style>
