@@ -81,23 +81,44 @@ class ArchiveCaptureTests(unittest.TestCase):
         self.assertEqual(database.sync_status(self.path)['pending'], count)
         self.assertEqual(len(database.history(self.path)), 1)
 
-    def test_queue_survives_restart_ack_is_idempotent_and_import_is_once_per_report(self):
+    def test_queue_survives_restart_ack_is_idempotent_and_finished_sessions_are_not_reimported(self):
         session = self.start()
         self.service.finish({'session_id': session['id']})
         before = database.pending(self.path)
+        self.assertEqual(before[1]['eventId'], 'finish:' + session['id'])
         database.acknowledge(self.path, before[0]['eventId'])
         database.acknowledge(self.path, before[0]['eventId'])
         SessionService(self.path)
         pending = database.pending(self.path)
-        self.assertEqual(pending[0], before[1])
-        self.assertEqual(sum(e['kind'] == 'import' for e in pending), 1)
-        SessionService(self.path)
-        self.assertEqual(database.pending(self.path), pending)
+        self.assertEqual(pending, [before[1]])  # A restart re-uploads nothing.
+        database.acknowledge(self.path, before[1]['eventId'])
+        SessionService(self.path)  # Not even after the finish event was delivered.
+        self.assertEqual(database.pending(self.path), [])
+
+    def test_legacy_random_id_finish_event_also_prevents_reimport(self):
+        session = self.start()
+        self.service.finish({'session_id': session['id']})
+        with database.connect(self.path) as db:  # A database written before 'finish:<id>' IDs.
+            db.execute("UPDATE convex_outbox SET event_id = 'legacy-uuid' WHERE event_id = ?",
+                       ('finish:' + session['id'],))
+        database.initialize(self.path)
+        self.assertEqual([e['kind'] for e in database.pending(self.path)], ['start', 'finish'])
+
+    def test_dead_lettered_events_leave_the_queue_but_stay_counted(self):
+        self.start()
+        event = database.pending(self.path)[0]
+        database.acknowledge(self.path, [event['eventId']], dead_letter=True)
+        self.assertEqual(database.pending(self.path), [])
+        self.assertEqual(database.sync_status(self.path), {'pending': 0, 'dead_letter': 1})
+        database.acknowledge(self.path, event['eventId'])  # A late ack does not hide the dead letter.
+        self.assertEqual(database.sync_status(self.path), {'pending': 0, 'dead_letter': 1})
 
     def test_migration_imports_all_old_reports_not_only_the_latest_thirty(self):
         for i in range(35):
             session = self.start()
             self.service.finish({'session_id': session['id']})
+        with database.connect(self.path) as db:  # Reports saved before the upload queue existed.
+            db.execute('DELETE FROM convex_outbox')
         database.initialize(self.path)
         events = database.pending(self.path, limit=1000)
         imported = [e for e in events if e['kind'] == 'import']
@@ -133,23 +154,25 @@ class PublisherDeliveryTests(unittest.TestCase):
             with self.assertRaises(HTTPError):
                 post_feedback(sent.full_url, 'bad', {})
 
-    def test_acknowledges_only_committed_events_and_retries_same_id_after_lost_ack(self):
+    def test_acknowledges_only_committed_batch_and_retries_same_ids_after_lost_ack(self):
         events = [{'eventId': 'first', 'sequence': 1}, {'eventId': 'second', 'sequence': 2}]
         with patch('backend.wearable.publish_feedback.local_request') as local, patch('backend.wearable.publish_feedback.post_feedback') as remote:
-            local.side_effect = [{'events': events}, {'ok': True}]
-            remote.side_effect = [None, OSError('offline')]
+            local.side_effect = [{'events': events}]
+            remote.side_effect = OSError('offline')
             with self.assertRaises(OSError):
                 sync_pending('http://local', 'https://test.convex.site', 'secret')
-            self.assertEqual(local.call_count, 2)
-            self.assertEqual(local.call_args.args[2], {'eventId': 'first'})
-            # Server committed but local ack was lost: same event is sent again, never a new event ID.
+            self.assertEqual(local.call_count, 1)  # Nothing acknowledged before Convex commits.
+            self.assertEqual(remote.call_args.args[:3],
+                             ('https://test.convex.site/archive', 'secret', {'events': events}))
+            # Server committed but local ack was lost: the same event IDs are sent again.
             local.reset_mock(); remote.reset_mock(); remote.side_effect = None
-            local.side_effect = [{'events': [events[1]]}, OSError('ack lost')]
+            local.side_effect = [{'events': events}, OSError('ack lost')]
             with self.assertRaises(OSError):
                 sync_pending('http://local', 'https://test.convex.site', 'secret')
-            local.side_effect = [{'events': [events[1]]}, {'ok': True}]
-            self.assertEqual(sync_pending('http://local', 'https://test.convex.site', 'secret'), 1)
+            local.side_effect = [{'events': events}, {'ok': True}]
+            self.assertEqual(sync_pending('http://local', 'https://test.convex.site', 'secret'), 2)
             self.assertEqual(remote.call_args_list[0], remote.call_args_list[1])
+            self.assertEqual(local.call_args.args[1:], ('/api/convex/ack', {'eventIds': ['first', 'second']}))
 
     def test_empty_queue_does_not_post(self):
         with patch('backend.wearable.publish_feedback.local_request', return_value={'events': []}), patch('backend.wearable.publish_feedback.post_feedback') as remote:

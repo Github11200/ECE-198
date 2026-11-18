@@ -3,7 +3,9 @@ import argparse
 import json
 import os
 import sys
+from threading import Event, Thread
 from time import monotonic, sleep
+from urllib.error import HTTPError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
@@ -62,22 +64,126 @@ def publisher_payload(session):
     return {**wearable_snapshot(session), "dashboard": session}
 
 
-def post_feedback(url, token, payload):
+def post_feedback(url, token, payload, timeout=2):
     request = Request(url, data=json.dumps(payload).encode(), headers={
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}",
     })
-    with urlopen(request, timeout=2):
+    with urlopen(request, timeout=timeout):
         pass
 
 
+BATCH_SIZE = 100          # Convex /archive accepts 1-100 events per atomic batch.
+ARCHIVE_TIMEOUT = 10      # A full batch is larger than a live cue; allow a slower uplink.
+
+
+class AuthorizationError(Exception):
+    """Convex rejected the publish token: keep every event and retry."""
+
+
+def _log(message):
+    print(message, file=sys.stderr, flush=True)
+
+
+def _permanent(error):
+    """A 4xx other than 401/429 is a rejection that retrying cannot fix."""
+    return isinstance(error, HTTPError) and 400 <= error.code < 500 and error.code not in (401, 429)
+
+
+def _response_body(error):
+    try:
+        return error.read(2000).decode("utf-8", "replace")
+    except (OSError, ValueError):
+        return ""
+
+
+def _post_archive(remote, token, body):
+    """POST to /archive. Raise AuthorizationError for 401; other errors propagate."""
+    try:
+        post_feedback(remote + "/archive", token, body, timeout=ARCHIVE_TIMEOUT)
+    except HTTPError as error:
+        if error.code == 401:
+            error.close()
+            raise AuthorizationError(
+                "Convex rejected FEEDBACK_PUBLISH_TOKEN (401). Events stay queued; "
+                "fix the token on the laptop or the deployment.") from None
+        raise
+
+
 def sync_pending(local, remote, token):
-    """Only acknowledge locally after Convex commits; retries reuse event IDs."""
-    events = local_request(local, "/api/convex/pending")["events"]
-    for event in events:
-        post_feedback(remote + "/archive", token, {"event": event})
-        local_request(local, "/api/convex/ack", {"eventId": event["eventId"]})
+    """Upload one batch of queued archive events; returns how many were settled.
+
+    Events are acknowledged locally only after Convex commits them (204), so a
+    lost acknowledgement just resends the same event IDs. If Convex rejects a
+    batch (4xx), the events are retried one at a time: valid ones are
+    committed, and a permanently rejected one is dead-lettered (kept in SQLite,
+    removed from the upload queue) and logged, so it cannot block the queue.
+    Network errors, 429 and 5xx propagate for a later retry; a 401 raises
+    AuthorizationError and drops nothing.
+    """
+    events = local_request(local, f"/api/convex/pending?limit={BATCH_SIZE}")["events"]
+    if not events:
+        return 0
+    try:
+        _post_archive(remote, token, {"events": events})
+    except HTTPError as error:
+        if not _permanent(error):
+            raise
+        body = _response_body(error)
+        error.close()
+        if len(events) == 1:
+            _dead_letter(local, events[0], error.code, body)
+            return 1
+        _log(f"Archive batch of {len(events)} rejected ({error.code} {body}); retrying events individually.")
+        settled = 0
+        for event in events:
+            try:
+                _post_archive(remote, token, {"event": event})
+            except HTTPError as single:
+                if not _permanent(single):
+                    raise
+                _dead_letter(local, event, single.code, _response_body(single))
+                single.close()
+            else:
+                local_request(local, "/api/convex/ack", {"eventIds": [event["eventId"]]})
+            settled += 1
+        return settled
+    local_request(local, "/api/convex/ack", {"eventIds": [event["eventId"] for event in events]})
     return len(events)
+
+
+def _dead_letter(local, event, status, body):
+    _log(f"ARCHIVE EVENT PERMANENTLY REJECTED: eventId={event.get('eventId')} kind={event.get('kind')} "
+         f"sequence={event.get('sequence')} status={status} response={body!r}. "
+         "It is kept in SQLite as dead-lettered and will not be retried.")
+    local_request(local, "/api/convex/ack", {"eventIds": [event["eventId"]], "dead_letter": True})
+
+
+HEARTBEAT_SECONDS = 2
+
+
+def publish_live(local, base, token, state):
+    """Publish the live cue/dashboard when it changes, plus a heartbeat while active."""
+    current = local_request(local, "/api/session")["session"]
+    payload = publisher_payload(current)
+    if payload != state.get("payload") or (
+            payload["session"] and monotonic() - state.get("sent", 0) >= HEARTBEAT_SECONDS):
+        post_feedback(base + "/feedback", token, payload)
+        state["payload"], state["sent"] = payload, monotonic()
+
+
+def archive_loop(local, base, token, stop):
+    """Drain the durable queue on its own thread so uploads never delay live feedback."""
+    while not stop.is_set():
+        try:
+            settled = sync_pending(local, base, token)
+            stop.wait(0 if settled >= BATCH_SIZE else 0.25)
+        except AuthorizationError as error:
+            _log(f"Archive upload paused: {error}")
+            stop.wait(5)
+        except (OSError, ValueError, KeyError) as error:
+            _log(f"Archive upload retrying: {error}")
+            stop.wait(1)
 
 
 def main():
@@ -94,24 +200,30 @@ def main():
     if not token:
         parser.error("Set FEEDBACK_PUBLISH_TOKEN to the deployment's publish token.")
     local = f"http://127.0.0.1:{args.port}"
-    remote = args.url.rstrip("/") + "/feedback"
+    base = args.url.rstrip("/")
     print("Publishing demo feedback to Convex. Press Ctrl+C to stop.", flush=True)
-    last_payload, last_sent = None, 0
+    stop = Event()
+    uploader = Thread(target=archive_loop, args=(local, base, token, stop), daemon=True)
+    uploader.start()
+    state = {}
     try:
         while True:
             try:
-                sync_pending(local, args.url.rstrip("/"), token)
-                current = local_request(local, "/api/session")["session"]
-                payload = publisher_payload(current)
-                if payload != last_payload or (payload["session"] and monotonic() - last_sent >= 2):
-                    post_feedback(remote, token, payload)
-                    last_payload, last_sent = payload, monotonic()
+                publish_live(local, base, token, state)
                 sleep(0.25)
-            except (OSError, ValueError) as error:
-                print(f"Feedback relay retrying: {error}", file=sys.stderr, flush=True)
+            except HTTPError as error:
+                hint = " (check FEEDBACK_PUBLISH_TOKEN)" if error.code == 401 else ""
+                _log(f"Live feedback retrying: HTTP {error.code}{hint} {_response_body(error)}")
+                error.close()
+                sleep(1)
+            except (OSError, ValueError, KeyError) as error:
+                _log(f"Live feedback retrying: {error}")
                 sleep(1)
     except KeyboardInterrupt:
         pass
+    finally:
+        stop.set()
+        uploader.join(timeout=ARCHIVE_TIMEOUT + 3)
 
 
 if __name__ == "__main__":

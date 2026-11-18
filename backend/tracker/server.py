@@ -5,11 +5,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import mimetypes
 import re
+import traceback
 from pathlib import Path
 from threading import Lock
 from time import monotonic
 from uuid import uuid4
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from . import database
 from .pose import MIN_CONFIDENCE, REPLAY_FPS, REPLAY_FRAMES, replay_frame
@@ -35,7 +36,7 @@ def timestamp():
 
 
 def frontend_asset(target):
-    """Resolve only exported public files, including Next client-navigation data."""
+    """Resolve only exported public files of the static frontend build (frontend/out)."""
     root = (ROOT / 'frontend' / 'out').resolve()
     if not (root / 'index.html').is_file():
         return None
@@ -206,6 +207,24 @@ class SessionService:
                 return saved
             raise RequestError(404, "Session not found.")
 
+    def acknowledge(self, data):
+        """Accept {"eventId": id} or {"eventIds": [...]} (1-100), optionally {"dead_letter": true}."""
+        ids = data["eventIds"] if "eventIds" in data else [data.get("eventId")]
+        if (not isinstance(ids, list) or not 1 <= len(ids) <= 100
+                or any(not isinstance(value, str) or not value for value in ids)):
+            raise RequestError(400, "Send an eventId string or an eventIds list of 1-100 strings.")
+        dead_letter = data.get("dead_letter", False)
+        if not isinstance(dead_letter, bool):
+            raise RequestError(400, "dead_letter must be true or false.")
+        database.acknowledge(self.db_path, ids, dead_letter)
+        return {"ok": True}
+
+    def pending(self, query):
+        values = parse_qs(query).get("limit", ["25"])
+        if len(values) != 1 or not values[0].isdecimal() or not 1 <= int(values[0]) <= 100:
+            raise RequestError(400, "limit must be a whole number from 1 to 100.")
+        return {"events": database.pending(self.db_path, int(values[0]))}
+
 
 def handler_for(service, port):
     hosts = {f"localhost:{port}", f"127.0.0.1:{port}"}
@@ -227,37 +246,40 @@ def handler_for(service, port):
             try:
                 if self.headers.get("Host") not in hosts:
                     raise RequestError(403, "Open the app using localhost.")
+                # Route API/report requests on the path alone, so cache-busting
+                # query strings (e.g. /api/session?t=1) still reach their handler.
+                path = urlsplit(self.path).path
                 if self.command == "GET":
-                    match = re.fullmatch(r'/reports/([0-9a-f]{32})', self.path)
+                    match = re.fullmatch(r'/reports/([0-9a-f]{32})', path)
                     if match:
                         saved = database.find(service.db_path, match.group(1))
                         if saved is None:
                             raise RequestError(404, 'Saved workout not found.')
                         self.send(200, workout_report(saved).encode('utf-8'), 'text/html')
                         return
-                    if self.path == '/api/exercises':
+                    if path == '/api/exercises':
                         self.send_json(200, {'exercises': catalog(), 'max_active_lanes': 5,
                                              'identity_mode': 'manual participant-to-lane assignment'})
                         return
-                    if self.path in ASSETS:
-                        exported = frontend_asset(self.path) if self.path == '/' else None
+                    if path in ASSETS:
+                        exported = frontend_asset(path) if path == '/' else None
                         if exported:
                             asset, mime = exported
                             self.send(200, asset.read_bytes(), mime)
                             return
-                        filename, mime = ASSETS[self.path]
+                        filename, mime = ASSETS[path]
                         self.send(200, (ROOT / "legacy-dashboard" / filename).read_bytes(), mime)
                         return
-                    if self.path == "/api/session":
+                    if path == "/api/session":
                         self.send_json(200, {"session": service.current()})
                         return
-                    if self.path == "/api/convex/pending":
-                        self.send_json(200, {"events": database.pending(service.db_path)})
+                    if path == "/api/convex/pending":
+                        self.send_json(200, service.pending(urlsplit(self.path).query))
                         return
-                    if self.path == "/api/convex/status":
+                    if path == "/api/convex/status":
                         self.send_json(200, database.sync_status(service.db_path))
                         return
-                    if self.path == "/api/history":
+                    if path == "/api/history":
                         self.send_json(200, {"sessions": database.history(service.db_path)})
                         return
                     exported = frontend_asset(self.path)
@@ -269,9 +291,8 @@ def handler_for(service, port):
                     routes = {"/api/session/start": (201, service.start),
                               "/api/session/finish": (200, service.finish),
                               "/api/pose": (200, service.ingest),
-                              "/api/convex/ack": (200, lambda data: (
-                                  database.acknowledge(service.db_path, data.get("eventId", "")) or {"ok": True}))}
-                    if self.path in routes:
+                              "/api/convex/ack": (200, service.acknowledge)}
+                    if path in routes:
                         origin = self.headers.get("Origin")
                         if origin and origin != f"http://{self.headers.get('Host')}":
                             raise RequestError(403, "Use the dashboard on this laptop.")
@@ -286,18 +307,26 @@ def handler_for(service, port):
                             raise RequestError(400, "Invalid JSON body.") from error
                         if not isinstance(data, dict):
                             raise RequestError(400, "Send a JSON object.")
-                        status, action = routes[self.path]
+                        status, action = routes[path]
                         self.send_json(status, action(data))
                         return
                 raise RequestError(404, "Page or endpoint not found.")
             except RequestError as error:
                 self.send_json(error.status, {"error": str(error)})
+            except Exception:  # noqa: BLE001 - always answer instead of dropping the connection
+                self.log_error("Unhandled error for %s %s\n%s", self.command, self.path, traceback.format_exc())
+                try:
+                    self.send_json(500, {"error": "The tracker hit an internal error. Check the server log."})
+                except OSError:
+                    pass  # The client already disconnected.
 
         do_GET = dispatch
         do_POST = dispatch
 
         def log_message(self, format, *args):
-            if self.path not in ("/api/session", "/api/pose"):
+            # High-frequency polling (browser, camera bridge, Convex publisher) would
+            # bury real errors; the publisher logs its own upload failures.
+            if urlsplit(self.path).path not in ("/api/session", "/api/pose", "/api/convex/pending", "/api/convex/ack"):
                 super().log_message(format, *args)
 
     return Handler

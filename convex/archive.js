@@ -13,9 +13,10 @@ function authorize(token) {
  * @param {V} item */
 const pageOf = (item) => v.object({ page: v.array(item), isDone: v.boolean(), continueCursor: v.string() });
 
-export const ingest = internalMutation({
-  args: { event: archiveEvent }, returns: v.null(),
-  handler: async (ctx, { event }) => {
+/** Applies one archive event. Retries reuse eventId; older state never overwrites newer/final state.
+ * @param {import("./_generated/server").MutationCtx} ctx
+ * @param {import("convex/values").Infer<typeof archiveEvent>} event */
+async function applyEvent(ctx, event) {
     const { snapshot, sequence, kind } = event;
     const completed = snapshot.finished_at !== null;
     if (!snapshot.participants.length || snapshot.participants.length > 5 ||
@@ -64,6 +65,22 @@ export const ingest = internalMutation({
       if (attendance) await ctx.db.patch(attendance._id, data);
       else await ctx.db.insert("attendance", data);
     }
+    return null;
+}
+
+export const ingest = internalMutation({
+  args: { event: archiveEvent }, returns: v.null(),
+  handler: async (ctx, { event }) => applyEvent(ctx, event),
+});
+
+// The tracker produces ~15 pose events/s; one HTTP round trip per event cannot keep up.
+// A batch commits atomically in one transaction, applied in the order sent.
+const MAX_BATCH = 100;
+export const ingestBatch = internalMutation({
+  args: { events: v.array(archiveEvent) }, returns: v.null(),
+  handler: async (ctx, { events }) => {
+    if (!events.length || events.length > MAX_BATCH) throw new Error(`Send 1-${MAX_BATCH} archive events per batch`);
+    for (const event of events) await applyEvent(ctx, event);
     return null;
   },
 });

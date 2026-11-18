@@ -60,8 +60,13 @@ router.route({
     let payload;
     try { payload = await request.json(); }
     catch { return Response.json({ error: "Invalid JSON" }, { status: 400, headers }); }
-    if (!payload?.event) return Response.json({ error: "An event is required" }, { status: 400, headers });
-    try { await ctx.runMutation(internal.archive.ingest, { event: payload.event }); }
+    // Either a single `event` or an ordered `events` batch (committed atomically).
+    const batch = Array.isArray(payload?.events);
+    if (!batch && !payload?.event) return Response.json({ error: "An event or events batch is required" }, { status: 400, headers });
+    try {
+      if (batch) await ctx.runMutation(internal.archive.ingestBatch, { events: payload.events });
+      else await ctx.runMutation(internal.archive.ingest, { event: payload.event });
+    }
     catch (error) { console.error("Archive upload failed", error); return Response.json({ error: "Invalid archive event" }, { status: 400, headers }); }
     return new Response(null, { status: 204, headers });
   }),

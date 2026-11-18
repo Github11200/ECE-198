@@ -33,7 +33,7 @@ def workout_report(session):
     stamp = lambda value: f'<time data-utc="{text(value)}">{text(value)} (UTC)</time>'
     return f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CCCARE workout report — {text(session['exercise_label'])}</title>
+<title>CCCARE workout report — {text(session['exercise_label'])}</title><link rel="icon" href="/icon.svg" type="image/svg+xml">
 <style>
 body{{font:15px/1.5 system-ui,sans-serif;color:#173a35;margin:32px auto;max-width:1050px;padding:0 22px}}
 h1{{font-size:30px;line-height:1.15}}h2{{font-size:19px}}p{{margin:8px 0}}.muted{{color:#526b65}}

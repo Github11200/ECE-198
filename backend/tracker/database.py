@@ -61,9 +61,18 @@ def initialize(path):
                 if column not in existing:
                     db.execute(f'ALTER TABLE {table} ADD COLUMN {column} {declaration}')
 
+        # Queue a one-time import only for reports that never had an upload event:
+        # sessions finished by this tracker already queued a 'finish' event in save().
+        # New finish events use the deterministic ID 'finish:<session id>'; older
+        # databases used random IDs, found by the payload prefix (JSON keeps 'kind' first).
+        legacy_finished = {row[0] for row in db.execute("""SELECT json_extract(payload, '$.snapshot.id')
+            FROM convex_outbox WHERE payload LIKE '{"kind": "finish"%'""")}
         for saved in db.execute("""SELECT * FROM sessions
-            WHERE NOT EXISTS (SELECT 1 FROM convex_outbox WHERE event_id = 'import:' || sessions.id)
+            WHERE NOT EXISTS (SELECT 1 FROM convex_outbox
+                              WHERE event_id IN ('import:' || sessions.id, 'finish:' || sessions.id))
             ORDER BY finished_at"""):
+            if saved['id'] in legacy_finished:
+                continue
             snapshot = _with_results(db, saved)
             _enqueue(db, 'import', snapshot, event_id='import:' + snapshot['id'])
 
@@ -75,7 +84,7 @@ def save(path, session):
             session.get('exercise', DEFAULT_EXERCISE), session.get('station', 'Station 1'),
             json.dumps({'exercise_label': session.get('exercise_label'), 'criteria': session.get('criteria')}),
         ))
-        _enqueue(db, "finish", session)
+        _enqueue(db, "finish", session, event_id='finish:' + session["id"])
         for person in session["participants"]:
             db.execute("INSERT OR IGNORE INTO participants VALUES (?, ?)", (person["id"], person["label"]))
             details = {key: person[key] for key in ('range_score', 'target_remaining', 'tracking_coverage',
@@ -142,16 +151,22 @@ def enqueue(path, kind, snapshot, pose=None):
 
 
 def pending(path, limit=25):
+    """Undelivered events in sequence order (delivered: 0 queued, 1 delivered, 2 dead-lettered)."""
     with connect(path) as db:
         rows = db.execute('SELECT sequence, event_id, payload FROM convex_outbox WHERE delivered = 0 ORDER BY sequence LIMIT ?', (limit,))
         return [{**json.loads(row['payload']), 'eventId': row['event_id'], 'sequence': row['sequence']} for row in rows]
 
 
-def acknowledge(path, event_id):
+def acknowledge(path, event_ids, dead_letter=False):
+    """Mark events delivered, or dead-lettered (kept for inspection, never re-sent)."""
+    if isinstance(event_ids, str):
+        event_ids = [event_ids]
     with connect(path) as db:
-        db.execute('UPDATE convex_outbox SET delivered = 1 WHERE event_id = ?', (event_id,))
+        db.executemany('UPDATE convex_outbox SET delivered = ? WHERE event_id = ? AND delivered = 0',
+                       [(2 if dead_letter else 1, event_id) for event_id in event_ids])
 
 
 def sync_status(path):
     with connect(path) as db:
-        return {'pending': db.execute('SELECT COUNT(*) FROM convex_outbox WHERE delivered = 0').fetchone()[0]}
+        return {'pending': db.execute('SELECT COUNT(*) FROM convex_outbox WHERE delivered = 0').fetchone()[0],
+                'dead_letter': db.execute('SELECT COUNT(*) FROM convex_outbox WHERE delivered = 2').fetchone()[0]}
