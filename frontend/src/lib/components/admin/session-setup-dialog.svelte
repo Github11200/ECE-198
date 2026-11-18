@@ -41,7 +41,7 @@
 
 	const sourceHelp: Record<Source, string> = {
 		camera:
-			'Start the session, then run the AlphaPose camera bridge on this laptop. Its preview opens in a separate window.',
+			'Start session opens AlphaPose automatically on this laptop. Wait for the camera preview before exercising; End & save closes the camera.',
 		replay:
 			'Generated joint coordinates run through the backend scorer for five seconds. No camera required.',
 		recording:

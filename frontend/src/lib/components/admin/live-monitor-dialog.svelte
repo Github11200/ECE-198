@@ -11,7 +11,8 @@
 		session,
 		busy,
 		error = '',
-		onEnd
+		onEnd,
+		onRetryCamera
 	}: {
 		open?: boolean;
 		session: Workout | null;
@@ -19,6 +20,8 @@
 		/** Shown inside the dialog, since the page alert is hidden behind it. */
 		error?: string;
 		onEnd: () => void;
+		/** Relaunch AlphaPose for a camera session whose camera failed or stopped. */
+		onRetryCamera?: () => void;
 	} = $props();
 
 	let previewId = $state<string | null>(null);
@@ -45,6 +48,24 @@
 				<p class="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border px-3.5 py-2.5 text-sm font-medium" role="alert">
 					{error}
 				</p>
+			{/if}
+
+			{#if session.camera}
+				{@const failed = session.camera.state === 'failed'}
+				<div
+					class={[
+						'flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5 text-sm',
+						failed
+							? 'border-destructive/30 bg-destructive/10 text-destructive font-medium'
+							: 'border-border bg-muted/50 text-foreground'
+					]}
+					role="status"
+				>
+					<span>{session.camera.message}</span>
+					{#if onRetryCamera && ['failed', 'paused', 'stopped'].includes(session.camera.state)}
+						<Button size="sm" variant="outline" disabled={busy} onclick={onRetryCamera}>Retry camera</Button>
+					{/if}
+				</div>
 			{/if}
 
 			{#if session.replay_done}

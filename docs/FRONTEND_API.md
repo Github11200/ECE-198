@@ -25,17 +25,15 @@ AlphaPose estimates COCO keypoints. OpenCV supplies camera/video input and drawi
 
 The active session lives in Python memory. `POST /api/session/finish` saves it to SQLite, including exercise, station, participant IDs, target snapshots, range results, tracking coverage, review notes, and per-rep peak angles. A server restart retains completed history but clears an unfinished session.
 
-The existing Convex implementation stores one latest-feedback snapshot, not session history. Its HTTP routes are `/feedback` on a `.convex.site` deployment. The current source allows optional exercise/station labels and IDs P01–P99, while still limiting the laptop session to five simultaneous lanes. Those Convex source updates require a deployment and have not been cloud-verified here. The relay uses separate publish/read tokens as documented in [WEARABLE.md](WEARABLE.md).
+The optional publisher sends session and pose archive events to Convex `/archive` and the latest live snapshot to `/feedback`. The relay uses separate publish/read tokens as documented in [WEARABLE.md](WEARABLE.md). See [the archive architecture](REALTIME_ARCHITECTURE.md) for delivery and retry behavior.
 
 ## Connecting a teammate's website
 
-The frontend from `feat/alphapose-camera-performance` at `7100c35` has been integrated selectively. Its Next.js/React website, demo login pages, and styling live in `frontend/`. The Admin Panel uses relative `/api/...` calls through `src/lib/tracker-api.ts` and `src/lib/use-tracker.ts`. Its local count timer and sessionStorage history have been replaced with the current Python API and SQLite reports. Participant programme/progress pages retain labeled illustrative records; they are not an authenticated personal-results service.
+The Next.js/React website and demo login pages live in `frontend/`. The Admin Panel reads and controls the local tracker with relative `/api/...` calls through `src/lib/tracker-api.ts` and `src/lib/use-tracker.ts`. It merges recent local reports with any shared Convex history. The participant portal reads individual results from Convex when configured.
 
 Run `npm.cmd --prefix frontend ci` once, then `npm.cmd --prefix frontend run build`. Static export produces ignored `frontend/out/`. `python -m backend.tracker.server` serves the website and unchanged API together at `http://127.0.0.1:8000`; no CORS changes or second backend are needed. Direct page reloads, Next navigation data, fonts, images, and JS/CSS are served from that export only. `/tracker` retains the original dashboard. `scripts/start-frontend.cmd` automates build/start. Rebuild and refresh after editing React source.
 
-The current AlphaPose bridge/acceleration, pose/exercise scoring, SQLite implementation, printable report generator, and wearable relay/Convex source were preserved from `1095a10`. In `backend/tracker/server.py`, only public frontend asset serving was added; `Session` and `SessionService` remain identical. Starting a camera session still requires the existing separate AlphaPose bridge command. Closing the new live monitor does not pause the session; the backend has no pause endpoint. Targets edited in participant details apply to the next setup on that page, while started-session targets are saved as snapshots. Fake login fields are still not read or submitted.
-
-The local frontend merge does not require moving session history from SQLite into Convex. Convex is currently the wearable feedback connection. Any later hosted station-control/history service would be a separate backend extension.
+The server launches the bridge when starting a camera session and closes its child process after saving. Closing the monitor keeps the session running. Targets edited in participant details apply to the next setup on that page, while started-session targets are saved as snapshots. Demo login fields are used for navigation only.
 
 ## HTTP contract
 
@@ -45,6 +43,7 @@ All POST bodies use `Content-Type: application/json`. Error responses have an `e
 | --- | --- |
 | `GET /api/exercises` | Fixed exercise catalog, joint definitions, angle criteria, and five-lane capacity |
 | `POST /api/session/start` | Start one exercise at one station, with a participant assigned to each lane |
+| `POST /api/camera/retry` | Restart the managed bridge for the active camera `session_id`, retaining results |
 | `GET /api/session` | Live state, or `{ "session": null }` |
 | `POST /api/pose` | Camera/recording producer only; the frontend does not need to send poses |
 | `POST /api/session/finish` | Save completed results; retrying the same ID returns its saved result |
@@ -65,7 +64,7 @@ Start example:
 
 The first ID/target maps to the leftmost lane, and the second to the next lane. IDs must be unique P01–P99, with one to five targets between 1 and 99. Missing exercise, station, or IDs use the original curl/Station 1/P01… defaults for backward compatibility. Currently there is one active session per server process; a station label does not create simultaneous station servers.
 
-The response contains `id`, `source`, `exercise`, `exercise_label`, `station`, `criteria`, timestamps, and `participants`. Each live participant contains:
+The response contains `id`, `source`, `exercise`, `exercise_label`, `station`, `criteria`, timestamps, and `participants`. Managed live camera responses include `camera.state` and `camera.message`. Each live participant contains:
 
 ```json
 {

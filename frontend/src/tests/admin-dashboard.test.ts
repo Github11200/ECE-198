@@ -254,7 +254,7 @@ describe('admin dashboard: live monitor and saving', () => {
 		expect(within(feedback).getByText('Waiting for a clear view of the arm.')).toBeInTheDocument();
 	});
 
-	it('ends and saves the session, shows its summary and reports that upload is pending', async () => {
+	it('ends and saves the session, shows its summary and where it is saved', async () => {
 		const api = installTrackerApi({ live: liveWorkout });
 		const user = await openAdmin();
 
@@ -268,7 +268,7 @@ describe('admin dashboard: live monitor and saving', () => {
 		expect(await screen.findByRole('dialog', { name: 'Session summary' })).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				'Session stopped and queued for upload. It will appear in history when Convex confirms the save.'
+				'Session saved on this laptop. It is listed under Session history and uploads to Convex in the background.'
 			)
 		).toBeInTheDocument();
 		await waitFor(() => expect(screen.queryByText('Active session')).not.toBeInTheDocument());

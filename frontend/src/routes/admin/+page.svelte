@@ -92,11 +92,19 @@
 			const saved = await tracker.finish(tracker.session.id);
 			monitorOpen = false;
 			summary = saved;
-			notice = tracker.cloudHistory
-				? 'Session stopped and queued for upload. It will appear in history when Convex confirms the save.'
-				: 'Session saved on this laptop and queued for Convex upload. It is listed under Session history.';
+			notice = 'Session saved on this laptop. It is listed under Session history and uploads to Convex in the background.';
 		} catch (cause) {
 			endError = cause instanceof Error ? cause.message : 'Could not save the session. Try End & save again.';
+		}
+	}
+
+	async function retryCamera() {
+		if (!tracker.session) return;
+		endError = '';
+		try {
+			await tracker.retryCamera(tracker.session.id);
+		} catch (cause) {
+			endError = cause instanceof Error ? cause.message : 'Could not restart the camera.';
 		}
 	}
 
@@ -320,6 +328,7 @@
 	busy={tracker.busy}
 	error={endError}
 	onEnd={endSession}
+	onRetryCamera={retryCamera}
 />
 
 <Dialog.Root

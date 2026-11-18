@@ -96,15 +96,17 @@ Upstream's standalone demo writes `alphapose-results.json` to its output directo
 
 ## Connect the dashboard
 
-Run `python -m backend.tracker.server` from `ECE-198` in the dashboard terminal, if it is not already running. Open `http://localhost:8000`, select **Live AlphaPose camera**, set **1** participant and a small rep target, and start the session.
+Run `scripts/start-dashboard.cmd` from `ECE-198` after building the frontend. Open `http://localhost:8000`, select **Live AlphaPose camera**, set **1** participant and a small rep target, and click **Start session**. Wait for the preview before exercising. **End & save session** saves the report and closes the preview.
 
-In a second terminal, run the preparation block above, then:
+The backend selects Intel GPU mode when the OpenVINO export is present. Use `--camera-device CPU` to select OpenVINO CPU, or `--camera-device native` for AlphaPose's original PyTorch device selection. If Windows Application Control blocks the configured Python executable, use an approved AlphaPose environment via `--camera-python` or select **Synthetic demo replay**.
+
+For standalone bridge diagnostics, start the server with `--no-auto-camera`, create the camera session, and run the preparation block above in a second terminal, then:
 
 ```powershell
 & $alphaPython -m backend.camera.bridge camera --repo ..\AlphaPose --gpus -1 --show-camera
 ```
 
-The bridge supplies `--sp`. Begin with the arm lowered, then perform a full curl and a shortened curl. Check counts and range cues on the dashboard, click **End & save session**, stop the bridge with Ctrl+C, and review History. Actual performance remains to be measured.
+The bridge supplies `--sp`. Begin with the arm lowered, then perform a full curl and a shortened curl. Check counts and range cues, end and save, and review History. Stop a manually launched bridge with Ctrl+C.
 
 ## Verified sample check
 

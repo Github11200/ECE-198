@@ -5,6 +5,7 @@ import {
 	fetchLocalHistory,
 	fetchSession,
 	finishSession,
+	retryCamera,
 	startSession,
 	TrackerError,
 	type Exercise,
@@ -65,8 +66,19 @@ class TrackerStore {
 		return Boolean(liveFeedback.client) && !cloudHistory.error;
 	}
 
+	/**
+	 * Cloud archive plus the laptop's saved copy, one row per session, newest
+	 * first. Sessions saved locally appear immediately, even while their
+	 * upload to Convex is still retrying.
+	 */
 	get history(): Workout[] {
-		return this.cloudHistory ? cloudHistory.records : this.localHistory;
+		if (!this.cloudHistory) return this.localHistory;
+		const byId = new Map<string, Workout>();
+		for (const s of [...cloudHistory.records, ...this.localHistory]) {
+			if (!byId.has(s.id)) byId.set(s.id, s);
+		}
+		const stamp = (s: Workout) => Date.parse(s.finished_at || s.started_at);
+		return [...byId.values()].sort((a, b) => stamp(b) - stamp(a));
 	}
 
 	get historyLoading() {
@@ -178,6 +190,13 @@ class TrackerStore {
 		this.localSession = null;
 		void this.#refreshHistory();
 		return saved;
+	}
+
+	/** Relaunch AlphaPose for the active camera session (after it failed or stopped). */
+	async retryCamera(sessionId: string) {
+		const workout = await this.#change(() => retryCamera(sessionId));
+		this.localSession = workout;
+		return workout;
 	}
 
 	async #change(request: () => Promise<Workout>) {

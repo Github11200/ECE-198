@@ -55,10 +55,12 @@ def tracking_diagnostics(detections, width, seats, frame, exercise=DEFAULT_EXERC
 
 
 class PoseFeed:
-    def __init__(self, base, source, diagnostics=None):
+    def __init__(self, base, source, diagnostics=None, expected_session_id=None):
         session = local_request(base, "/api/session")["session"]
         if not session or session["source"] != source:
             raise ValueError(f"Start a {source} session in the dashboard first.")
+        if expected_session_id is not None and session["id"] != expected_session_id:
+            raise ValueError("The camera's session has already ended.")
         self.base = base
         self.session_id = session["id"]
         self.seats = len(session["participants"])
@@ -199,6 +201,7 @@ def run_camera(args, feed):
 
     original_vis = vis.vis_frame_fast
     detections = []
+    resume_frame = feed.frame if feed is not None else 0
 
     def collect(image, result, options, thresholds):
         if feed is not None:
@@ -209,6 +212,8 @@ def run_camera(args, feed):
         def write_image(self, image, name, stream=None):
             try:
                 if feed is not None:
+                    if resume_frame and feed.frame == resume_frame:
+                        feed.send([], 1)  # Clear a partial attempt once the camera is delivering frames.
                     feed.send(detections, image.shape[1])
             except (URLError, TimeoutError) as error:
                 print(f"Pose update failed: {error}", file=sys.stderr, flush=True)
@@ -262,6 +267,7 @@ def main():
         camera.add_argument("--cpu-threads", type=int)
         camera.add_argument("--profile", action="store_true")
         if mode == 'camera':
+            camera.add_argument('--session-id', help='Bind the bridge to a specific active session')
             camera.add_argument('--diagnostics', type=Path,
                                 help='Overwrite a local lane/confidence summary once per second; no images or joint coordinates')
         camera.add_argument("--openvino-device", choices=('CPU', 'GPU'))
@@ -280,8 +286,9 @@ def main():
         # The server binds IPv4. On Windows, resolving localhost to IPv6 first
         # can add seconds of connection fallback to every camera frame.
         feed = None if args.mode == 'preview' else PoseFeed(
-            f"http://127.0.0.1:{args.port}", args.mode, getattr(args, 'diagnostics', None))
-        if feed is not None and feed.frame:
+            f"http://127.0.0.1:{args.port}", args.mode, getattr(args, 'diagnostics', None),
+            getattr(args, 'session_id', None))
+        if args.mode == 'recording' and feed.frame:
             feed.send([], 1)  # A restarted feed cannot complete a previous partial attempt.
         if args.mode in ('camera', 'preview'):
             run_camera(args, feed)

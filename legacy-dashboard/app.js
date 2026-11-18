@@ -1,7 +1,7 @@
 const byId = (id) => document.getElementById(id);
 const sources = {
   replay: { label: "Synthetic replay", help: "Runs sample motions for five seconds. No camera or wearable required." },
-  camera: { label: "Live AlphaPose camera", help: "Start this session, then run the AlphaPose webcam bridge on this laptop." },
+  camera: { label: "Live AlphaPose camera", help: "Start the session to open AlphaPose on this laptop. End & save closes the camera." },
   recording: { label: "AlphaPose JSON replay", help: "Start this session, then run the bridge with your exported COCO JSON." },
 };
 const defaultTargets = [2, 4, 1, 3, 2];
@@ -140,7 +140,7 @@ function renderMonitor(session) {
   const visible = session.participants.filter((person) => person.angle !== null).length;
   const status = session.source === "replay"
     ? (session.replay_done ? "Replay complete. Save the session to open its results." : "Running generated pose frames.")
-    : `${visible} of ${session.participants.length} lanes have a usable pose.`;
+    : [session.camera?.message, `${visible} of ${session.participants.length} lanes have a usable pose.`].filter(Boolean).join(" ");
   if (byId("monitor-status").textContent !== status) byId("monitor-status").textContent = status;
   byId("roster-count").textContent = `${session.participants.length} seats`;
   for (const person of session.participants) {

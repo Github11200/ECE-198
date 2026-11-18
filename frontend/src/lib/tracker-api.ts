@@ -54,6 +54,11 @@ export type Workout = {
 	participants: ParticipantResult[];
 	replay_done?: boolean;
 	last_frame?: number;
+	/** Present for camera sessions when the tracker launched AlphaPose itself. */
+	camera?: {
+		state: 'starting' | 'running' | 'failed' | 'paused' | 'stopped';
+		message: string;
+	};
 };
 
 export type SessionSetup = {
@@ -111,6 +116,9 @@ export const startSession = (setup: SessionSetup) =>
 	trackerRequest<Workout>('/api/session/start', setup);
 export const finishSession = (sessionId: string) =>
 	trackerRequest<Workout>('/api/session/finish', { session_id: sessionId });
+/** Relaunch AlphaPose for the active camera session after it failed or stopped. */
+export const retryCamera = (sessionId: string) =>
+	trackerRequest<Workout>('/api/camera/retry', { session_id: sessionId });
 
 /**
  * The Python tracker renders a printable report for sessions saved on this

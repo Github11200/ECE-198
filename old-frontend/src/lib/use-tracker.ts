@@ -8,6 +8,8 @@ import { trackerRequest, type Exercise, type SessionSetup, type Workout } from "
 export function useTracker() {
   const live = useLiveFeedback();
   const cloudHistory = useCloudHistory();
+  const [localActive, setLocalActive] = useState<Workout | null>(null);
+  const [localHistory, setLocalHistory] = useState<Workout[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -25,12 +27,19 @@ export function useTracker() {
       if (!changing.current) {
         const observedRevision = revision.current;
         try {
-          const metadata = Date.now() >= metadataDue
-            ? await trackerRequest<{ exercises: Exercise[] }>("/api/exercises") : null;
+          const [current, metadata] = await Promise.all([
+            trackerRequest<{ session: Workout | null }>("/api/session"),
+            Date.now() >= metadataDue ? Promise.all([
+              trackerRequest<{ exercises: Exercise[] }>("/api/exercises"),
+              trackerRequest<{ sessions: Workout[] }>("/api/history"),
+            ]) : Promise.resolve(null),
+          ]);
           if (!disposed && !changing.current && revision.current === observedRevision) {
-            interval = 5000;
+            setLocalActive(current.session);
+            interval = current.session ? 120 : 700;
             if (metadata) {
-              setExercises(metadata.exercises);
+              setExercises(metadata[0].exercises);
+              setLocalHistory(metadata[1].sessions);
               metadataDue = Date.now() + 5000;
             }
             setConnected(true);
@@ -59,8 +68,8 @@ export function useTracker() {
     setBusy(true);
     try {
       const result = await trackerRequest<Workout>(path, body);
-
-
+      setLocalActive(finished ? null : result);
+      if (finished) setLocalHistory(current => [result, ...current.filter(s => s.id !== result.id)].slice(0, 30));
       setConnected(true);
       return result;
     } finally {
@@ -69,11 +78,17 @@ export function useTracker() {
     }
   }
 
+  // Keep the team's reactive archive and pagination. The local laptop remains
+  // authoritative for its active session, including while cloud uploads retry.
+  const history = [...new Map([...cloudHistory.records, ...localHistory].map(s => [s.id, s])).values()]
+    .sort((a, b) => Date.parse(b.finished_at || b.started_at) - Date.parse(a.finished_at || a.started_at));
   return {
-    active: live.active, history: cloudHistory.records, exercises, loading: loading || live.loading,
+    active: connected ? localActive : live.connected ? live.active : localActive,
+    history, exercises, loading,
     historyHasMore: cloudHistory.hasMore, loadMoreHistory: cloudHistory.loadMore,
-    connected, error: error || cloudHistory.error || live.error, busy,
+    connected, error, busy,
     start: (setup: SessionSetup) => change("/api/session/start", setup, false),
     finish: (sessionId: string) => change("/api/session/finish", { session_id: sessionId }, true),
+    retryCamera: (sessionId: string) => change("/api/camera/retry", { session_id: sessionId }, false),
   };
 }
