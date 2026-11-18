@@ -1,0 +1,19 @@
+{
+    // Treat Arduino sketches as C++ so the C/C++ extension gives IntelliSense.
+    "files.associations": {
+        "*.ino": "cpp"
+    },
+    // Use the include paths PlatformIO writes to c_cpp_properties.json.
+    // Don't let the C/C++ extension pick up the old arduino-cli database.
+    "C_Cpp.default.compileCommands": "",
+    "C_Cpp.errorSquiggles": "enabled",
+    // Hide build output from search and the file tree.
+    "files.exclude": {
+        ".arduino-build": true
+    },
+    "search.exclude": {
+        ".pio": true,
+        ".arduino-build": true,
+        "compile_commands.json": true
+    }
+}
