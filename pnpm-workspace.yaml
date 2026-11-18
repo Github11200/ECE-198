@@ -1,0 +1,7 @@
+packages:
+  - frontend
+
+# pnpm blocks dependency install scripts unless they are listed here.
+allowBuilds:
+  esbuild: true             # downloads its platform binary
+  "@hugeicons/svelte": false # postinstall only prints a thank-you message

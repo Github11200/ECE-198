@@ -13,6 +13,9 @@
     "vitest": "^5.1.0"
   },
   "scripts": {
+    "build": "npm --prefix frontend run build",
+    "check": "npm --prefix frontend run check",
+    "test:frontend": "npm --prefix frontend test",
     "test": "vitest run",
     "test:unit": "vitest run",
     "typecheck": "tsc --noEmit -p convex",
