@@ -5,10 +5,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import mimetypes
 import re
+import select
+import socket
 import traceback
 from pathlib import Path
 import signal
-from threading import Lock
+from threading import Condition, Lock
 from time import monotonic
 from uuid import uuid4
 from urllib.parse import parse_qs, unquote, urlsplit
@@ -122,7 +124,28 @@ class SessionService:
         database.initialize(db_path)
         self.active = None
         self.lock = Lock()
+        self.frame_changed = Condition(self.lock)
+        self.frame = None
+        self.frame_seq = 0
+        self.frame_time = None
         self.camera = camera
+
+    def camera_session(self):
+        session = self.active
+        if not session or session.source != 'camera':
+            raise RequestError(404, 'No active camera session.')
+        return session
+
+    def camera_frame(self, session_id, frame):
+        with self.frame_changed:
+            session = self.active
+            if not session or session.source != 'camera' or session.id != session_id:
+                raise RequestError(409, 'This frame does not match an active camera session.')
+            self.frame = frame
+            self.frame_seq += 1
+            self.frame_time = monotonic()
+            self.frame_changed.notify_all()
+            return {'ok': True, 'seq': self.frame_seq}
 
     def with_camera_status(self, snapshot):
         if self.camera and self.active and self.active.source == 'camera':
@@ -178,6 +201,9 @@ class SessionService:
                 raise
             candidate.last_archived_frame = candidate.last_frame
             self.active = candidate
+            self.frame = None
+            self.frame_time = None
+            self.frame_changed.notify_all()
             return self.with_camera_status(snapshot)
 
     def restart_camera(self, data):
@@ -233,6 +259,9 @@ class SessionService:
                 result = self.active.snapshot(finished=True)
                 database.save(self.db_path, result)
                 self.active = None
+                self.frame = None
+                self.frame_time = None
+                self.frame_changed.notify_all()
                 if self.camera:
                     try:
                         self.camera.stop(session_id)
@@ -286,6 +315,32 @@ def handler_for(service, port):
         def send_json(self, status, result):
             self.send(status, json.dumps(result).encode(), "application/json")
 
+        def camera_stream(self):
+            with service.frame_changed:
+                session_id = service.camera_session().id
+            last_seq = 0
+            try:
+                self.send_response(200)
+                self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('X-Content-Type-Options', 'nosniff')
+                self.end_headers()
+                while True:
+                    with service.frame_changed:
+                        if not service.active or service.active.id != session_id:
+                            return
+                        if service.frame is None or service.frame_seq == last_seq:
+                            service.frame_changed.wait(timeout=1)
+                            if select.select([self.connection], [], [], 0)[0] and not self.connection.recv(1, socket.MSG_PEEK):
+                                return
+                            continue
+                        frame, last_seq = service.frame, service.frame_seq
+                    self.wfile.write(b'--frame\r\nContent-Type: image/jpeg\r\nContent-Length: '
+                                     + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
+                    self.wfile.flush()
+            except ConnectionError:
+                pass
+
         def dispatch(self):
             try:
                 if self.headers.get("Host") not in hosts:
@@ -294,6 +349,15 @@ def handler_for(service, port):
                 # query strings (e.g. /api/session?t=1) still reach their handler.
                 path = urlsplit(self.path).path
                 if self.command == "GET":
+                    if path == '/api/camera/stream':
+                        self.camera_stream()
+                        return
+                    if path == '/api/camera/frame.jpg':
+                        with service.frame_changed:
+                            service.camera_session()
+                            frame = service.frame
+                        self.send(200, frame, 'image/jpeg') if frame is not None else self.send(204, b'', 'image/jpeg')
+                        return
                     match = re.fullmatch(r'/reports/([0-9a-f]{32})', path)
                     if match:
                         saved = database.find(service.db_path, match.group(1))
@@ -332,6 +396,26 @@ def handler_for(service, port):
                         self.send(200, asset.read_bytes(), mime)
                         return
                 else:
+                    if path == '/api/camera/frame':
+                        origin = self.headers.get('Origin')
+                        if origin and origin != f"http://{self.headers.get('Host')}":
+                            raise RequestError(403, 'Use the dashboard on this laptop.')
+                        if self.headers.get_content_type() != 'image/jpeg':
+                            raise RequestError(415, 'Send image/jpeg.')
+                        try:
+                            size = int(self.headers.get('Content-Length', '0'))
+                        except ValueError as error:
+                            raise RequestError(400, 'Invalid frame body length.') from error
+                        if size > 2_000_000:
+                            raise RequestError(413, 'Frame is too large.')
+                        if size < 1:
+                            raise RequestError(400, 'Invalid frame body length.')
+                        frame = self.rfile.read(size)
+                        if len(frame) != size:
+                            raise RequestError(400, 'Incomplete frame body.')
+                        session_id = parse_qs(urlsplit(self.path).query).get('session_id', [None])
+                        self.send_json(200, service.camera_frame(session_id[0] if len(session_id) == 1 else None, frame))
+                        return
                     routes = {"/api/session/start": (201, service.start),
                               "/api/session/finish": (200, service.finish),
                               "/api/camera/retry": (200, service.restart_camera),
@@ -371,7 +455,8 @@ def handler_for(service, port):
         def log_message(self, format, *args):
             # High-frequency polling (browser, camera bridge, Convex publisher) would
             # bury real errors; the publisher logs its own upload failures.
-            if urlsplit(self.path).path not in ("/api/session", "/api/pose", "/api/convex/pending", "/api/convex/ack"):
+            if urlsplit(self.path).path not in ("/api/session", "/api/pose", "/api/convex/pending", "/api/convex/ack",
+                                                '/api/camera/frame', '/api/camera/stream', '/api/camera/frame.jpg'):
                 super().log_message(format, *args)
 
     return Handler

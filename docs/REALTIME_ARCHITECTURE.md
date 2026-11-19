@@ -36,7 +36,7 @@ All arrows are implemented. The ESP32 wearable (`ECE198-OLED-IMU/`) subscribes t
 
 History queries use pagination. Personal history returns only the selected person's result within each session, including current sessions. Completed group history excludes active sessions. Raw frame history is available through the authorized, paginated `archive:frames` query.
 
-The tracker archives every accepted AlphaPose input frame, not just the 250 ms publisher sample. Duplicate/out-of-order frames rejected by the tracker do not become extra records. These are the lane-assigned inputs the scorer receives; camera video, original detector boxes and detections discarded by lane assignment are not sent by the existing bridge. Replay stores session snapshots as it advances, rather than raw camera frames. The current UI starts one exercise/station per session.
+The tracker archives every accepted AlphaPose input frame, not just the 250 ms publisher sample. Duplicate/out-of-order frames rejected by the tracker do not become extra records. These are the lane-assigned inputs the scorer receives; original detector boxes and detections discarded by lane assignment are not archived. The bridge sends a latest-only annotated JPEG preview to the local tracker (up to 15 fps), where it remains only in memory for `/api/camera/frame.jpg` and `/api/camera/stream`; it is cleared when the session ends. Replay stores session snapshots as it advances, rather than raw camera frames. The current UI starts one exercise/station per session.
 
 ## Capture, retries and migration
 

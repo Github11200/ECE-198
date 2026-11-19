@@ -56,6 +56,16 @@ class CameraSessionTests(unittest.TestCase):
             self.service.finish({'session_id': session['id']})
         self.assertEqual(self.launches, [])
 
+    def test_preview_flags_respect_show_window_environment(self):
+        with patch.dict('os.environ', {}, clear=True):
+            command = self.camera.command('a' * 32)
+        self.assertIn('--stream-preview', command)
+        self.assertNotIn('--show-camera', command)
+        with patch.dict('os.environ', {'ALPHAPOSE_SHOW_WINDOW': '1'}):
+            command = self.camera.command('a' * 32)
+        self.assertIn('--stream-preview', command)
+        self.assertIn('--show-camera', command)
+
     def test_start_retry_and_finish_own_the_same_camera_session(self):
         session = self.start()
         session_id = session['id']

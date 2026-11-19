@@ -64,9 +64,11 @@ class CameraController:
         if device == 'auto':
             device = 'GPU' if (self.root / 'data/openvino/manifest.json').is_file() else 'native'
         command = [str(self.python), '-u', '-m', 'backend.camera.bridge', '--port', str(self.port),
-                   'camera', '--repo', str(self.repo), '--index', str(self.index), '--show-camera',
+                   'camera', '--repo', str(self.repo), '--index', str(self.index), '--stream-preview',
                    '--session-id', session_id, '--cpu-threads', os.environ.get('ALPHAPOSE_CPU_THREADS', '4'),
                    '--diagnostics', str(self.root / 'data/tracking-diagnostics.json')]
+        if os.environ.get('ALPHAPOSE_SHOW_WINDOW') == '1':
+            command.append('--show-camera')
         if device in ('GPU', 'CPU'):
             command += ['--openvino-device', device]
         elif device != 'native':

@@ -147,6 +147,27 @@ describe('live monitor dialog', () => {
 		const dialog = await screen.findByRole('dialog');
 		expect(within(dialog).getByRole('alert')).toHaveTextContent('Disk is full.');
 	});
+
+	it('mounts the AlphaPose skeleton feed for a camera session', async () => {
+		const session = workout({
+			id: 'CAM',
+			source: 'camera',
+			finished_at: null,
+			participants: [person({ id: 'P01', lane: 1 })],
+			camera: { state: 'running', message: 'Streaming.' }
+		});
+		render(LiveMonitorDialog, { open: true, session, busy: false, onEnd: () => {} });
+		const feed = await screen.findByAltText('AlphaPose skeleton feed');
+		expect(feed.getAttribute('src')).toContain('/api/camera/stream');
+		expect(screen.getByText('Waiting for AlphaPose video…')).toBeInTheDocument();
+	});
+
+	it('does not mount the skeleton feed for a replay session', async () => {
+		const session = workout({ id: 'R1', finished_at: null, participants: [person({ id: 'P01', lane: 1 })] });
+		render(LiveMonitorDialog, { open: true, session, busy: false, onEnd: () => {} });
+		expect(await screen.findByRole('dialog')).toBeInTheDocument();
+		expect(screen.queryByAltText('AlphaPose skeleton feed')).not.toBeInTheDocument();
+	});
 });
 
 describe('tracker polling', () => {

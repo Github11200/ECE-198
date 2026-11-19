@@ -41,6 +41,65 @@
 	let previewId = $state<string | null>(null);
 	// Focus the dialog itself on open so the info tooltips don't pop open.
 	let monitorContent = $state<HTMLElement | null>(null);
+
+	// MJPEG skeleton feed from the tracker. The <img> only mounts while the dialog is
+	// open, so closing the monitor drops the stream connection.
+	let streamKey = $state(0);
+	let streamLoaded = $state(false);
+	let streamFailed = $state(false);
+	const streamVisible = $derived(open && session?.source === 'camera');
+	let streamRetry: ReturnType<typeof setTimeout> | undefined;
+	// Plain variables (not $state) so re-keying never feeds back into the effect.
+	let streamSessionId: string | null = null;
+	let streamCameraState: string | null = null;
+
+	$effect(() => {
+		const id = session?.id ?? null;
+		const cameraState = session?.camera?.state ?? null;
+		// Re-key for a new session, and when a camera retry re-enters `starting`.
+		if (id !== streamSessionId || (cameraState === 'starting' && streamCameraState !== 'starting')) {
+			streamSessionId = id;
+			streamKey += 1;
+			streamLoaded = false;
+			streamFailed = false;
+		}
+		streamCameraState = cameraState;
+	});
+
+	$effect(() => {
+		if (!streamVisible) {
+			streamLoaded = false;
+			streamFailed = false;
+		}
+	});
+
+	$effect(() => () => clearTimeout(streamRetry));
+
+	// Chrome may not fire `load` for a multipart MJPEG stream until it ends, so also
+	// treat the first decoded frame (naturalWidth > 0) as loaded.
+	let streamImage = $state<HTMLImageElement | null>(null);
+	$effect(() => {
+		if (!streamVisible || streamLoaded || !streamImage) return;
+		const image = streamImage;
+		const timer = setInterval(() => {
+			if (image.naturalWidth > 0) {
+				streamLoaded = true;
+				streamFailed = false;
+			}
+		}, 250);
+		return () => clearInterval(timer);
+	});
+
+	function retryStream() {
+		streamLoaded = false;
+		streamFailed = true;
+		clearTimeout(streamRetry);
+		streamRetry = setTimeout(() => {
+			streamFailed = false;
+			streamKey += 1;
+		}, 2000);
+	}
+
 	const preview = $derived(
 		session?.participants.find((person) => person.id === previewId) ?? session?.participants[0] ?? null
 	);
@@ -58,7 +117,7 @@
 
 <Tooltip.Provider>
 	<Dialog.Root bind:open>
-		<Dialog.Content class="max-h-[92svh] overflow-y-auto sm:max-w-5xl" bind:ref={monitorContent} onOpenAutoFocus={(event) => { event.preventDefault(); monitorContent?.focus(); }}>
+		<Dialog.Content class="max-h-[92svh] overflow-y-auto sm:max-w-6xl" bind:ref={monitorContent} onOpenAutoFocus={(event) => { event.preventDefault(); monitorContent?.focus(); }}>
 			{#if session}
 				<Dialog.Header class="gap-2">
 					<div class="flex flex-wrap items-center gap-2">
@@ -102,6 +161,30 @@
 							<Button size="sm" variant="outline" disabled={busy} onclick={onRetryCamera}>Retry camera</Button>
 						{/if}
 					</div>
+				{/if}
+
+				{#if session.source === 'camera' && open}
+					<section aria-label="Skeleton feed" class="space-y-2">
+						<h3 class="eyebrow">Skeleton feed</h3>
+						<div class="relative aspect-video max-h-[46svh] w-full overflow-hidden rounded-xl border bg-black">
+							<img
+								bind:this={streamImage}
+								src={`/api/camera/stream?k=${streamKey}`}
+								alt="AlphaPose skeleton feed"
+								class="size-full object-contain"
+								onload={() => {
+									streamLoaded = true;
+									streamFailed = false;
+								}}
+								onerror={retryStream}
+							/>
+							{#if !streamLoaded}
+								<div class="absolute inset-0 grid place-items-center p-4 text-center text-sm text-balance text-white/70" role="status">
+									{streamFailed ? 'Video feed unavailable — retrying…' : 'Waiting for AlphaPose video…'}
+								</div>
+							{/if}
+						</div>
+					</section>
 				{/if}
 
 				{#if session.replay_done}

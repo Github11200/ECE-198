@@ -8,6 +8,7 @@ from pathlib import Path
 import runpy
 import sys
 from tempfile import TemporaryDirectory
+from threading import Condition, Thread
 from time import monotonic, sleep, time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -172,6 +173,65 @@ def camera_preview(image, participant_ids=()):
     return image
 
 
+class FrameUploader:
+    def __init__(self, base, session_id):
+        self.url = f'{base}/api/camera/frame?session_id={session_id}'
+        self.changed = Condition()
+        self.latest = None
+        self.stopped = False
+        self.reported_error = False
+        self.last_queued = float('-inf')
+        Thread(target=self.run, daemon=True).start()
+
+    def offer(self, image):
+        now = monotonic()
+        if now - self.last_queued < 1 / 15:
+            return
+        self.last_queued = now
+        with self.changed:
+            if not self.stopped:
+                self.latest = image
+                self.changed.notify()
+
+    def run(self):
+        import cv2
+
+        while True:
+            with self.changed:
+                while self.latest is None and not self.stopped:
+                    self.changed.wait()
+                if self.stopped:
+                    return
+                image, self.latest = self.latest, None
+            try:
+                encoded, frame = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 75])
+            except cv2.error as error:
+                if not self.reported_error:
+                    print(f'Camera frame upload failed: {error}', file=sys.stderr, flush=True)
+                    self.reported_error = True
+                continue
+            if not encoded:
+                continue
+            try:
+                with urlopen(Request(self.url, data=frame.tobytes(), headers={'Content-Type': 'image/jpeg'}),
+                             timeout=2) as response:
+                    response.read()
+            except HTTPError as error:
+                error.close()
+                if error.code == 409:
+                    with self.changed:
+                        self.stopped = True
+                        self.latest = None
+                    return
+                if not self.reported_error:
+                    print(f'Camera frame upload failed: {error}', file=sys.stderr, flush=True)
+                    self.reported_error = True
+            except (OSError, TimeoutError) as error:
+                if not self.reported_error:
+                    print(f'Camera frame upload failed: {error}', file=sys.stderr, flush=True)
+                    self.reported_error = True
+
+
 def run_camera(args, feed):
     repo = args.repo.resolve()
     demo = repo / "scripts" / "demo_inference.py"
@@ -202,11 +262,12 @@ def run_camera(args, feed):
     original_vis = vis.vis_frame_fast
     detections = []
     resume_frame = feed.frame if feed is not None else 0
+    uploader = FrameUploader(feed.base, feed.session_id) if feed is not None and (args.stream_preview or args.show_camera) else None
 
     def collect(image, result, options, thresholds):
         if feed is not None:
             detections.extend(writer_detection(person) for person in result["result"])
-        return original_vis(image, result, options, thresholds) if args.show_camera else image
+        return original_vis(image, result, options, thresholds) if args.stream_preview or args.show_camera else image
 
     class LiveWriter(writer.DataWriter):
         def write_image(self, image, name, stream=None):
@@ -219,14 +280,17 @@ def run_camera(args, feed):
                 print(f"Pose update failed: {error}", file=sys.stderr, flush=True)
             finally:
                 detections.clear()
-            if args.show_camera:
+            if args.stream_preview or args.show_camera:
                 original_size = image.shape[:2]
                 image = camera_preview(image, feed.participant_ids if feed is not None else ())
                 if not getattr(self, 'preview_size_reported', False):
                     print(f'Camera preview: {original_size[1]}x{original_size[0]} -> '
                           f'{image.shape[1]}x{image.shape[0]} (complete image)', flush=True)
                     self.preview_size_reported = True
-                super().write_image(image, name, stream=stream)
+                if uploader is not None:
+                    uploader.offer(image)
+                if args.show_camera:
+                    super().write_image(image, name, stream=stream)
 
     # These hooks run inside AlphaPose's single writer thread with --sp.
     # It calls write_image even on frames with zero detected people.
@@ -262,6 +326,7 @@ def main():
         camera.add_argument("--index", type=int, default=0)
         camera.add_argument("--gpus", default="0", help="Use -1 for CPU, 0 for the first CUDA GPU")
         camera.add_argument("--show-camera", action="store_true", default=mode == 'preview')
+        camera.add_argument('--stream-preview', action='store_true')
         camera.add_argument("--detector-size", type=int,
                             help="Detector input: defaults to 416 with OpenVINO, 608 otherwise")
         camera.add_argument("--cpu-threads", type=int)
