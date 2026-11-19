@@ -6,15 +6,15 @@ Each rep requires a visible starting/rest pose, an excursion past the attempt th
 
 | Exercise | Measured joints | Starting/return angle | Attempt begins | Demo range |
 | --- | --- | --- | --- | --- |
-| Seated right-arm curl | Right shoulder–elbow–wrist | ≥150° | ≤120° | ≤70° |
-| Pushups | Right shoulder–elbow–wrist | ≥150° | ≤120° | ≤90° |
-| Squats | Right hip–knee–ankle | ≥160° | ≤130° | ≤100° |
-| Seated knee extensions | Right hip–knee–ankle | ≤105° | ≥125° | ≥155° |
-| Seated shoulder raises | Right hip–shoulder–elbow | ≤25° | ≥45° | ≥80° |
-| Seated marches | Right shoulder–hip–knee | ≥85° | ≤75° | ≤60° |
-| Sit-to-stand | Minimum of right hip and knee angles | ≤105° | ≥125° | ≥155° |
+| Seated arm curl | Shoulder–elbow–wrist (either side) | ≥150° | ≤120° | ≤70° |
+| Pushups | Shoulder–elbow–wrist (either side) | ≥150° | ≤120° | ≤90° |
+| Squats | Hip–knee–ankle (either side) | ≥160° | ≤130° | ≤100° |
+| Seated knee extensions | Hip–knee–ankle (either side) | ≤105° | ≥125° | ≥155° |
+| Seated shoulder raises | Hip–shoulder–elbow (either side) | ≤25° | ≥45° | ≥80° |
+| Seated marches | Shoulder–hip–knee (either side) | ≥85° | ≤75° | ≤60° |
+| Sit-to-stand | Minimum of hip and knee angles (same side) | ≤105° | ≥125° | ≥155° |
 
-The current unilateral movements count the right side only, not alternating left/right reps. Use a suitable view of the required joints. Pushup feedback currently describes elbow range; it does not verify whole-body alignment. Squat feedback describes knee range. Sit-to-stand requires both hip and knee extension so an isolated seated knee extension cannot count as a stand.
+Each movement is measured on both the left and right side. Every side whose joints pass the confidence check gets its angle from the dot product of the two limb vectors, and the side furthest into the movement is the one counted. Either arm or leg can do the exercise, and alternating sides each count as a rep. Use a suitable view of the required joints. Pushup feedback currently describes elbow range; it does not verify whole-body alignment. Squat feedback describes knee range. Sit-to-stand requires both hip and knee extension so an isolated seated knee extension cannot count as a stand.
 
 The rehabilitation starter set includes chair-based knee extensions, marches, shoulder raises, and a functional sit-to-stand movement. It is not an exhaustive rehabilitation library. Examples of chair/functional movements are described in [UCLH's rehabilitation exercise guide](https://www.uclh.nhs.uk/patients-and-visitors/patient-information-pages/home-exercises-improve-strength-and-balance-following-hospital-admission), [NHS sitting exercises](https://www.nhs.uk/live-well/exercise/sitting-exercises/), and [North Tees balance exercises](https://www.nth.nhs.uk/resources/balance-exercises/). **The software's numeric thresholds are ours, not thresholds taken from those clinical guides.**
 

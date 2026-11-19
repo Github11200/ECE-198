@@ -14,7 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from ..tracker.pose import MIN_CONFIDENCE, assign_lanes
-from ..tracker.exercises import DEFAULT_EXERCISE, EXERCISES, JOINT_NAMES, measure
+from ..tracker.exercises import DEFAULT_EXERCISE, EXERCISES, JOINT_NAMES, measure, sides
 
 
 def local_request(base, route, data=None):
@@ -33,7 +33,8 @@ def tracking_diagnostics(detections, width, seats, frame, exercise=DEFAULT_EXERC
         if isfinite(center) and box_width > 0 and 0 <= center < width:
             groups[int(center * seats / width)].append(person)
     lanes = []
-    required = sorted({joint for group in EXERCISES[exercise]['joints'] for joint in group})
+    required = sorted({joint for groups in sides(EXERCISES[exercise]).values()
+                       for group in groups for joint in group})
     for index, people in enumerate(groups, 1):
         candidates = []
         for person in people:

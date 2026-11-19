@@ -3,8 +3,19 @@ from copy import deepcopy
 from .pose import Curl, MIN_CONFIDENCE, LOWERED, CURL_STARTED, FULL_RANGE, joint_angle
 
 DEFAULT_EXERCISE = 'right_arm_curl'
-JOINT_NAMES = {6: 'right shoulder', 8: 'right elbow', 10: 'right wrist',
-               12: 'right hip', 14: 'right knee', 16: 'right ankle'}
+_PARTS = {6: 'shoulder', 8: 'elbow', 10: 'wrist', 12: 'hip', 14: 'knee', 16: 'ankle'}
+JOINT_NAMES = {**{joint: 'right ' + part for joint, part in _PARTS.items()},
+               **{joint - 1: 'left ' + part for joint, part in _PARTS.items()}}
+
+
+def mirror(groups):
+    """COCO stores each left joint one index before its right counterpart."""
+    return [tuple(joint - 1 for joint in group) for group in groups]
+
+
+def sides(spec):
+    """Joint groups for each body side; exercises are defined on the right side."""
+    return {'right': spec['joints'], 'left': mirror(spec['joints'])}
 
 
 def definition(label, category, joints, angle_label, rest, start, full, increasing, help_text):
@@ -14,27 +25,27 @@ def definition(label, category, joints, angle_label, rest, start, full, increasi
 
 
 EXERCISES = {
-    'right_arm_curl': definition('Seated right-arm curl', 'Strength', [(6, 8, 10)],
-        'Right elbow angle', LOWERED, CURL_STARTED, FULL_RANGE, False,
-        'Keep the right shoulder, elbow and wrist visible. Begin with the arm lowered.'),
+    'right_arm_curl': definition('Seated arm curl', 'Strength', [(6, 8, 10)],
+        'Elbow angle', LOWERED, CURL_STARTED, FULL_RANGE, False,
+        'Keep one shoulder, elbow and wrist visible (left or right). Begin with the arm lowered.'),
     'pushup': definition('Pushups', 'Strength', [(6, 8, 10)],
-        'Right elbow angle', 150, 120, 90, False,
-        'Use a side view with the right arm visible. This estimates elbow range, not whole-body alignment.'),
+        'Elbow angle', 150, 120, 90, False,
+        'Use a side view with either arm visible. This estimates elbow range, not whole-body alignment.'),
     'squat': definition('Squats', 'Strength', [(12, 14, 16)],
-        'Right knee angle', 160, 130, 100, False,
-        'Use a side view with the right hip, knee and ankle visible. Begin standing.'),
+        'Knee angle', 160, 130, 100, False,
+        'Use a side view with the hip, knee and ankle of either leg visible. Begin standing.'),
     'knee_extension': definition('Seated knee extensions', 'Rehabilitation', [(12, 14, 16)],
-        'Right knee angle', 105, 125, 155, True,
-        'Count the right leg. Keep the hip, knee and ankle visible; begin with the knee bent.'),
+        'Knee angle', 105, 125, 155, True,
+        'Counts either leg. Keep its hip, knee and ankle visible; begin with the knee bent.'),
     'shoulder_raise': definition('Seated shoulder raises', 'Rehabilitation', [(12, 6, 8)],
-        'Right shoulder angle', 25, 45, 80, True,
-        'Count the right arm moving out to the side and back down. Keep the hip, shoulder and elbow visible.'),
+        'Shoulder angle', 25, 45, 80, True,
+        'Counts either arm moving out to the side and back down. Keep its hip, shoulder and elbow visible.'),
     'seated_march': definition('Seated marches', 'Rehabilitation', [(6, 12, 14)],
-        'Right hip angle', 85, 75, 60, False,
-        'Count right-knee lifts only. Use a side view with the shoulder, hip and knee visible.'),
+        'Hip angle', 85, 75, 60, False,
+        'Counts knee lifts on either side. Use a side view with the shoulder, hip and knee visible.'),
     'sit_to_stand': definition('Sit-to-stand', 'Rehabilitation', [(12, 14, 16), (6, 12, 14)],
-        'Minimum right hip/knee angle', 105, 125, 155, True,
-        'Keep the right shoulder, hip, knee and ankle visible. Both hip and knee must extend; a leg extension alone is not a stand.'),
+        'Minimum hip/knee angle', 105, 125, 155, True,
+        'Keep the shoulder, hip, knee and ankle of one side visible. Both hip and knee must extend; a leg extension alone is not a stand.'),
 }
 
 
@@ -61,18 +72,25 @@ def measure(keypoints, exercise_id):
         return None, 'No unique usable person in this lane'
     if not isinstance(keypoints, list) or len(keypoints) != 51:
         return None, 'Invalid pose data'
-    required = sorted({joint for group in spec['joints'] for joint in group})
-    weak = []
-    for joint in required:
-        confidence = keypoints[joint * 3 + 2]
-        if type(confidence) not in (int, float) or not MIN_CONFIDENCE <= confidence <= 1_000_000:
-            weak.append(JOINT_NAMES[joint])
-    if weak:
-        return None, 'Low confidence in ' + ', '.join(weak)
-    angles = [joint_angle(keypoints, group) for group in spec['joints']]
-    if any(angle is None for angle in angles):
-        return None, 'Joint geometry unavailable'
-    return min(angles), 'Tracking'
+    angles, weak_sides = [], []
+    for groups in sides(spec).values():
+        required = sorted({joint for group in groups for joint in group})
+        weak = [JOINT_NAMES[joint] for joint in required
+                if type(keypoints[joint * 3 + 2]) not in (int, float)
+                or not MIN_CONFIDENCE <= keypoints[joint * 3 + 2] <= 1_000_000]
+        if weak:
+            weak_sides.append(weak)
+            continue
+        side = [joint_angle(keypoints, group) for group in groups]
+        if all(angle is not None for angle in side):
+            # Within one side every group must move (sit-to-stand needs hip and knee).
+            angles.append(min(side) if spec['increasing'] else max(side))
+    if angles:
+        # Either side may be the working one; follow whichever is further into the movement.
+        return (max(angles) if spec['increasing'] else min(angles)), 'Tracking'
+    if len(weak_sides) == 2:
+        return None, 'Low confidence in ' + ', '.join(min(weak_sides, key=len))
+    return None, 'Joint geometry unavailable'
 
 
 def report(person, metrics, exercise_id):

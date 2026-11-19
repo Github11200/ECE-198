@@ -50,6 +50,43 @@ class ExerciseTests(unittest.TestCase):
             person.observe(angle)
         self.assertEqual(person.reps, 0)
 
+    @staticmethod
+    def _mirrored(points):
+        """Move a right-side replay pose onto the matching left COCO joints."""
+        left = [0.0] * 51
+        for joint in range(6, 17, 2):
+            left[(joint - 1) * 3:joint * 3] = points[joint * 3:joint * 3 + 3]
+        return left
+
+    def test_every_exercise_counts_the_left_side(self):
+        for exercise in EXERCISES:
+            with self.subTest(exercise=exercise):
+                right, left = counter(exercise, 2), counter(exercise, 2)
+                for frame in range(REPLAY_FRAMES):
+                    points = replay_frame(frame, 1, EXERCISES[exercise])[0]
+                    right.observe(measure(points, exercise)[0])
+                    left.observe(measure(self._mirrored(points), exercise)[0])
+                self.assertGreater(right.reps, 0)
+                self.assertEqual((left.reps, left.full), (right.reps, right.full))
+
+    def test_curl_follows_the_working_arm_when_both_are_visible(self):
+        resting = replay_frame(0, 1, EXERCISES['right_arm_curl'])[0]
+        person = counter('right_arm_curl', 2)
+        for frame in range(REPLAY_FRAMES):
+            working = replay_frame(frame, 1, EXERCISES['right_arm_curl'])[0]
+            points = list(resting)
+            for joint in range(6, 17, 2):  # Left arm curls while the right arm stays lowered.
+                points[(joint - 1) * 3:joint * 3] = working[joint * 3:joint * 3 + 3]
+            person.observe(measure(points, 'right_arm_curl')[0])
+        self.assertEqual(person.reps, 2)
+
+    def test_low_confidence_reports_the_closer_side(self):
+        points = replay_frame(0, 1, EXERCISES['right_arm_curl'])[0]
+        points[32] = 0.2
+        self.assertEqual(measure(points, 'right_arm_curl'), (None, 'Low confidence in right wrist'))
+        self.assertEqual(measure(self._mirrored(points), 'right_arm_curl'),
+                         (None, 'Low confidence in left wrist'))
+
     def test_report_uses_unrounded_angle_at_range_boundary(self):
         person = counter('right_arm_curl', 1)
         for angle in (165, 115, 70.04, 160):

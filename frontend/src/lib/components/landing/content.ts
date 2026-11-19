@@ -1,12 +1,12 @@
 // Exercise names and range targets mirror backend/tracker/exercises.py.
 export const exercises = [
-	{ name: 'Seated right-arm curl', category: 'Strength', joint: 'Right elbow', target: '≤ 70°' },
-	{ name: 'Pushups', category: 'Strength', joint: 'Right elbow', target: '≤ 90°' },
-	{ name: 'Squats', category: 'Strength', joint: 'Right knee', target: '≤ 100°' },
-	{ name: 'Seated knee extensions', category: 'Rehabilitation', joint: 'Right knee', target: '≥ 155°' },
-	{ name: 'Seated shoulder raises', category: 'Rehabilitation', joint: 'Right shoulder', target: '≥ 80°' },
-	{ name: 'Seated marches', category: 'Rehabilitation', joint: 'Right hip', target: '≤ 60°' },
-	{ name: 'Sit-to-stand', category: 'Rehabilitation', joint: 'Right hip and knee', target: '≥ 155°' }
+	{ name: 'Seated arm curl', category: 'Strength', joint: 'Elbow (either side)', target: '≤ 70°' },
+	{ name: 'Pushups', category: 'Strength', joint: 'Elbow (either side)', target: '≤ 90°' },
+	{ name: 'Squats', category: 'Strength', joint: 'Knee (either side)', target: '≤ 100°' },
+	{ name: 'Seated knee extensions', category: 'Rehabilitation', joint: 'Knee (either side)', target: '≥ 155°' },
+	{ name: 'Seated shoulder raises', category: 'Rehabilitation', joint: 'Shoulder (either side)', target: '≥ 80°' },
+	{ name: 'Seated marches', category: 'Rehabilitation', joint: 'Hip (either side)', target: '≤ 60°' },
+	{ name: 'Sit-to-stand', category: 'Rehabilitation', joint: 'Hip and knee (one side)', target: '≥ 155°' }
 ] as const;
 
 export const sectionLinks = [
