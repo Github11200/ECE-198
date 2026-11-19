@@ -46,8 +46,9 @@ device-to-device traffic.
 
 | OLED | Meaning |
 |------|---------|
-| `P01 Squats`, big `3/8`, `reps range 67%`, cue | live session |
-| `Waiting session` | no session, or the laptop relay stopped updating for > 6 s |
+| `P01 Squats`, then `Reps: 3 / 8`, `Good`, `Short`, `Range %`, `Track %`, cue | live session (stats from the Convex `feedback:live` dashboard snapshot; `-` = not sent yet) |
+| `P01 Done` + the same stats | final results, held 60 s after the session ends |
+| `No session currently going` | no session, or the laptop relay stopped updating for > 6 s |
 | `Not in session` | a session is running without this participant |
 | `Connecting Wi-Fi...` / `Connecting server...` / `Connection lost` | link down; the old cue is cleared |
 | `Server error` + reason | query failed (e.g. wrong read token) |

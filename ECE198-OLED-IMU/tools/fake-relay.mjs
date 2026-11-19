@@ -24,11 +24,11 @@ const seconds = Number(process.argv[2] ?? 30), who = process.argv[3] ?? "P01";
 const target = 8, sessionId = `fake-${Date.now()}`;
 const cues = [["READY", "Ready"], ["RANGE_OK", "Range reached"], ["CHECK_RANGE", "Check range"]];
 
-async function publish(session) {
+async function publish(session, dashboard = null) {
   const res = await fetch(`${site}/feedback`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ session }),
+    body: JSON.stringify({ session, dashboard }),
   });
   if (!res.ok) throw new Error(`publish failed: ${res.status} ${await res.text()}`);
 }
@@ -45,6 +45,29 @@ function snapshot(tick) {
   };
 }
 
+// Full dashboard snapshot (the `workout` schema) with the good/short counts and
+// tracking coverage the OLED shows. Every other rep falls short of the range.
+const startedAt = new Date().toISOString();
+function dashboard(session, tick) {
+  const p = session.participants[0];
+  const full = Math.ceil(p.reps / 2), short = p.reps - full;
+  return {
+    id: sessionId, source: "replay", exercise: "squat", exercise_label: "Squats",
+    station: "Station 1", started_at: startedAt, finished_at: null,
+    criteria: { description: "Fake relay test data", angle_label: "Knee angle", rest_angle: 170,
+      start_angle: 150, full_angle: 100, increasing: false, minimum_confidence: 0.3 },
+    participants: [{
+      id: who, label: who, lane: 0, target, reps: p.reps, full, short,
+      last_range: p.reps ? (p.reps % 2 ? "full" : "short") : null,
+      range_score: p.range_score, tracking_coverage: 85 + (tick % 13), tracking_losses: 0,
+      discarded_attempts: 0, target_remaining: Math.max(0, target - p.reps), issues: [],
+      rep_details: Array.from({ length: p.reps }, (_, i) =>
+        ({ number: i + 1, peak_angle: i % 2 ? 120 : 95, reached_range: i % 2 === 0 })),
+      cue: p.cue,
+    }],
+  };
+}
+
 let stopped = false;
 const stop = async () => {
   if (stopped) return; stopped = true;
@@ -55,9 +78,11 @@ const stop = async () => {
 process.on("SIGINT", stop);
 for (let tick = 0; tick < seconds && !stopped; tick++) {
   const s = snapshot(tick);
-  await publish(s);
-  const p = s.participants[0];
-  console.log(`t=${tick}s ${p.id} ${p.reps}/${p.target} ${p.cue_code}`);
+  const d = dashboard(s, tick);
+  await publish(s, d);
+  const p = s.participants[0], r = d.participants[0];
+  console.log(`t=${tick}s ${p.id} reps ${p.reps}/${p.target} good ${r.full} short ${r.short} ` +
+    `range ${p.range_score ?? "-"}% track ${r.tracking_coverage}% cue ${p.display_text}`);
   await new Promise((r) => setTimeout(r, 1000));
 }
 await stop();

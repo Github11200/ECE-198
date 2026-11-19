@@ -187,7 +187,7 @@ def main():
         print("== Boot and connect")
         check("joins Wi-Fi", board.wait_for(r"^\[WiFi\] Got IP", 60, since=0))
         check("connects to Convex", board.wait_for(r"^\[Convex\] Connected", 30, since=0))
-        check("shows waiting screen", board.wait_for(oled("Waiting session"), 15, since=0))
+        check("shows no-session screen", board.wait_for(oled("No session currently going"), 15, since=0))
 
         print("== Live updates")
         for reps in (1, 2, 3):
@@ -217,7 +217,7 @@ def main():
         print("== Laptop relay stalls")
         mark = board.mark()
         relay.heartbeat = False
-        check("falls back to waiting (< 10 s)", board.wait_for(oled("Waiting session"), 10, since=mark))
+        check("falls back to no session (< 10 s)", board.wait_for(oled("No session currently going"), 10, since=mark))
         mark = board.mark()
         relay.set_reps(6)
         check("resumes when relay returns", board.wait_for(oled(f"6/{TARGET} "), 8, since=mark))
@@ -225,7 +225,8 @@ def main():
         print("== Session ends")
         mark = board.mark()
         relay.end_session()
-        check("shows waiting after end", board.wait_for(oled("Waiting session"), 8, since=mark))
+        # The board holds a results summary for 60 s after the session ends.
+        check("shows summary after end", board.wait_for(oled("Done"), 8, since=mark))
 
         print("== Health")
         mark = board.mark()

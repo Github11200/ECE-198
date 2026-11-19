@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 #include "../convex/value.hpp"
 
 namespace feedback {
@@ -35,6 +36,11 @@ struct Snapshot {
     int reps = 0;
     int target = 0;
     int range_score = -1;   // -1 = no completed attempts yet
+    // From the full dashboard snapshot that accompanies the compact payload;
+    // -1 when the relay sent no dashboard (older relays).
+    int full = -1;          // reps that reached the exercise's range
+    int short_reps = -1;    // reps that did not (counted, but not done properly)
+    int tracking = -1;      // % of frames with a usable pose (tracking_coverage)
     double updated_at = 0;  // Convex row updatedAt (ms since epoch), 0 if none
 };
 
@@ -49,6 +55,17 @@ std::string exercise_label(const std::string& exercise_id);
 
 /** Short cue (<= 16 chars): display_text, else derived from cue_code, else cue. */
 std::string cue_text(const Snapshot& s);
+
+/** Stats line (<= 21 chars), e.g. "Full 3 Short 1 75%". */
+std::string stats(const Snapshot& s);
+
+/**
+ * One stat per OLED line (each <= 21 chars), drawn during a session and on
+ * the end-of-session summary:
+ *   "Reps:   4 / 8", "Good:   3", "Short:  1", "Range:  75%", "Track:  92%"
+ * "-" marks a value the relay has not sent yet.
+ */
+std::vector<std::string> stat_lines(const Snapshot& s);
 
 /** Truncate to `width` characters (OLED text is ASCII). */
 std::string fit(const std::string& text, size_t width);
@@ -77,11 +94,14 @@ private:
 
 enum class Link { WifiConnecting, ConvexConnecting, Online };
 
-/** Text content of one OLED frame. Empty `big` = no large number shown. */
+/** Shown whenever no session is running for this participant. */
+extern const char* const NO_SESSION_TEXT;
+
+/** Text content of one OLED frame. Empty `big` = no session stats shown. */
 struct Screen {
     std::string header;  // size-1 text, <= 21 chars
-    std::string big;     // large "reps/target", <= 7 chars
-    std::string sub;     // size-1 text, <= 21 chars
+    std::string big;     // "reps/target", <= 7 chars (non-empty = draw stat_lines)
+    std::string sub;     // size-1 text; may hold '\n', each line <= 21 chars
     std::string footer;  // size-1 text, <= 21 chars
     bool operator==(const Screen& o) const {
         return header == o.header && big == o.big && sub == o.sub && footer == o.footer;
@@ -91,5 +111,8 @@ struct Screen {
 
 /** Decide what to draw. `fresh` comes from Freshness::fresh(). */
 Screen render(const Snapshot& s, Link link, bool fresh, const std::string& participant);
+
+/** Final results for a session that just ended, from its last active snapshot. */
+Screen summary(const Snapshot& last);
 
 }  // namespace feedback

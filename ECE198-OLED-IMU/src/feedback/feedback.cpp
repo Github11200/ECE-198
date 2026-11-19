@@ -68,6 +68,18 @@ Snapshot parse_live(const convex::Value& result, const std::string& participant)
         s.cue_code = get_string(p, "cue_code");
         s.display_text = get_string(p, "display_text");
         s.cue = get_string(p, "cue");
+        // Full/short counts live in the dashboard snapshot sent alongside.
+        const convex::Value* dashboard = field(result, "dashboard");
+        const convex::Value* results = dashboard ? field(*dashboard, "participants") : nullptr;
+        if (results && results->is_array()) {
+            for (const convex::Value& r : results->as_array()) {
+                if (get_string(r, "id") != participant) continue;
+                s.full = get_int(r, "full", -1);
+                s.short_reps = get_int(r, "short", -1);
+                s.tracking = get_int(r, "tracking_coverage", -1);
+                break;
+            }
+        }
         return s;
     }
     s.status = Status::NotPaired;
@@ -126,6 +138,36 @@ std::string fit(const std::string& text, size_t width) {
     return text.size() <= width ? text : text.substr(0, width);
 }
 
+// "Full 3 Short 1 75%": good reps, reps short of the range, and range score.
+std::string stats(const Snapshot& s) {
+    std::string line;
+    if (s.full >= 0 && s.short_reps >= 0) {
+        line = "Full " + std::to_string(s.full) + " Short " + std::to_string(s.short_reps);
+    } else {
+        line = "reps";
+    }
+    if (s.range_score >= 0) {
+        std::string range = std::to_string(s.range_score) + "%";
+        line += (line == "reps" ? "   range " : " ") + range;
+    }
+    return fit(line, 21);
+}
+
+std::vector<std::string> stat_lines(const Snapshot& s) {
+    auto value = [](int n, const char* suffix = "") {
+        return n >= 0 ? std::to_string(n) + suffix : std::string("-");
+    };
+    return {
+        fit("Reps:   " + std::to_string(s.reps) + " / " + std::to_string(s.target), 21),
+        fit("Good:   " + value(s.full), 21),
+        fit("Short:  " + value(s.short_reps), 21),
+        fit("Range:  " + value(s.range_score, "%"), 21),
+        fit("Track:  " + value(s.tracking, "%"), 21),
+    };
+}
+
+const char* const NO_SESSION_TEXT = "No session\ncurrently going";
+
 void Freshness::observe(double updated_at, uint32_t now_ms) {
     if (!seen_) {
         seen_ = true;
@@ -169,11 +211,11 @@ Screen render(const Snapshot& s, Link link, bool fresh, const std::string& parti
             return screen;
         case Status::NoSession:
             screen.header = participant;
-            screen.sub = "Waiting session";
+            screen.sub = NO_SESSION_TEXT;
             return screen;
         case Status::NotPaired:
             screen.header = participant;
-            screen.sub = fresh ? "Not in session" : "Waiting session";
+            screen.sub = fresh ? "Not in session" : NO_SESSION_TEXT;
             screen.footer = fresh ? fit(s.station, 21) : "";
             return screen;
         case Status::Active:
@@ -182,14 +224,23 @@ Screen render(const Snapshot& s, Link link, bool fresh, const std::string& parti
 
     if (!fresh) {
         screen.header = participant;
-        screen.sub = "Waiting session";
+        screen.sub = NO_SESSION_TEXT;
         return screen;
     }
 
     screen.header = fit(participant + " " + exercise_label(s.exercise), 21);
     screen.big = fit(std::to_string(s.reps) + "/" + std::to_string(s.target), 7);
-    screen.sub = s.range_score >= 0 ? "reps   range " + std::to_string(s.range_score) + "%" : "reps";
+    screen.sub = stats(s);
     screen.footer = cue_text(s);
+    return screen;
+}
+
+Screen summary(const Snapshot& last) {
+    Screen screen;
+    screen.header = fit(last.participant + " Done", 21);
+    screen.big = fit(std::to_string(last.reps) + "/" + std::to_string(last.target), 7);
+    screen.sub = stats(last);
+    screen.footer = last.target > 0 && last.reps >= last.target ? "Target met" : "Session ended";
     return screen;
 }
 
